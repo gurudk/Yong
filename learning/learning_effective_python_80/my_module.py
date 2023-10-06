@@ -17,20 +17,19 @@
 import math
 
 
-def compute_rmse(observed, ideal):
-    total_err_2 = 0
-    count = 0
-    for got, wanted in zip(observed, ideal):
-        err_2 = (got - wanted) ** 2
-        breakpoint()  # Start the debugger here
-        total_err_2 += err_2
-        count += 1
+def squared_error(point, mean):
+    err = point - mean
+    return err ** 2
 
-    mean_err = total_err_2 / count
-    rmse = math.sqrt(mean_err)
-    return rmse
 
-result = compute_rmse(
-    [1.8, 1.7, 3.2, 6],
-    [2, 1.5, 3, 5])
-print(result)
+def compute_variance(data):
+    mean = sum(data) / len(data)
+    err_2_sum = sum(squared_error(x, mean) for x in data)
+    variance = err_2_sum / (len(data) - 1)
+    return variance
+
+
+def compute_stddev(data):
+    variance = compute_variance(data)
+    return math.sqrt(variance)
+

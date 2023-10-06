@@ -14,23 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
+import tracemalloc
+
+tracemalloc.start(10)                      # Set stack depth
+time1 = tracemalloc.take_snapshot()        # Before snapshot
+
+import waste_memory
+
+x = waste_memory.run()                     # Usage to debug
+time2 = tracemalloc.take_snapshot()        # After snapshot
+
+stats = time2.compare_to(time1, 'lineno', cumulative=True)  # Compare snapshots
+for stat in stats[:5]:
+    print(stat)
 
 
-def compute_rmse(observed, ideal):
-    total_err_2 = 0
-    count = 0
-    for got, wanted in zip(observed, ideal):
-        err_2 = (got - wanted) ** 2
-        breakpoint()  # Start the debugger here
-        total_err_2 += err_2
-        count += 1
-
-    mean_err = total_err_2 / count
-    rmse = math.sqrt(mean_err)
-    return rmse
-
-result = compute_rmse(
-    [1.8, 1.7, 3.2, 6],
-    [2, 1.5, 3, 5])
-print(result)

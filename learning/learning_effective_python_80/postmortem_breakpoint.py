@@ -22,7 +22,6 @@ def compute_rmse(observed, ideal):
     count = 0
     for got, wanted in zip(observed, ideal):
         err_2 = (got - wanted) ** 2
-        breakpoint()  # Start the debugger here
         total_err_2 += err_2
         count += 1
 
@@ -30,7 +29,8 @@ def compute_rmse(observed, ideal):
     rmse = math.sqrt(mean_err)
     return rmse
 
+
 result = compute_rmse(
-    [1.8, 1.7, 3.2, 6],
+    [1.8, 1.7, 3.2, 7j],  # Bad input
     [2, 1.5, 3, 5])
 print(result)

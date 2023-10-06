@@ -14,23 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
+import tracemalloc
 
+tracemalloc.start(10)
+time1 = tracemalloc.take_snapshot()
 
-def compute_rmse(observed, ideal):
-    total_err_2 = 0
-    count = 0
-    for got, wanted in zip(observed, ideal):
-        err_2 = (got - wanted) ** 2
-        breakpoint()  # Start the debugger here
-        total_err_2 += err_2
-        count += 1
+import waste_memory
 
-    mean_err = total_err_2 / count
-    rmse = math.sqrt(mean_err)
-    return rmse
+x = waste_memory.run()
+time2 = tracemalloc.take_snapshot()
 
-result = compute_rmse(
-    [1.8, 1.7, 3.2, 6],
-    [2, 1.5, 3, 5])
-print(result)
+stats = time2.compare_to(time1, 'traceback')
+top = stats[0]
+print('Biggest offender is:')
+print('\n'.join(top.traceback.format()))

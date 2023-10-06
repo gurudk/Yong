@@ -14,23 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
+import gc
 
+found_objects = gc.get_objects()
+print('Before:', len(found_objects))
 
-def compute_rmse(observed, ideal):
-    total_err_2 = 0
-    count = 0
-    for got, wanted in zip(observed, ideal):
-        err_2 = (got - wanted) ** 2
-        breakpoint()  # Start the debugger here
-        total_err_2 += err_2
-        count += 1
+import waste_memory
 
-    mean_err = total_err_2 / count
-    rmse = math.sqrt(mean_err)
-    return rmse
+hold_reference = waste_memory.run()
 
-result = compute_rmse(
-    [1.8, 1.7, 3.2, 6],
-    [2, 1.5, 3, 5])
-print(result)
+found_objects = gc.get_objects()
+print('After: ', len(found_objects))
+for obj in found_objects[:3]:
+    print(repr(obj)[:100])
+
+print('...')

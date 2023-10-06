@@ -14,23 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import math
 
 
-def compute_rmse(observed, ideal):
-    total_err_2 = 0
-    count = 0
-    for got, wanted in zip(observed, ideal):
-        err_2 = (got - wanted) ** 2
-        breakpoint()  # Start the debugger here
-        total_err_2 += err_2
-        count += 1
+# Example 7
+# Check types in this file with: python -m mypy <path>
 
-    mean_err = total_err_2 / count
-    rmse = math.sqrt(mean_err)
-    return rmse
+from typing import Container, List
 
-result = compute_rmse(
-    [1.8, 1.7, 3.2, 6],
-    [2, 1.5, 3, 5])
-print(result)
+def find_anagrams(word: str,
+                  dictionary: Container[str]) -> List[str]:
+    """Find all anagrams for a word.
+
+    This function only runs as fast as the test for
+    membership in the 'dictionary' container.
+
+    Args:
+        word: Target word.
+        dictionary: All known actual words.
+
+    Returns:
+        Anagrams that were found.
+    """
+    pass
