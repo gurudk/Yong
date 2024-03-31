@@ -33,7 +33,7 @@ class Variable:
         return self.data.dtype
 
     def __add__(self, other):
-        return add(self, other);
+        return add(self, other)
 
     def __mul__(self, other):
         return mul(self, other)
