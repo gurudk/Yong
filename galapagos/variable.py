@@ -200,7 +200,7 @@ class Pow(Function):
     def backward(self, gy):
         x0, x1 = self.inputs[0].data, self.inputs[1].data
 
-        return x1 * x0 ** (x1 - 1) * gy
+        return x1 * x0 ** (x1 - 1) * gy, np.log(x0) * x0 ** x1 * gy
 
 
 class Config:
@@ -282,6 +282,7 @@ Variable.__rsub__ = rsub
 Variable.__truediv__ = div
 Variable.__rtruediv__ = rdiv
 Variable.__pow__ = pow
+Variable.__rpow__ = rpow
 
 
 def numerical_diff(f, x, eps=1e-4):
@@ -297,10 +298,10 @@ print(2 ** e)
 print(e ** 2)
 
 a = Variable(np.array(2))
-b = -a
-c = b ** 3
+b = a ** 2
+c = b ** 2
 # d = c - 2 / b - a / 2 ** a
-d = exp(c)
+d = 2 ** b
 print(d)
 d.backward()
 print(a.grad)
