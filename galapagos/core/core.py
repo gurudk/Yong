@@ -1,7 +1,33 @@
+import contextlib
 import weakref
 
 import numpy as np
 
+
+# =============================================================================
+# Config
+# =============================================================================
+class Config:
+    enable_backprop = True
+
+
+@contextlib.contextmanager
+def using_config(name, value):
+    old_value = getattr(Config, name)
+    setattr(Config, name, value)
+    try:
+        yield
+    finally:
+        setattr(Config, name, old_value)
+
+
+def no_grad():
+    return using_config('enable_backprop', False)
+
+
+# =============================================================================
+# Variable / Function
+# =============================================================================
 
 class Variable:
     __array_priority = 200
@@ -31,12 +57,6 @@ class Variable:
     @property
     def dtype(self):
         return self.data.dtype
-
-    def __add__(self, other):
-        return add(self, other)
-
-    def __mul__(self, other):
-        return mul(self, other)
 
     def __len__(self):
         return len(self.data)
@@ -194,13 +214,18 @@ class Div(Function):
 
 
 class Pow(Function):
-    def forward(self, x0, x1):
-        return x0 ** x1
+    def __init__(self, c):
+        self.c = c
+
+    def forward(self, x):
+        y = x ** self.c
+        return y
 
     def backward(self, gy):
-        x0, x1 = self.inputs[0].data, self.inputs[1].data
-
-        return x1 * x0 ** (x1 - 1) * gy, np.log(x0) * x0 ** x1 * gy
+        x = self.inputs[0].data
+        c = self.c
+        gx = c * x ** (c - 1) * gy
+        return gx
 
 
 class Config:
@@ -260,29 +285,12 @@ def rdiv(x0, x1):
     return Div()(x1, x0)
 
 
-def pow(x0, x1):
-    x1 = as_array(x1)
-    return Pow()(x0, x1)
-
-
-def rpow(x0, x1):
-    x1 = as_array(x1)
-    return Pow()(x1, x0)
+def pow(x, c):
+    return Pow(c)(x)
 
 
 def neg(x):
     return Neg()(x)
-
-
-Variable.__radd__ = add
-Variable.__rmul__ = mul
-Variable.__neg__ = neg
-Variable.__sub__ = sub
-Variable.__rsub__ = rsub
-Variable.__truediv__ = div
-Variable.__rtruediv__ = rdiv
-Variable.__pow__ = pow
-Variable.__rpow__ = rpow
 
 
 def numerical_diff(f, x, eps=1e-4):
@@ -293,15 +301,15 @@ def numerical_diff(f, x, eps=1e-4):
     return (y1.data - y0.data) / (2 * eps)
 
 
-e = -2
-print(2 ** e)
-print(e ** 2)
-
-a = Variable(np.array(2))
-b = a ** 2
-c = b ** 2
-# d = c - 2 / b - a / 2 ** a
-d = 2 ** b
-print(d)
-d.backward()
-print(a.grad)
+def setup_variable():
+    Variable.__add__ = add
+    Variable.__radd__ = add
+    Variable.__mul__ = mul
+    Variable.__rmul__ = mul
+    Variable.__neg__ = neg
+    Variable.__sub__ = sub
+    Variable.__rsub__ = rsub
+    Variable.__truediv__ = div
+    Variable.__rtruediv__ = rdiv
+    Variable.__pow__ = pow
+    # Variable.__rpow__ = rpow
