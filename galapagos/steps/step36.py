@@ -1,5 +1,5 @@
 import numpy as np
-from galapagos.core.core import Variable
+from galapagos.core.variable import Variable
 
 x = Variable(np.array(2.0))
 y = x ** 2

@@ -6,7 +6,7 @@ if '__file__' in globals():
 
 import numpy as np
 
-from galapagos.core.core import Variable
+from galapagos.core.variable import Variable
 
 x = Variable(np.array(1.0))
 y = (x + 3) ** 2

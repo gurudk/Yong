@@ -1,6 +1,6 @@
 import numpy as np
 
-from galapagos.core.core import Variable
+from galapagos.core.variable import Variable
 
 
 def f(x):

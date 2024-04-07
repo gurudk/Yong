@@ -2,7 +2,7 @@ import math
 
 import numpy as np
 
-from galapagos.core.core import Function, Variable
+from galapagos.core.variable import Function, Variable
 from galapagos.core.utils import plot_dot_graph
 
 

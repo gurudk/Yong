@@ -115,11 +115,23 @@ class Variable:
                     for y in f.outputs:
                         y().grad = None
 
-        # f = self.creator
-        # if f is not None:
-        #     x = f.input
-        #     x.grad = f.backward(self.grad)
-        #     x.backward()
+    def reshape(self, *shape):
+        if len(shape) == 1 and isinstance(shape[0], (tuple, list)):
+            shape = shape[0]
+        import galapagos.core.functions as F
+        return F.reshape(self, shape)
+
+    def transpose(self):
+        import galapagos.core.functions as F
+        return F.transpose(self)
+
+    @property
+    def T(self):
+        return self.transpose()
+
+    def sum(self, axis=None, keepdims=False):
+        import galapagos.core.functions as F
+        return F.sum(self, axis, keepdims)
 
 
 class Function:
