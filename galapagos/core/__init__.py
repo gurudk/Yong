@@ -9,4 +9,8 @@ from galapagos.core.variable import using_config
 from galapagos.core.models import Model
 from galapagos.core.layers import Layer
 
+import galapagos.core.functions as F
+
+Variable.__getitem__ = F.get_item
+
 setup_variable()
