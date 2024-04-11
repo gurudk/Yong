@@ -1,4 +1,4 @@
-import numpy as np
+import numpy_try as np
 
 from galapagos.core.variable import Variable
 from galapagos.core.utils import plot_dot_graph

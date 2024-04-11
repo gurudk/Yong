@@ -317,3 +317,14 @@ def softmax_cross_entropy_simple(x, t):
     tlog_p = log_p[np.arange(N), t.data]
     y = -1 * sum(tlog_p) / N
     return y
+
+
+def softmax_cross_entropy(x, t):
+    x, t = as_variable(x), as_variable(t)
+    N = x.shape[0]
+    p = softmax_simple(x)
+    p = clip(p, 1e-15, 1.0)
+    log_p = log(p)
+    tlog_p = log_p[np.arange(N), t.data]
+    y = -1 * sum(tlog_p) / N
+    return y
