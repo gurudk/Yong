@@ -12,7 +12,7 @@ import galapagos.core.optimizers as O
 import galapagos.core.datasets as D
 
 # Hyperparameters
-max_epoch = 300
+max_epoch = 30
 batch_size = 30
 hidden_size = 10
 lr = 0.02

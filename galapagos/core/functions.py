@@ -2,8 +2,9 @@ import numpy as np
 
 from galapagos.core.variable import Function
 from galapagos.core.variable import as_variable
+from galapagos.core.variable import as_array
 
-from galapagos.core import utils
+from galapagos.core import utils, Variable
 
 
 class Sin(Function):
@@ -328,3 +329,18 @@ def softmax_cross_entropy(x, t):
     tlog_p = log_p[np.arange(N), t.data]
     y = -1 * sum(tlog_p) / N
     return y
+
+
+# =============================================================================
+# accuracy / dropout / batch_norm / embed_id
+# =============================================================================
+def accuracy(y, t):
+    """
+    [WAR] This function is not differentiable.
+    """
+    y, t = as_variable(y), as_variable(t)
+
+    pred = y.data.argmax(axis=1).reshape(t.shape)
+    result = (pred == t.data)
+    acc = result.mean()
+    return Variable(as_array(acc))
