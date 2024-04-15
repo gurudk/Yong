@@ -234,7 +234,7 @@ class Div(Function):
 
     def backward(self, gy):
         x0, x1 = self.inputs
-        return gy / x1, -gy * x0 / x1 ** 2
+        return gy / x1, gy * (-x0 / x1 ** 2)
 
 
 class Pow(Function):

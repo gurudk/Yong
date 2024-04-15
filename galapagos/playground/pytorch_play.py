@@ -1,4 +1,5 @@
 import torch
+
 import cupy
 
 x = torch.rand(5, 4)

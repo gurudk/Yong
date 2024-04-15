@@ -303,6 +303,7 @@ def log(x):
 
 
 def softmax_simple(x, axis=1):
+    x.data = x.data - x.data.max(axis, keepdims=True)
     x = as_variable(x)
     y = exp(x)
     sum_y = sum(y, axis=axis, keepdims=True)
