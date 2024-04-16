@@ -1,5 +1,4 @@
 import numpy as np
-from galapagos.core import Variable
 
 gpu_enable = True
 
@@ -12,6 +11,7 @@ except ImportError:
 
 
 def get_array_module(x):
+    from galapagos.core import Variable
     if isinstance(x, Variable):
         x = x.data
 
@@ -24,6 +24,7 @@ def get_array_module(x):
 
 
 def as_numpy(x):
+    from galapagos.core import Variable
     if isinstance(x, Variable):
         x = x.data
     if np.isscalar(x):
@@ -35,6 +36,7 @@ def as_numpy(x):
 
 
 def as_cupy(x):
+    from galapagos.core import Variable
     if isinstance(x, Variable):
         x = x.data
 

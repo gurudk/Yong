@@ -7,7 +7,7 @@ import galapagos.core.cuda
 try:
     import cupy
 
-    array_types = (np.ndarray, cupy.ndaray)
+    array_types = (np.ndarray, cupy.ndarray)
 except ImportError:
     array_types = (np.ndarray)
 
@@ -194,11 +194,13 @@ class Square(Function):
 
 class Exp(Function):
     def forward(self, x):
-        return np.exp(x)
+        xp = galapagos.core.cuda.get_array_module(x)
+        return xp.exp(x)
 
     def backward(self, gy):
         x = self.inputs[0].data
-        gx = np.exp(x) * gy
+        xp = galapagos.core.cuda.get_array_module(x)
+        gx = xp.exp(x) * gy
         return gx
 
 
@@ -273,9 +275,9 @@ class Config:
     enable_backprop = True
 
 
-def as_array(x):
+def as_array(x, array_module=np):
     if np.isscalar(x):
-        return np.array(x)
+        return array_module.array(x)
     return x
 
 
@@ -296,33 +298,33 @@ def exp(x):
 
 
 def add(x0, x1):
-    x1 = as_array(x1)
+    x1 = as_array(x1, galapagos.core.cuda.get_array_module(x0.data))
     f = Add()
     return f(x0, x1)
 
 
 def mul(x0, x1):
-    x1 = as_array(x1)
+    x1 = as_array(x1, galapagos.core.cuda.get_array_module(x0.data))
     return Mul()(x0, x1)
 
 
 def sub(x0, x1):
-    x1 = as_array(x1)
+    x1 = as_array(x1, galapagos.core.cuda.get_array_module(x0.data))
     return Sub()(x0, x1)
 
 
 def rsub(x0, x1):
-    x1 = as_array(x1)
+    x1 = as_array(x1, galapagos.core.cuda.get_array_module(x0.data))
     return Sub()(x1, x0)
 
 
 def div(x0, x1):
-    x1 = as_array(x1)
+    x1 = as_array(x1, galapagos.core.cuda.get_array_module(x0.data))
     return Div()(x0, x1)
 
 
 def rdiv(x0, x1):
-    x1 = as_array(x1)
+    x1 = as_array(x1, galapagos.core.cuda.get_array_module(x0.data))
     return Div()(x1, x0)
 
 
@@ -354,3 +356,8 @@ def setup_variable():
     Variable.__rtruediv__ = rdiv
     Variable.__pow__ = pow
     # Variable.__rpow__ = rpow
+    import galapagos.core.functions as F
+    Variable.matmul = F.matmul
+    Variable.dot = F.matmul
+    Variable.max = F.max
+    Variable.min = F.min

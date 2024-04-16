@@ -3,22 +3,23 @@ if '__file__' in globals():
 
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import time
-import dlf.dezero
-import dlf.dezero.functions as F
-from dlf.dezero import optimizers
-from dlf.dezero import DataLoader
-from dlf.dezero.models import MLP
+import galapagos
+import galapagos.core.functions as F
+import galapagos.core.datasets as D
+from galapagos.core import optimizers
+from galapagos.core.dataloaders import DataLoader
+from galapagos.core.models import MLP
 
 max_epoch = 5
 batch_size = 100
 
-train_set = dlf.dezero.datasets.MNIST(train=True)
+train_set = D.MNIST(train=True)
 train_loader = DataLoader(train_set, batch_size)
 model = MLP((1000, 10))
 optimizer = optimizers.SGD().setup(model)
 
 # GPU mode
-if dlf.dezero.cuda.gpu_enable:
+if galapagos.core.cuda.gpu_enable:
     train_loader.to_gpu()
     model.to_gpu()
 
