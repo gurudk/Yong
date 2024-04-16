@@ -1,7 +1,15 @@
 import contextlib
 import weakref
-
 import numpy as np
+
+import galapagos.core.cuda
+
+try:
+    import cupy
+
+    array_types = (np.ndarray, cupy.ndaray)
+except ImportError:
+    array_types = (np.ndarray)
 
 
 # =============================================================================
@@ -34,7 +42,7 @@ class Variable:
 
     def __init__(self, data, name=None):
         if data is not None:
-            if not isinstance(data, np.ndarray):
+            if not isinstance(data, array_types):
                 raise TypeError("{} is not surpported".format(type(data)))
         self.data = data
         self.name = name
@@ -77,7 +85,8 @@ class Variable:
 
     def backward(self, retain_grad=False, create_graph=False):
         if self.grad is None:
-            self.grad = Variable(np.ones_like(self.data))
+            xp = galapagos.core.cuda.get_array_module(self.data)
+            self.grad = Variable(xp.ones_like(self.data))
 
         funcs = []
         seen_set = set()
@@ -132,6 +141,14 @@ class Variable:
     def sum(self, axis=None, keepdims=False):
         import galapagos.core.functions as F
         return F.sum(self, axis, keepdims)
+
+    def to_cpu(self):
+        if self.data is not None:
+            self.data = galapagos.core.cuda.as_numpy(self.data)
+
+    def to_gpu(self):
+        if self.data is not None:
+            self.data = galapagos.core.cuda.as_cupy(self.data)
 
 
 class Parameter(Variable):

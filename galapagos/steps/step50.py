@@ -12,7 +12,7 @@ from galapagos.core.models import MLP
 max_epoch = 300
 batch_size = 30
 hidden_size = 10
-lr = 0.01
+lr = 1.0
 
 train_set = D.Spiral(train=True)
 test_set = D.Spiral(train=False)

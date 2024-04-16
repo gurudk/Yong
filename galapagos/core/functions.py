@@ -5,11 +5,13 @@ from galapagos.core.variable import as_variable
 from galapagos.core.variable import as_array
 
 from galapagos.core import utils, Variable
+from galapagos.core import cuda
 
 
 class Sin(Function):
     def forward(self, x):
-        y = np.sin(x)
+        xp = cuda.get_array_module(x)
+        y = xp.sin(x)
         return y
 
     def backward(self, gy):
@@ -25,7 +27,8 @@ def sin(x):
 class Cos(Function):
 
     def forward(self, x):
-        y = np.cos(x)
+        xp = cuda.get_array_module(x)
+        y = xp.cos(x)
         return y
 
     def backward(self, gy):
@@ -40,7 +43,8 @@ def cos(x):
 
 class Tanh(Function):
     def forward(self, x):
-        return np.tanh(x)
+        xp = cuda.get_array_module(x)
+        return xp.tanh(x)
 
     def backward(self, gy):
         y = self.outputs[0]()
@@ -54,7 +58,8 @@ def tanh(x):
 
 class Exp(Function):
     def forward(self, x):
-        y = np.exp(x)
+        xp = cuda.get_array_module(x)
+        y = xp.exp(x)
         return y
 
     def backward(self, gy):
@@ -87,17 +92,24 @@ def reshape(x, shape):
 
 
 class Transpose(Function):
+    def __init__(self, axes=None):
+        self.axes = axes
+
     def forward(self, x):
-        y = np.transpose(x)
+        y = x.transpose(self.axes)
         return y
 
     def backward(self, gy):
-        gx = transpose(gy)
-        return gx
+        if self.axes is None:
+            return transpose(gy)
+
+        axes_len = len(self.axes)
+        inv_axes = tuple(np.argsort([ax % axes_len for ax in self.axes]))
+        return transpose(gy, inv_axes)
 
 
-def transpose(x):
-    return Transpose()(x)
+def transpose(x, axes=None):
+    return Transpose(axes)(x)
 
 
 class Sum(Function):
@@ -258,9 +270,13 @@ class GetItemGrad(Function):
         self.in_shape = in_shape
 
     def forward(self, gy):
-        gx = np.zeros(self.in_shape)
-        np.add.at(gx, self.slices, gy)
+        xp = cuda.get_array_module(gy)
+        gx = xp.zeros(self.in_shape, dtype=gy.dtype)
 
+        if xp is np:
+            np.add.at(gx, self.slices, gy)
+        else:
+            xp.scatter_add(gx, self.slices, gy)
         return gx
 
     def backward(self, ggx):
@@ -273,7 +289,8 @@ class Clip(Function):
         self.x_max = x_max
 
     def forward(self, x):
-        y = np.clip(x, self.x_min, self.x_max)
+        xp = cuda.get_array_module(x)
+        y = xp.clip(x, self.x_min, self.x_max)
         return y
 
     def backward(self, gy):
@@ -289,7 +306,8 @@ def clip(x, x_min, x_max):
 
 class Log(Function):
     def forward(self, x):
-        y = np.log(x)
+        xp = cuda.get_array_module(x)
+        y = xp.log(x)
         return y
 
     def backward(self, gy):
@@ -321,15 +339,53 @@ def softmax_cross_entropy_simple(x, t):
     return y
 
 
+class Softmax(Function):
+    def __init__(self, axis=1):
+        self.axis = axis
+
+    def forward(self, x):
+        xp = cuda.get_array_module(x)
+        y = x - x.max(axis=self.axis, keepdims=True)
+        y = xp.exp(y)
+        y /= y.sum(axis=self.axis, keepdims=True)
+        return y
+
+    def backward(self, gy):
+        y = self.outputs[0]()
+        gx = y * gy
+        sumdx = gx.sum(axis=self.axis, keepdims=True)
+        gx -= y * sumdx
+        return gx
+
+
+def softmax(x, axis=1):
+    return Softmax(axis)(x)
+
+
+class SoftmaxCrossEntropy(Function):
+    def forward(self, x, t):
+        N = x.shape[0]
+        log_z = utils.logsumexp(x, axis=1)
+        log_p = x - log_z
+        log_p = log_p[np.arange(N), t.ravel()]
+        y = -log_p.sum() / np.float32(N)
+        return y
+
+    def backward(self, gy):
+        x, t = self.inputs
+        N, CLS_NUM = x.shape
+
+        gy *= 1 / N
+        y = softmax(x)
+        # convert to one-hot
+        xp = cuda.get_array_module(t.data)
+        t_onehot = xp.eye(CLS_NUM, dtype=t.dtype)[t.data]
+        y = (y - t_onehot) * gy
+        return y
+
+
 def softmax_cross_entropy(x, t):
-    x, t = as_variable(x), as_variable(t)
-    N = x.shape[0]
-    p = softmax_simple(x)
-    p = clip(p, 1e-15, 1.0)
-    log_p = log(p)
-    tlog_p = log_p[np.arange(N), t.data]
-    y = -1 * sum(tlog_p) / N
-    return y
+    return SoftmaxCrossEntropy()(x, t)
 
 
 # =============================================================================

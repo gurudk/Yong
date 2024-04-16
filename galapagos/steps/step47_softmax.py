@@ -13,3 +13,12 @@ y = model(x)
 loss = F.softmax_cross_entropy_simple(y, t)
 
 print(loss)
+
+print("-----------------------------------")
+
+x = np.array([[1, 2, 3]])
+y = F.softmax(x, axis=1)
+gx = y.backward()
+
+print(y)
+print(gx)

@@ -8,7 +8,7 @@ from dlf.dezero import optimizers
 from dlf.dezero import DataLoader
 from dlf.dezero.models import MLP
 
-max_epoch = 5
+max_epoch = 30
 batch_size = 100
 hidden_size = 1000
 
