@@ -29,6 +29,10 @@ def using_config(name, value):
         setattr(Config, name, old_value)
 
 
+def test_mode():
+    return using_config("train", False)
+
+
 def no_grad():
     return using_config('enable_backprop', False)
 
@@ -273,6 +277,7 @@ class Pow(Function):
 
 class Config:
     enable_backprop = True
+    train = True
 
 
 def as_array(x, array_module=np):
