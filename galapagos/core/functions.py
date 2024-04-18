@@ -427,6 +427,27 @@ def softmax_cross_entropy(x, t):
     return SoftmaxCrossEntropy()(x, t)
 
 
+class LeakyReLU(Function):
+    def __init__(self, slope):
+        self.slope = slope
+
+    def forward(self, x):
+        y = x.copy()
+        y[x <= 0] *= self.slope
+        return y
+
+    def backward(self, gy):
+        x, = self.inputs
+        mask = (x.data > 0).astype(gy.dtype)
+        mask[mask <= 0] = self.slope
+        gx = gy * mask
+        return gx
+
+
+def leaky_relu(x, slope=0.2):
+    return LeakyReLU(slope)(x)
+
+
 # =============================================================================
 # accuracy / dropout / batch_norm / embed_id
 # =============================================================================
