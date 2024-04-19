@@ -134,9 +134,13 @@ class Variable:
         import galapagos.core.functions as F
         return F.reshape(self, shape)
 
-    def transpose(self):
-        import galapagos.core.functions as F
-        return F.transpose(self)
+    def transpose(self, *axes):
+        if len(axes) == 0:
+            axes = None
+        elif len(axes) == 1:
+            if isinstance(axes[0], (tuple, list)) or axes[0] is None:
+                axes = axes[0]
+        return galapagos.core.functions.transpose(self, axes)
 
     @property
     def T(self):
