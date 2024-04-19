@@ -5,7 +5,8 @@ from torchvision import datasets
 from torchvision import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu")
 
 print(device)
 
@@ -194,7 +195,7 @@ def force_cudnn_initialization():
     torch.nn.functional.conv2d(torch.zeros(s, s, s, s, device=dev), torch.zeros(s, s, s, s, device=dev))
 
 
-force_cudnn_initialization()
+# force_cudnn_initialization()
 
 for epoch in range(num_epochs):
     for i, (images, labels) in enumerate(train_loader):
