@@ -176,7 +176,7 @@ class VGG16(nn.Module):
 
 num_classes = 100
 num_epochs = 20
-batch_size = 8
+batch_size = 16
 learning_rate = 0.005
 
 model = VGG16(num_classes).to(device)
