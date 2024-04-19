@@ -2,6 +2,7 @@ from galapagos.core.variable import Function
 from galapagos.core.variable import Variable
 from galapagos.core.variable import as_array
 from galapagos.core.variable import as_variable
+from galapagos.core.variable import test_mode
 from galapagos.core.variable import no_grad
 from galapagos.core.variable import setup_variable
 from galapagos.core.variable import using_config

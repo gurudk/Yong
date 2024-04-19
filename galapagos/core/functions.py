@@ -247,6 +247,23 @@ def sigmoid_simple(x):
     return y
 
 
+class ReLU(Function):
+    def forward(self, x):
+        xp = cuda.get_array_module(x)
+        y = xp.maximum(x, 0.0)
+        return y
+
+    def backward(self, gy):
+        x, = self.inputs
+        mask = x.data > 0
+        gx = gy * mask
+        return gx
+
+
+def relu(x):
+    return ReLU()(x)
+
+
 class GetItem(Function):
     def __init__(self, slices):
         self.slices = slices
@@ -474,3 +491,24 @@ def dropout(x, dropout_ratio=0.5):
         return y
     else:
         return x
+
+
+# =============================================================================
+# conv2d / col2im / im2col / basic_math
+# =============================================================================
+from galapagos.core.functions_conv import conv2d
+from galapagos.core.functions_conv import deconv2d
+from galapagos.core.functions_conv import conv2d_simple
+from galapagos.core.functions_conv import im2col
+from galapagos.core.functions_conv import col2im
+from galapagos.core.functions_conv import pooling_simple
+from galapagos.core.functions_conv import pooling
+from galapagos.core.functions_conv import average_pooling
+
+# from galapagos.core.core import add
+# from galapagos.core.core import sub
+# from galapagos.core.core import rsub
+# from galapagos.core.core import mul
+# from galapagos.core.core import div
+# from galapagos.core.core import neg
+# from galapagos.core.core import pow
