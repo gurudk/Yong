@@ -24,7 +24,7 @@ def data_loader(data_dir,
 
     # define transforms
     transform = transforms.Compose([
-        transforms.Resize((227, 227)),
+        transforms.Resize((224, 224)),
         transforms.ToTensor(),
         normalize,
     ])
@@ -47,7 +47,7 @@ def data_loader(data_dir,
         download=True, transform=transform,
     )
 
-    valid_dataset = datasets.CIFAR10(
+    valid_dataset = datasets.CIFAR100(
         root=data_dir, train=True,
         download=True, transform=transform,
     )
@@ -175,8 +175,8 @@ class VGG16(nn.Module):
 
 
 num_classes = 100
-num_epochs = 20
-batch_size = 16
+num_epochs = 50
+batch_size = 32
 learning_rate = 0.005
 
 model = VGG16(num_classes).to(device)
