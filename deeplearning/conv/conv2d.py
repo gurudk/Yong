@@ -14,5 +14,10 @@ m = nn.BatchNorm2d(3)
 
 input = torch.randn(2, 3, 3, 4)
 output = m(input)
-print(input)
-print(output)
+print(input.shape)
+print(output.shape)
+
+m = nn.Conv2d(64, 128, (1, 1))
+input = torch.randn(20, 64, 28, 28)
+output = m(input)
+print(output.shape)
