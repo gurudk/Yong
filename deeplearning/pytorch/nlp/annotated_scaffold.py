@@ -810,11 +810,11 @@ def build_vocabulary(spacy_de, spacy_en):
         return tokenize(text, spacy_en)
 
     print("Building German Vocabulary ...")
-    train = datasets.Multi30k(root='data', split='train', language_pair=('de', 'en'))
-    val = datasets.Multi30k(root='data', split='valid', language_pair=('de', 'en'))
-    test = datasets.Multi30k(root='data', split='test', language_pair=('de', 'en'))
+    # train = datasets.Multi30k(root='data', split='train', language_pair=('de', 'en'))
+    # val = datasets.Multi30k(root='data', split='valid', language_pair=('de', 'en'))
+    # test = datasets.Multi30k(root='data', split='test', language_pair=('de', 'en'))
 
-    # train, val, test = datasets.Multi30k(language_pair=("de", "en"))
+    train, val, test = datasets.Multi30k(language_pair=("de", "en"))
     vocab_src = build_vocab_from_iterator(
         yield_tokens(train + val + test, tokenize_de, index=0),
         min_freq=2,
