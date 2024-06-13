@@ -3,9 +3,10 @@ import cv2
 import os
 
 football_v = "/home/wolf/Downloads/xueshi.mp4"
+xueshi_v = "xueshi/xueshi_video_1.mp4"
 sample_mp4 = "talking_dog.mp4"
 # Read the video from specified path
-cam = cv2.VideoCapture(football_v)
+cam = cv2.VideoCapture(xueshi_v)
 frame_skip = 100
 
 try:
@@ -23,7 +24,7 @@ currentframe = 0
 
 while (True):
 
-    if currentframe > 100:
+    if currentframe > 300:
         break
 
     # reading from frame
