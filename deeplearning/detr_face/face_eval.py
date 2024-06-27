@@ -53,6 +53,7 @@ def plot_results(pil_img, prob, boxes):
                 bbox=dict(facecolor='yellow', alpha=0.5))
     plt.axis('off')
     plt.show()
+    plt.close()
 
 
 def postprocess_img(img_path):
@@ -78,18 +79,23 @@ def postprocess_img(img_path):
     plot_results(im, probas[keep], bboxes_scaled)
 
 
-TEST_IMG_PATH = 'datasets/WIDER_test/images'
+TEST_IMG_PATH1 = 'datasets/WIDER_test/images'
+TEST_IMG_PATH = 'datasets/mytest'
 
 img_format = {'jpg', 'png', 'jpeg'}
 paths = list()
 
 for obj in os.scandir(TEST_IMG_PATH):
-    if obj.is_dir():
-        paths_temp = [obj.path for obj in os.scandir(obj.path) if obj.name.split(".")[-1] in img_format]
-        paths.extend(paths_temp)
+    # paths_temp = [obj.path for obj in os.scandir(obj.path)]
+    paths.append(obj.path)
+
+# for obj in os.scandir(TEST_IMG_PATH1):
+#     if obj.is_dir():
+#         paths_temp = [obj.path for obj in os.scandir(obj.path) if obj.name.split(".")[-1] in img_format]
+#         paths.extend(paths_temp)
 
 print('Total number of test images: ', len(paths))
 random.shuffle(paths)
 
-for i in paths[1:20]:
+for i in paths[1:15]:
     postprocess_img(i)
