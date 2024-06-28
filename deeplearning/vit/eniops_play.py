@@ -13,3 +13,13 @@ print(E.rearrange(images, 'b h w c -> b w h c').shape)
 print(E.rearrange(images, 'b (h1 h) (w1 w) c -> (b h1 w1) h w c', h1=2, w1=2).shape)
 
 print(E.rearrange(images, 'b (h h1) (w w1) c -> b h w (c h1 w1)', h1=2, w1=2).shape)
+
+import time
+import datetime
+
+start = time.time()
+print(start)
+print(datetime.datetime.fromtimestamp(start / 1e3))
+
+print(datetime.datetime.now())
+print(datetime.datetime.now().timestamp())

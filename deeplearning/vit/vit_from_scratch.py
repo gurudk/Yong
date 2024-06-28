@@ -166,6 +166,12 @@ class ViT(nn.Module):
         # Classification head
         self.head = nn.Sequential(nn.LayerNorm(emb_dim), nn.Linear(emb_dim, out_dim))
 
+    # def __getattr__(self, name):
+    #     try:
+    #         return super().__getattr__(name)
+    #     except AttributeError:
+    #         return getattr(self.module, name)
+
     def forward(self, img):
         # Get patch embedding vectors
         x = self.patch_embedding(img)
@@ -205,7 +211,11 @@ model = ViT().to(device)
 optimizer = optim.AdamW(model.parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss()
 
-for epoch in range(1000):
+import datetime
+
+print("Train start time:", datetime.datetime.now())
+for epoch in range(300):
+    start = datetime.datetime.now().timestamp()
     epoch_losses = []
     model.train()
     for step, (inputs, labels) in enumerate(train_dataloader):
@@ -228,9 +238,14 @@ for epoch in range(1000):
             epoch_losses.append(loss.item())
         print(f">>> Epoch {epoch} test loss: ", np.mean(epoch_losses))
 
+    end = datetime.datetime.now().timestamp()
+    print(f"Epoch {epoch} , time:{end - start}s")
+
+print("Train end time:", datetime.datetime.now())
 inputs, labels = next(iter(test_dataloader))
 inputs, labels = inputs.to(device), labels.to(device)
 outputs = model(inputs)
+torch.save(model, "epoch_100.pth")
 
 print("Predicted classes", outputs.argmax(-1))
 print("Actual classes", labels)
