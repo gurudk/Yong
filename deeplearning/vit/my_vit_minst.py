@@ -197,10 +197,10 @@ def main():
         f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "",
     )
     model = MyViT(
-        (1, 28, 28), n_patches=7, n_blocks=2, hidden_d=8, n_heads=2, out_d=10
+        (1, 28, 28), n_patches=7, n_blocks=2, hidden_d=16, n_heads=2, out_d=10
     ).to(device)
-    N_EPOCHS = 5
-    LR = 0.005
+    N_EPOCHS = 50
+    LR = 0.001
 
     # Training loop
     optimizer = Adam(model.parameters(), lr=LR)
