@@ -1,0 +1,3051 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI
+        xmlns="http://www.tei-c.org/ns/1.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve"
+        xsi:schemaLocation="http://www.tei-c.org/ns/1.0 https://raw.githubusercontent.com/kermitt2/grobid/master/grobid-home/schemas/xsd/Grobid.xsd">
+    <teiHeader xml:lang="en">
+        <fileDesc>
+            <titleStmt>
+                <title level="a"
+                       type="main">DEFORMABLE DETR: DEFORMABLE TRANSFORMERS FOR END-TO-END OBJECT DETECTION</title>
+                <funder ref="#_tpCMKFZ #_D8Tdys2">
+                    <orgName type="full">National Natural Science Foundation of China</orgName>
+                    <orgName type="abbreviated">NSFC</orgName>
+                    <idno type="DOI" subtype="crossref">10.13039/501100001809</idno>
+                </funder>
+                <funder ref="#_cxuPVtT">
+                    <orgName type="full">National Key R&amp;D Program of China</orgName>
+                </funder>
+            </titleStmt>
+            <publicationStmt>
+                <publisher/>
+                <availability status="unknown">
+                    <licence/>
+                </availability>
+                <date type="published" when="2021-03-18">18 Mar 2021</date>
+            </publicationStmt>
+            <sourceDesc>
+                <biblStruct>
+                    <analytic>
+                        <author>
+                            <persName>
+                                <forename type="first">Xizhou</forename>
+                                <surname>Zhu</surname>
+                            </persName>
+                        </author>
+                        <author>
+                            <persName>
+                                <forename type="first">Weijie</forename>
+                                <surname>Su</surname>
+                            </persName>
+                        </author>
+                        <author>
+                            <persName>
+                                <forename type="first">Lewei</forename>
+                                <surname>Lu</surname>
+                            </persName>
+                        </author>
+                        <author>
+                            <persName>
+                                <forename type="first">Bin</forename>
+                                <surname>Li</surname>
+                            </persName>
+                            <email>binli@ustc.edu.cn</email>
+                        </author>
+                        <author>
+                            <persName>
+                                <forename type="first">Xiaogang</forename>
+                                <surname>Wang</surname>
+                            </persName>
+                            <email>xgwang@ee.cuhk.edu.hk</email>
+                        </author>
+                        <author>
+                            <persName>
+                                <forename type="first">Jifeng</forename>
+                                <surname>Dai</surname>
+                            </persName>
+                            <email>daijifeng@sensetime.com</email>
+                        </author>
+                        <author>
+                            <persName>
+                                <forename type="first">Sensetime</forename>
+                                <surname>Research</surname>
+                            </persName>
+                        </author>
+                        <title level="a" type="main">DEFORMABLE DETR: DEFORMABLE TRANSFORMERS FOR END-TO-END OBJECT DETECTION</title>
+                    </analytic>
+                    <monogr>
+                        <imprint>
+                            <date type="published" when="2021-03-18">18 Mar 2021</date>
+                        </imprint>
+                    </monogr>
+                    <idno type="MD5">64F1D7D04A0CFC8963195A95A67C1928</idno>
+                    <idno type="arXiv">arXiv:2010.04159v4[cs.CV]</idno>
+                </biblStruct>
+            </sourceDesc>
+        </fileDesc>
+        <encodingDesc>
+            <appInfo>
+                <application version="0.8.1-SNAPSHOT" ident="GROBID" when="2024-07-08T16:13+0000">
+                    <desc>GROBID - A machine learning software for extracting information from scholarly documents</desc>
+                    <ref target="https://github.com/kermitt2/grobid"/>
+                </application>
+            </appInfo>
+        </encodingDesc>
+        <profileDesc>
+            <abstract>
+                <div
+                        xmlns="http://www.tei-c.org/ns/1.0">
+                    <p>
+                        <s>DETR has been recently proposed to eliminate the need for many hand-designed components in object detection while demonstrating good performance.</s>
+                        <s>However, it suffers from slow convergence and limited feature spatial resolution, due to the limitation of Transformer attention modules in processing image feature maps.</s>
+                        <s>To mitigate these issues, we proposed Deformable DETR, whose attention modules only attend to a small set of key sampling points around a reference.</s>
+                        <s>Deformable DETR can achieve better performance than DETR (especially on small objects) with 10× less training epochs.</s>
+                        <s>Extensive experiments on the COCO benchmark demonstrate the effectiveness of our approach.</s>
+                        <s>Code is released at https:// github.com/fundamentalvision/Deformable-DETR.</s>
+                    </p>
+                </div>
+            </abstract>
+        </profileDesc>
+    </teiHeader>
+    <text xml:lang="en">
+        <body>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="1">INTRODUCTION</head>
+                <p>
+                    <s>Modern object detectors employ many hand-crafted components
+                        <ref type="bibr" target="#b19">(Liu et al., 2020)</ref>, e.g., anchor generation, rule-based
+                        training target assignment, non-maximum suppression (NMS) post-processing.
+                    </s>
+                    <s>They are not fully end-to-end.</s>
+                    <s>Recently,
+                        <ref type="bibr" target="#b2">Carion et al. (2020)</ref>
+                        proposed DETR to eliminate the need for such hand-crafted components, and built the first fully
+                        end-to-end object detector, achieving very competitive performance.
+                    </s>
+                    <s>DETR utilizes a simple architecture, by combining convolutional neural networks (CNNs) and Transformer
+                        <ref type="bibr" target="#b33">(Vaswani et al., 2017)</ref>
+                        encoder-decoders.
+                    </s>
+                    <s>They exploit the versatile and powerful relation modeling capability of Transformers to replace the hand-crafted rules, under properly designed training signals.</s>
+                </p>
+                <p>
+                    <s>Despite its interesting design and good performance, DETR has its own issues: (1) It requires much longer training epochs to converge than the existing object detectors.</s>
+                    <s>For example, on the COCO
+                        <ref type="bibr" target="#b16">(Lin et al., 2014)</ref>
+                        benchmark, DETR needs 500 epochs to converge, which is around 10 to 20 times slower than Faster
+                        R-CNN
+                        <ref type="bibr" target="#b25">(Ren et al., 2015)</ref>.
+                    </s>
+                    <s>(
+                        <ref type="formula" target="#formula_5">2</ref>) DETR delivers relatively low performance at
+                        detecting small objects.
+                    </s>
+                    <s>Modern object detectors usually exploit multi-scale features, where small objects are detected from high-resolution feature maps.</s>
+                    <s>Meanwhile, high-resolution feature maps lead to unacceptable complexities for DETR.</s>
+                    <s>The above-mentioned issues can be mainly attributed to the deficit of Transformer components in processing image feature maps.</s>
+                    <s>At initialization, the attention modules cast nearly uniform attention weights to all the pixels in the feature maps.</s>
+                    <s>Long training epoches is necessary for the attention weights to be learned to focus on sparse meaningful locations.</s>
+                    <s>On the other hand, the attention weights computation in Transformer encoder is of quadratic computation w.r.t.</s>
+                    <s>pixel numbers.</s>
+                    <s>Thus, it is of very high computational and memory complexities to process high-resolution feature maps.</s>
+                </p>
+                <p>
+                    <s>In the image domain, deformable convolution
+                        <ref type="bibr" target="#b5">(Dai et al., 2017)</ref>
+                        is of a powerful and efficient mechanism to attend to sparse spatial locations.
+                    </s>
+                    <s>It naturally avoids the above-mentioned issues.</s>
+                    <s>While it lacks the element relation modeling mechanism, which is the key for the success of DETR.</s>
+                    <s>In this paper, we propose Deformable DETR, which mitigates the slow convergence and high complexity issues of DETR.</s>
+                    <s>It combines the best of the sparse spatial sampling of deformable convolution, and the relation modeling capability of Transformers.</s>
+                    <s>We propose the deformable attention module, which attends to a small set of sampling locations as a pre-filter for prominent key elements out of all the feature map pixels.</s>
+                    <s>The module can be naturally extended to aggregating multi-scale features, without the help of FPN
+                        <ref type="bibr">(Lin et al., 2017a)</ref>.
+                    </s>
+                    <s>In Deformable DETR , we utilize (multi-scale) deformable attention modules to replace the Transformer attention modules processing feature maps, as shown in Fig.
+                        <ref type="figure" target="#fig_0">1</ref>.
+                    </s>
+                </p>
+                <p>
+                    <s>Deformable DETR opens up possibilities for us to exploit variants of end-to-end object detectors, thanks to its fast convergence, and computational and memory efficiency.</s>
+                    <s>We explore a simple and effective iterative bounding box refinement mechanism to improve the detection performance.</s>
+                    <s>We also try a two-stage Deformable DETR, where the region proposals are also generated by a vaiant of Deformable DETR, which are further fed into the decoder for iterative bounding box refinement.</s>
+                </p>
+                <p>
+                    <s>Extensive experiments on the COCO
+                        <ref type="bibr" target="#b16">(Lin et al., 2014)</ref>
+                        benchmark demonstrate the effectiveness of our approach.
+                    </s>
+                    <s>Compared with DETR, Deformable DETR can achieve better performance (especially on small objects) with 10× less training epochs.</s>
+                    <s>The proposed variant of two-stage Deformable DETR can further improve the performance.</s>
+                    <s>Code is released at https://github.</s>
+                    <s>com/fundamentalvision/Deformable-DETR.</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="2">RELATED WORK</head>
+                <p>
+                    <s>Efficient Attention Mechanism.</s>
+                    <s>Transformers
+                        <ref type="bibr" target="#b33">(Vaswani et al., 2017)</ref>
+                        involve both self-attention and cross-attention mechanisms.
+                    </s>
+                    <s>One of the most well-known concern of Transformers is the high time and memory complexity at vast key element numbers, which hinders model scalability in many cases.</s>
+                    <s>Recently, many efforts have been made to address this problem
+                        <ref type="bibr">(Tay et al., 2020b)</ref>, which can be roughly divided into three categories
+                        in practice.
+                    </s>
+                </p>
+                <p>
+                    <s>The first category is to use pre-defined sparse attention patterns on keys.</s>
+                    <s>The most straightforward paradigm is restricting the attention pattern to be fixed local windows.</s>
+                    <s>Most works
+                        <ref type="bibr">(Liu et al., 2018a;</ref>
+                        <ref type="bibr" target="#b22">Parmar et al., 2018;</ref>
+                        <ref type="bibr" target="#b3">Child et al., 2019;</ref>
+                        <ref type="bibr" target="#b11">Huang et al., 2019;</ref>
+                        <ref type="bibr" target="#b9">Ho et al., 2019;</ref>
+                        <ref type="bibr">Wang et al., 2020a;</ref>
+                        <ref type="bibr" target="#b10">Hu et al., 2019;</ref>
+                        <ref type="bibr" target="#b24">Ramachandran et al., 2019;</ref>
+                        <ref type="bibr" target="#b23">Qiu et al., 2019;</ref>
+                        <ref type="bibr" target="#b1">Beltagy et al., 2020;</ref>
+                        <ref type="bibr" target="#b0">Ainslie et al., 2020;</ref>
+                        <ref type="bibr" target="#b39">Zaheer et al., 2020)</ref>
+                        follow this paradigm.
+                    </s>
+                    <s>Although restricting the attention pattern to a local neighborhood can decrease the complexity, it loses global information.</s>
+                    <s>To compensate,
+                        <ref type="bibr" target="#b3">Child et al. (2019)</ref>;
+                        <ref type="bibr" target="#b11">Huang et al. (2019)</ref>;
+                        <ref type="bibr" target="#b9">Ho et al. (2019)</ref>;
+                        <ref type="bibr">Wang et al. (2020a)</ref>
+                        attend key elements at fixed intervals to significantly increase the receptive field on keys.
+                    </s>
+                    <s>
+                        <ref type="bibr" target="#b1">Beltagy et al. (2020)</ref>;
+                        <ref type="bibr" target="#b0">Ainslie et al. (2020)</ref>;
+                        <ref type="bibr" target="#b39">Zaheer et al. (2020)</ref>
+                        allow a small number of special tokens having access to all key elements.
+                    </s>
+                    <s>
+                        <ref type="bibr" target="#b39">Zaheer et al. (2020)</ref>;
+                        <ref type="bibr" target="#b23">Qiu et al. (2019)</ref>
+                        also add some pre-fixed sparse attention patterns to attend distant key elements directly.
+                    </s>
+                </p>
+                <p>
+                    <s>The second category is to learn data-dependent sparse attention.</s>
+                    <s>
+                        <ref type="bibr" target="#b14">Kitaev et al. (2020)</ref>
+                        proposes a locality sensitive hashing (LSH) based attention, which hashes both the query and key
+                        elements to different bins.
+                    </s>
+                    <s>A similar idea is proposed by
+                        <ref type="bibr" target="#b26">Roy et al. (2020)</ref>, where k-means finds out the most related
+                        keys.
+                    </s>
+                    <s>
+                        <ref type="bibr">Tay et al. (2020a)</ref>
+                        learns block permutation for block-wise sparse attention.
+                    </s>
+                </p>
+                <p>
+                    <s>The third category is to explore the low-rank property in self-attention.</s>
+                    <s>
+                        <ref type="bibr">Wang et al. (2020b)</ref>
+                        reduces the number of key elements through a linear projection on the size dimension instead of
+                        the channel dimension.
+                    </s>
+                    <s>
+                        <ref type="bibr" target="#b12">Katharopoulos et al. (2020)</ref>;
+                        <ref type="bibr" target="#b4">Choromanski et al. (2020)</ref>
+                        rewrite the calculation of selfattention through kernelization approximation.
+                    </s>
+                </p>
+                <p>
+                    <s>In the image domain, the designs of efficient attention mechanism (e.g.,
+                        <ref type="bibr" target="#b22">Parmar et al. (2018)</ref>
+                        <ref type="formula">2019</ref>) admit such approaches are much slower in implementation than
+                        traditional convolution with the same FLOPs (at least 3× slower), due to the intrinsic
+                        limitation in memory access patterns.
+                    </s>
+                </p>
+                <p>
+                    <s>On the other hand, as discussed in
+                        <ref type="bibr">Zhu et al. (2019a)</ref>, there are variants of convolution, such as deformable
+                        convolution
+                        <ref type="bibr" target="#b5">(Dai et al., 2017;</ref>
+                        <ref type="bibr">Zhu et al., 2019b)</ref>
+                        and dynamic convolution
+                        <ref type="bibr" target="#b36">(Wu et al., 2019)</ref>, that also can be viewed as
+                        self-attention mechanisms.
+                    </s>
+                    <s>Especially, deformable convolution operates much more effectively and efficiently on image recognition than Transformer self-attention.</s>
+                    <s>Meanwhile, it lacks the element relation modeling mechanism.</s>
+                </p>
+                <p>
+                    <s>Our proposed deformable attention module is inspired by deformable convolution, and belongs to the second category.</s>
+                    <s>It only focuses on a small fixed set of sampling points predicted from the feature of query elements.</s>
+                    <s>Different from
+                        <ref type="bibr" target="#b24">Ramachandran et al. (2019)</ref>;
+                        <ref type="bibr" target="#b10">Hu et al. (2019)</ref>, deformable attention is just slightly
+                        slower than the traditional convolution under the same FLOPs.
+                    </s>
+                </p>
+                <p>
+                    <s>Multi-scale Feature Representation for Object Detection.</s>
+                    <s>One of the main difficulties in object detection is to effectively represent objects at vastly different scales.</s>
+                    <s>Modern object detectors usually exploit multi-scale features to accommodate this.</s>
+                    <s>As one of the pioneering works, FPN
+                        <ref type="bibr">(Lin et al., 2017a)</ref>
+                        proposes a top-down path to combine multi-scale features.
+                    </s>
+                    <s>PANet
+                        <ref type="bibr">(Liu et al., 2018b)</ref>
+                        further adds an bottom-up path on the top of FPN.
+                    </s>
+                    <s>
+                        <ref type="bibr" target="#b15">Kong et al. (2018)</ref>
+                        combines features from all scales by a global attention operation.
+                    </s>
+                    <s>
+                        <ref type="bibr" target="#b41">Zhao et al. (2019)</ref>
+                        proposes a U-shape module to fuse multi-scale features.
+                    </s>
+                    <s>Recently, NAS-FPN
+                        <ref type="bibr" target="#b7">(Ghiasi et al., 2019)</ref>
+                        and Auto-FPN
+                        <ref type="bibr" target="#b38">(Xu et al., 2019)</ref>
+                        are proposed to automatically design cross-scale connections via neural architecture search.
+                    </s>
+                    <s>
+                        <ref type="bibr" target="#b28">Tan et al. (2020)</ref>
+                        proposes the BiFPN, which is a repeated simplified version of PANet.
+                    </s>
+                    <s>Our proposed multi-scale deformable attention module can naturally aggregate multi-scale feature maps via attention mechanism, without the help of these feature pyramid networks.</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="3">REVISITING TRANSFORMERS AND DETR</head>
+                <p>
+                    <s>Multi-Head Attention in Transformers.</s>
+                    <s>Transformers
+                        <ref type="bibr" target="#b33">(Vaswani et al., 2017)</ref>
+                        are of a network architecture based on attention mechanisms for machine translation.
+                    </s>
+                    <s>Given a query element (e.g., a target word in the output sentence) and a set of key elements (e.g., source words in the input sentence), the multi-head attention module adaptively aggregates the key contents according to the attention weights that measure the compatibility of query-key pairs.</s>
+                    <s>To allow the model focusing on contents from different representation subspaces and different positions, the outputs of different attention heads are linearly aggregated with learnable weights.</s>
+                    <s>Let q ∈ Ω q indexes a query element with representation feature z q ∈ R C , and k ∈ Ω k indexes a key element with representation feature x k ∈ R C , where C is the feature dimension, Ω q and Ω k specify the set of query and key elements, respectively.</s>
+                    <s>Then the multi-head attention feature is calculated by</s>
+                </p>
+                <formula xml:id="formula_0">MultiHeadAttn(z q , x) = M m=1 W m k∈Ω k A mqk • W m x k ,
+                    <label>(1)</label>
+                </formula>
+                <p>
+                    <s>where m indexes the attention head, W m ∈ R Cv×C and W m ∈ R C×Cv are of learnable weights</s>
+                </p>
+                <formula xml:id="formula_1">(C v = C/M by default). The attention weights A mqk ∝ exp{ z T q U T m Vmx k √ Cv</formula>
+                <p>
+                    <s>} are normalized as</s>
+                </p>
+                <formula xml:id="formula_2">k∈Ω k A mqk = 1, in which U m , V m ∈ R</formula>
+                <p>
+                    <s>Cv×C are also learnable weights.</s>
+                    <s>To disambiguate different spatial positions, the representation features z q and x k are usually of the concatenation/summation of element contents and positional embeddings.</s>
+                </p>
+                <p>
+                    <s>There are two known issues with Transformers.</s>
+                    <s>One is Transformers need long training schedules before convergence.</s>
+                    <s>Suppose the number of query and key elements are of N q and N k , respectively.</s>
+                    <s>Typically, with proper parameter initialization, U m z q and V m x k follow distribution with mean of 0 and variance of 1, which makes attention weights A mqk ≈ 1 N k , when N k is large.</s>
+                    <s>It will lead to ambiguous gradients for input features.</s>
+                    <s>Thus, long training schedules are required so that the attention weights can focus on specific keys.</s>
+                    <s>In the image domain, where the key elements are usually of image pixels, N k can be very large and the convergence is tedious.</s>
+                </p>
+                <p>
+                    <s>On the other hand, the computational and memory complexity for multi-head attention can be very high with numerous query and key elements.</s>
+                    <s>The computational complexity of Eq. 1 is of</s>
+                </p>
+                <formula xml:id="formula_3">O(N q C 2 + N k C 2 + N q N k C).</formula>
+                <p>
+                    <s>In the image domain, where the query and key elements are both of pixels, N q = N k C, the complexity is dominated by the third term, as O(N q N k C).</s>
+                    <s>Thus, the multi-head attention module suffers from a quadratic complexity growth with the feature map size.</s>
+                </p>
+                <p>
+                    <s>DETR.</s>
+                    <s>DETR
+                        <ref type="bibr" target="#b2">(Carion et al., 2020)</ref>
+                        is built upon the Transformer encoder-decoder architecture, combined with a set-based Hungarian
+                        loss that forces unique predictions for each ground-truth bounding box via bipartite matching.
+                    </s>
+                    <s>We briefly review the network architecture as follows.</s>
+                </p>
+                <p>
+                    <s>Given the input feature maps x ∈ R C×H×W extracted by a CNN backbone (e.g., ResNet
+                        <ref type="bibr" target="#b8">(He et al., 2016)</ref>), DETR exploits a standard Transformer
+                        encoder-decoder architecture to transform the input feature maps to be features of a set of
+                        object queries.
+                    </s>
+                    <s>A 3-layer feed-forward neural network (FFN) and a linear projection are added on top of the object query features (produced by the decoder) as the detection head.</s>
+                    <s>The FFN acts as the regression branch to predict the bounding box coordinates b ∈ [0, 1] 4 , where b = {b x , b y , b w , b h } encodes the normalized box center coordinates, box height and width (relative to the image size).</s>
+                    <s>The linear projection acts as the classification branch to produce the classification results.</s>
+                </p>
+                <p>
+                    <s>For the Transformer encoder in DETR, both query and key elements are of pixels in the feature maps.</s>
+                    <s>The inputs are of ResNet feature maps (with encoded positional embeddings).</s>
+                    <s>Let H and W denote the feature map height and width, respectively.</s>
+                    <s>The computational complexity of self-attention is of O(H 2 W 2 C), which grows quadratically with the spatial size.</s>
+                </p>
+                <p>
+                    <s>For the Transformer decoder in DETR, the input includes both feature maps from the encoder, and N object queries represented by learnable positional embeddings (e.g., N = 100).</s>
+                    <s>There are two types of attention modules in the decoder, namely, cross-attention and self-attention modules.</s>
+                    <s>In the cross-attention modules, object queries extract features from the feature maps.</s>
+                    <s>The query elements are of the object queries, and key elements are of the output feature maps from the encoder.</s>
+                    <s>In it,</s>
+                </p>
+                <formula xml:id="formula_4">N q = N , N k = H × W and the complexity of the cross-attention is of O(HW C 2 + N HW C).</formula>
+                <p>
+                    <s>The complexity grows linearly with the spatial size of feature maps.</s>
+                    <s>In the self-attention modules, object queries interact with each other, so as to capture their relations.</s>
+                    <s>The query and key elements are both of the object queries.</s>
+                    <s>In it, N q = N k = N , and the complexity of the self-attention module is of O(2N C 2 + N 2 C).</s>
+                    <s>The complexity is acceptable with moderate number of object queries.</s>
+                </p>
+                <p>
+                    <s>DETR is an attractive design for object detection, which removes the need for many hand-designed components.</s>
+                    <s>However, it also has its own issues.</s>
+                    <s>These issues can be mainly attributed to the deficits of Transformer attention in handling image feature maps as key elements: (1) DETR has relatively low performance in detecting small objects.</s>
+                    <s>Modern object detectors use high-resolution feature maps to better detect small objects.</s>
+                    <s>However, high-resolution feature maps would lead to an unacceptable complexity for the self-attention module in the Transformer encoder of DETR, which has a quadratic complexity with the spatial size of input feature maps.</s>
+                    <s>(2) Compared with modern object detectors, DETR requires many more training epochs to converge.</s>
+                    <s>This is mainly because the attention modules processing image features are difficult to train.</s>
+                    <s>For example, at initialization, the cross-attention modules are almost of average attention on the whole feature maps.</s>
+                    <s>While, at the end of the training, the attention maps are learned to be very sparse, focusing only on the object</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="4">METHOD</head>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="4.1">DEFORMABLE TRANSFORMERS FOR END-TO-END OBJECT DETECTION</head>
+                <p>
+                    <s>Deformable Attention Module.</s>
+                    <s>The core issue of applying Transformer attention on image feature maps is that it would look over all possible spatial locations.</s>
+                    <s>To address this, we present a deformable attention module.</s>
+                    <s>Inspired by deformable convolution
+                        <ref type="bibr" target="#b5">(Dai et al., 2017;</ref>
+                        <ref type="bibr">Zhu et al., 2019b)</ref>, the deformable attention module only attends to a
+                        small set of key sampling points around a reference point, regardless of the spatial size of the
+                        feature maps, as shown in Fig.
+                        <ref type="figure" target="#fig_2">2</ref>. By assigning only a small fixed number of keys for
+                        each query, the issues of convergence and feature spatial resolution can be mitigated.
+                    </s>
+                </p>
+                <p>
+                    <s>Given an input feature map x ∈ R C×H×W , let q index a query element with content feature z q and a 2-d reference point p q , the deformable attention feature is calculated by</s>
+                </p>
+                <formula xml:id="formula_5">DeformAttn(z q , p q , x) = M m=1 W m K k=1 A mqk • W m x(p q + ∆p mqk ) ,
+                    <label>(2)</label>
+                </formula>
+                <p>
+                    <s>where m indexes the attention head, k indexes the sampled keys, and K is the total sampled key number (K HW ).</s>
+                    <s>∆p mqk and A mqk denote the sampling offset and attention weight of the k th sampling point in the m th attention head, respectively.</s>
+                    <s>The scalar attention weight A mqk lies in the range [0, 1], normalized by K k=1 A mqk = 1.</s>
+                    <s>∆p mqk ∈ R 2 are of 2-d real numbers with unconstrained range.</s>
+                    <s>As p q + ∆p mqk is fractional, bilinear interpolation is applied as in
+                        <ref type="bibr" target="#b5">Dai et al. (2017)</ref>
+                        in computing x(p q +∆p mqk ).
+                    </s>
+                    <s>Both ∆p mqk and A mqk are obtained via linear projection over the query feature z q .</s>
+                    <s>In implementation, the query feature z q is fed to a linear projection operator of 3M K channels, where the first 2M K channels encode the sampling offsets ∆p mqk , and the remaining M K channels are fed to a softmax operator to obtain the attention weights A mqk .</s>
+                </p>
+                <p>
+                    <s>The deformable attention module is designed for processing convolutional feature maps as key elements.</s>
+                    <s>Let N q be the number of query elements, when M K is relatively small, the complexity of the deformable attention module is of O(2N q C 2 + min(HW C 2 , N q KC 2 )) (See Appendix A.1 for details).</s>
+                    <s>When it is applied in DETR encoder, where N q = HW , the complexity becomes O(HW C 2 ), which is of linear complexity with the spatial size.</s>
+                    <s>When it is applied as the cross-attention modules in DETR decoder, where N q = N (N is the number of object queries), the complexity becomes O(N KC 2 ), which is irrelevant to the spatial size HW .</s>
+                </p>
+                <p>
+                    <s>Multi-scale Deformable Attention Module.</s>
+                    <s>Most modern object detection frameworks benefit from multi-scale feature maps
+                        <ref type="bibr" target="#b19">(Liu et al., 2020)</ref>.
+                    </s>
+                    <s>Our proposed deformable attention module can be naturally extended for multi-scale feature maps.</s>
+                </p>
+                <p>
+                    <s>Let {x l } L l=1 be the input multi-scale feature maps, where x l ∈ R C×H l ×W l .</s>
+                    <s>Let pq ∈ [0, 1] 2 be the normalized coordinates of the reference point for each query element q, then the multi-scale deformable attention module is applied as</s>
+                </p>
+                <formula xml:id="formula_6">MSDeformAttn(z q , pq , {x l } L l=1 ) = M m=1 W m L l=1 K k=1 A mlqk • W m x l (φ l ( pq ) + ∆p mlqk ) ,
+                    <label>(3)</label>
+                </formula>
+                <p>
+                    <s>where m indexes the attention head, l indexes the input feature level, and k indexes the sampling point.</s>
+                    <s>∆p mlqk and A mlqk denote the sampling offset and attention weight of the k th sampling point in the l th feature level and the m th attention head, respectively.</s>
+                    <s>The scalar attention weight A mlqk is normalized by</s>
+                </p>
+                <formula xml:id="formula_7">L l=1 K k=1 A mlqk = 1.</formula>
+                <p>
+                    <s>Here, we use normalized coordinates pq ∈ [0, 1] 2 for the clarity of scale formulation, in which the normalized coordinates (0, 0) and (1, 1) indicate the top-left and the bottom-right image corners, respectively.</s>
+                    <s>Function φ l ( pq ) in Equation 3 re-scales the normalized coordinates pq to the input feature map of the l-th level.</s>
+                    <s>The multi-scale deformable attention is very similar to the previous single-scale version, except that it samples LK points from multi-scale feature maps instead of K points from single-scale feature maps.</s>
+                </p>
+                <p>
+                    <s>The proposed attention module will degenerate to deformable convolution
+                        <ref type="bibr" target="#b5">(Dai et al., 2017)</ref>, when L = 1, K = 1, and W m ∈ R Cv×C is
+                        fixed as an identity matrix.
+                    </s>
+                    <s>Deformable convolution is designed for single-scale inputs, focusing only on one sampling point for each attention head.</s>
+                    <s>However, our multi-scale deformable attention looks over multiple sampling points from multi-scale inputs.</s>
+                    <s>The proposed (multi-scale) deformable attention module can also be perceived as an efficient variant of Transformer attention, where a pre-filtering mechanism is introduced by the deformable sampling locations.</s>
+                    <s>When the sampling points traverse all possible locations, the proposed attention module is equivalent to Transformer attention.</s>
+                </p>
+                <p>
+                    <s>Deformable Transformer Encoder.</s>
+                    <s>We replace the Transformer attention modules processing feature maps in DETR with the proposed multi-scale deformable attention module.</s>
+                    <s>Both the input and output of the encoder are of multi-scale feature maps with the same resolutions.</s>
+                    <s>In encoder, we extract multi-scale feature maps {x l } L-1 l=1 (L = 4) from the output feature maps of stages C 3 through C 5 in ResNet
+                        <ref type="bibr" target="#b8">(He et al., 2016)</ref>
+                        (transformed by a 1 × 1 convolution), where C l is of resolution 2 l lower than the input image.
+                    </s>
+                    <s>The lowest resolution feature map x L is obtained via a 3 × 3 stride 2 convolution on the final C 5 stage, denoted as C 6 .</s>
+                    <s>All the multi-scale feature maps are of C = 256 channels.</s>
+                    <s>Note that the top-down structure in FPN
+                        <ref type="bibr">(Lin et al., 2017a)</ref>
+                        is not used, because our proposed multi-scale deformable attention in itself can exchange
+                        information among multi-scale feature maps.
+                    </s>
+                    <s>The constructing of multi-scale feature maps are also illustrated in Appendix A.2. Experiments in Section 5.2 show that adding FPN will not improve the performance.</s>
+                </p>
+                <p>
+                    <s>In application of the multi-scale deformable attention module in encoder, the output are of multiscale feature maps with the same resolutions as the input.</s>
+                    <s>Both the key and query elements are of pixels from the multi-scale feature maps.</s>
+                    <s>For each query pixel, the reference point is itself.</s>
+                    <s>To identify which feature level each query pixel lies in, we add a scale-level embedding, denoted as e l , to the feature representation, in addition to the positional embedding.</s>
+                    <s>Different from the positional embedding with fixed encodings, the scale-level embedding {e l } L l=1 are randomly initialized and jointly trained with the network.</s>
+                    <s>Deformable Transformer Decoder.</s>
+                    <s>There are cross-attention and self-attention modules in the decoder.</s>
+                    <s>The query elements for both types of attention modules are of object queries.</s>
+                    <s>In the crossattention modules, object queries extract features from the feature maps, where the key elements are of the output feature maps from the encoder.</s>
+                    <s>In the self-attention modules, object queries interact with each other, where the key elements are of the object queries.</s>
+                    <s>Since our proposed deformable attention module is designed for processing convolutional feature maps as key elements, we only replace each cross-attention module to be the multi-scale deformable attention module, while leaving the self-attention modules unchanged.</s>
+                    <s>For each object query, the 2-d normalized coordinate of the reference point pq is predicted from its object query embedding via a learnable linear projection followed by a sigmoid function.</s>
+                </p>
+                <p>
+                    <s>Because the multi-scale deformable attention module extracts image features around the reference point, we let the detection head predict the bounding box as relative offsets w.r.t. the reference point to further reduce the optimization difficulty.</s>
+                    <s>The reference point is used as the initial guess of the box center.</s>
+                    <s>The detection head predicts the relative offsets w.r.t. the reference point.</s>
+                    <s>Check Appendix A.3 for the details.</s>
+                    <s>In this way, the learned decoder attention will have strong correlation with the predicted bounding boxes, which also accelerates the training convergence.</s>
+                </p>
+                <p>
+                    <s>By replacing Transformer attention modules with deformable attention modules in DETR, we establish an efficient and fast converging detection system, dubbed as Deformable DETR (see Fig.
+                        <ref type="figure" target="#fig_0">1</ref>).
+                    </s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="4.2">ADDITIONAL IMPROVEMENTS AND VARIANTS FOR DEFORMABLE DETR</head>
+                <p>
+                    <s>Deformable DETR opens up possibilities for us to exploit various variants of end-to-end object detectors, thanks to its fast convergence, and computational and memory efficiency.</s>
+                    <s>Due to limited space, we only introduce the core ideas of these improvements and variants here.</s>
+                    <s>The implementation details are given in Appendix A.4.</s>
+                </p>
+                <p>
+                    <s>Iterative Bounding Box Refinement.</s>
+                    <s>This is inspired by the iterative refinement developed in optical flow estimation
+                        <ref type="bibr" target="#b31">(Teed &amp; Deng, 2020)</ref>.
+                    </s>
+                    <s>We establish a simple and effective iterative bounding box refinement mechanism to improve detection performance.</s>
+                    <s>Here, each decoder layer refines the bounding boxes based on the predictions from the previous layer.</s>
+                </p>
+                <p>
+                    <s>Two-Stage Deformable DETR.</s>
+                    <s>In the original DETR, object queries in the decoder are irrelevant to the current image.</s>
+                    <s>Inspired by two-stage object detectors, we explore a variant of Deformable DETR for generating region proposals as the first stage.</s>
+                    <s>The generated region proposals will be fed into the decoder as object queries for further refinement, forming a two-stage Deformable DETR.</s>
+                </p>
+                <p>
+                    <s>In the first stage, to achieve high-recall proposals, each pixel in the multi-scale feature maps would serve as an object query.</s>
+                    <s>However, directly setting object queries as pixels will bring unacceptable computational and memory cost for the self-attention modules in the decoder, whose complexity grows quadratically with the number of queries.</s>
+                    <s>To avoid this problem, we remove the decoder and form an encoder-only Deformable DETR for region proposal generation.</s>
+                    <s>In it, each pixel is assigned as an object query, which directly predicts a bounding box.</s>
+                    <s>Top scoring bounding boxes are picked as region proposals.</s>
+                    <s>No NMS is applied before feeding the region proposals to the second stage.</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="5">EXPERIMENT</head>
+                <p>
+                    <s>Dataset.</s>
+                    <s>We conduct experiments on COCO 2017 dataset
+                        <ref type="bibr" target="#b16">(Lin et al., 2014)</ref>.
+                    </s>
+                    <s>Our models are trained on the train set, and evaluated on the val set and test-dev set.</s>
+                </p>
+                <p>
+                    <s>Implementation Details.</s>
+                    <s>ImageNet
+                        <ref type="bibr" target="#b6">(Deng et al., 2009)</ref>
+                        pre-trained ResNet-50
+                        <ref type="bibr" target="#b8">(He et al., 2016)</ref>
+                        is utilized as the backbone for ablations.
+                    </s>
+                    <s>Multi-scale feature maps are extracted without FPN
+                        <ref type="bibr">(Lin et al., 2017a)</ref>.
+                    </s>
+                    <s>M = 8 and K = 4 are set for deformable attentions by default.</s>
+                    <s>Parameters of the deformable Transformer encoder are shared among different feature levels.</s>
+                    <s>Other hyper-parameter setting and training strategy mainly follow DETR
+                        <ref type="bibr" target="#b2">(Carion et al., 2020)</ref>, except that Focal Loss
+                        <ref type="bibr">(Lin et al., 2017b)</ref>
+                        with loss weight of 2 is used for bounding box classification, and the number of object queries
+                        is increased from 100 to 300.
+                    </s>
+                    <s>We also report the performance of DETR-DC5 with these modifications for a fair comparison, denoted as DETR-DC5 + .</s>
+                    <s>By default, models are trained for 50 epochs and the learning rate is decayed at the 40-th epoch by a factor of 0.1.</s>
+                    <s>Following DETR
+                        <ref type="bibr" target="#b2">(Carion et al., 2020)</ref>, we train our models using Adam
+                        optimizer
+                        <ref type="bibr" target="#b13">(Kingma &amp; Ba, 2015)</ref>
+                        with base learning rate of 2 × 10 -4 , β 1 = 0.9, β 2 = 0.999, and weight decay of 10 -4 .
+                    </s>
+                    <s>Learning rates of the linear projections, used for predicting object query reference points and sampling offsets, are multiplied by a factor of 0.1.</s>
+                    <s>Run time is evaluated on NVIDIA Tesla V100 GPU.</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="5.1">COMPARISON WITH DETR</head>
+                <p>
+                    <s>As shown in Table
+                        <ref type="table" target="#tab_1">1</ref>, compared with Faster R-CNN + FPN, DETR requires many
+                        more training epochs to converge, and delivers lower performance at detecting small objects.
+                    </s>
+                    <s>Compared with DETR, Deformable DETR achieves better performance (especially on small objects) with 10× less training epochs.</s>
+                    <s>Detailed convergence curves are shown in Fig.
+                        <ref type="figure" target="#fig_3">3</ref>.
+                    </s>
+                    <s>With the aid of iterative bounding box refinement and two-stage paradigm, our method can further improve the detection accuracy.</s>
+                </p>
+                <p>
+                    <s>Our proposed Deformable DETR has on par FLOPs with Faster R-CNN + FPN and DETR-DC5.</s>
+                    <s>But the runtime speed is much faster (1.6×) than DETR-DC5, and is just 25% slower than Faster R-CNN + FPN.</s>
+                    <s>The speed issue of DETR-DC5 is mainly due to the large amount of memory access in Transformer attention.</s>
+                    <s>Our proposed deformable attention can mitigate this issue, at the cost of unordered memory access.</s>
+                    <s>Thus, it is still slightly slower than traditional convolution.</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="5.2">ABLATION STUDY ON DEFORMABLE ATTENTION</head>
+                <p>
+                    <s>Table
+                        <ref type="table">2</ref>
+                        presents ablations for various design choices of the proposed deformable attention module.
+                    </s>
+                    <s>Using multi-scale inputs instead of single-scale inputs can effectively improve detection accuracy with 1.7% AP, especially on small objects with 2.9% AP S .</s>
+                    <s>Increasing the number of sampling points K can further improve 0.9% AP.</s>
+                    <s>Using multi-scale deformable attention, which allows information exchange among different scale levels, can bring additional 1.5% improvement in AP.</s>
+                    <s>Because the cross-level feature exchange is already adopted, adding FPNs will not improve the performance.</s>
+                    <s>When multi-scale attention is not applied, and K = 1, our (multi-scale) deformable attention module degenerates to deformable convolution, delivering noticeable lower accuracy.</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="5.3">COMPARISON WITH STATE-OF-THE-ART METHODS</head>
+                <p>
+                    <s>Table
+                        <ref type="table" target="#tab_2">3</ref>
+                        compares the proposed method with other state-of-the-art methods.
+                    </s>
+                    <s>Iterative bounding box refinement and two-stage mechanism are both utilized by our models in Table
+                        <ref type="table" target="#tab_2">3</ref>.
+                    </s>
+                    <s>With ResNet-101 and ResNeXt-101
+                        <ref type="bibr" target="#b37">(Xie et al., 2017)</ref>, our method achieves 48.7 AP and 49.0 AP
+                        without bells and whistles, respectively.
+                    </s>
+                    <s>By using ResNeXt-101 with DCN
+                        <ref type="bibr">(Zhu et al., 2019b)</ref>, the accuracy rises to 50.1 AP.
+                    </s>
+                    <s>With additional test-time augmentations, the proposed method achieves 52.3 AP.</s>
+                </p>
+                <p>
+                    <s>Table
+                        <ref type="table">2</ref>: Ablations for deformable attention on COCO 2017 val set.
+                    </s>
+                    <s>"MS inputs" indicates using multi-scale inputs.</s>
+                    <s>"MS attention" indicates using multi-scale deformable attention.</s>
+                    <s>K is the number of sampling points for each attention head on each feature level.</s>
+                </p>
+                <p>
+                    <s>MS inputs MS attention K FPNs AP AP50 AP75 APS APM APL 4 FPN
+                        <ref type="bibr">(Lin et al., 2017a</ref>
+                        <ref type="bibr">) 43.8 62.6 47.8 26.5 47.3 58.1 4 BiFPN (Tan et al., 2020) 43.9 62.5 47.7 25.6 47.4</ref>
+                    </s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head n="6">CONCLUSION</head>
+                <p>
+                    <s>Deformable DETR is an end-to-end object detector, which is efficient and fast-converging.</s>
+                    <s>It enables us to explore more interesting and practical variants of end-to-end object detectors.</s>
+                    <s>At the core of Deformable DETR are the (multi-scale) deformable attention modules, which is an efficient attention mechanism in processing image feature maps.</s>
+                    <s>We hope our work opens up new possibilities in exploring end-to-end object detection.</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head>A APPENDIX</head>
+                <p>
+                    <s>A.1 COMPLEXITY FOR DEFORMABLE ATTENTION Supposes the number of query elements is N q , in the deformable attention module (see Equation
+                        <ref type="formula" target="#formula_5">2</ref>), the complexity for calculating the sampling
+                        coordinate offsets ∆p mqk and attention weights A mqk is of O(3N q CM K).
+                    </s>
+                    <s>Given the sampling coordinate offsets and attention weights, the complexity of computing Equation
+                        <ref type="formula" target="#formula_5">2</ref>is O(N q C 2 + N q KC 2 + 5N q KC), where the
+                        factor of 5 in 5N q KC is because of bilinear interpolation and the weighted sum in attention.
+                    </s>
+                    <s>On the other hand, we can also calculate W m x before sampling, as it is independent to query, and the complexity of computing Equation 2 will become as O(N q C 2 +HW C 2 +5N q KC).</s>
+                    <s>So the overall complexity of deformable attention is O(N q C 2 + min(HW C 2 , N q KC 2 ) + 5N q KC + 3N q CM K).</s>
+                    <s>In our experiments, M = 8, K ≤ 4 and C = 256 by default, thus 5K + 3M K &lt; C and the complexity is of O(2N q C 2 + min(HW C 2 , N q KC 2 )).</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head>A.2 CONSTRUCTING MULT-SCALE FEATURE MAPS FOR DEFORMABLE DETR</head>
+                <p>
+                    <s>As discussed in Section 4.1 and illustrated in Figure
+                        <ref type="figure" target="#fig_4">4</ref>, the input multi-scale feature maps of the encoder {x
+                        l } L-1 l=1 (L = 4) are extracted from the output feature maps of stages C 3 through C 5 in
+                        ResNet
+                        <ref type="bibr" target="#b8">(He et al., 2016)</ref>
+                        (transformed by a 1×1 convolution).
+                    </s>
+                    <s>The lowest resolution feature map x L is obtained via a 3 × 3 stride 2 convolution on the final C 5 stage.</s>
+                    <s>Note that FPN
+                        <ref type="bibr">(Lin et al., 2017a)</ref>
+                        is not used, because our proposed multi-scale deformable attention in itself can exchange
+                        information among multi-scale feature maps.
+                    </s>
+                </p>
+                <formula xml:id="formula_8">𝐶𝑜𝑛𝑣 1 × 1, 𝑠𝑡𝑟𝑖𝑑𝑒 1 𝐶𝑜𝑛𝑣 1 × 1, 𝑠𝑡𝑟𝑖𝑑𝑒 1 𝐶𝑜𝑛𝑣 1 × 1, 𝑠𝑡𝑟𝑖𝑑𝑒 1 𝐶𝑜𝑛𝑣 3 × 3, 𝑠𝑡𝑟𝑖𝑑𝑒 2 Input Multi-scale Feature Maps{𝒙 𝑙 } 𝑙=1 4 𝑪3 𝑪 4 𝑪 5 ResNet Feature Maps</formula>
+                <formula xml:id="formula_9">q = {σ(∆b d qx +σ -1 ( bd-1 qx )), σ(∆b d qy +σ -1 ( bd-1 qy )), σ(∆b d qw +σ -1 ( bd-1 qw )), σ(∆b d qh +σ -1 ( bd-1 qh ))},</formula>
+                <p>
+                    <s>where d ∈ {1, 2, ..., D}, ∆b d q{x,y,w,h} ∈ R are predicted at the d-th decoder layer.</s>
+                    <s>Prediction heads for different decoder layers do not share parameters.</s>
+                    <s>The initial box is set as b0 qx = pqx , b0 qy = pqy , b0 qw = 0.1, and b0 qh = 0.1.</s>
+                    <s>The system is robust to the choice of b 0 qw and b 0 qh .</s>
+                    <s>We tried setting them as 0.05, 0.1, 0.2, 0.5, and achieved similar performance.</s>
+                    <s>To stabilize training, similar to
+                        <ref type="bibr" target="#b31">Teed &amp; Deng (2020)</ref>, the gradients only back propagate
+                        through ∆b d q{x,y,w,h} , and are blocked at σ -1 ( bd-1 q{x,y,w,h} ).
+                    </s>
+                    <s>In iterative bounding box refinement, for the d-th decoder layer, we sample key elements respective to the box bd-1 q predicted from the (d -1)-th decoder layer.</s>
+                    <s>For Equation 3 in the cross-attention module of the d-th decoder layer, ( bd-1 qx , bd-1 qy ) serves as the new reference point.</s>
+                    <s>The sampling offset ∆p mlqk is also modulated by the box size, as (∆p mlqkx bd-1 qw , ∆p mlqky bd-1 qh ).</s>
+                    <s>Such modifications make the sampling locations related to the center and size of previously predicted boxes.</s>
+                </p>
+                <p>
+                    <s>Two-Stage Deformable DETR.</s>
+                    <s>In the first stage, given the output feature maps of the encoder, a detection head is applied to each pixel.</s>
+                    <s>The detection head is of a 3-layer FFN for bounding box regression, and a linear projection for bounding box binary classification (i.e., foreground and background), respectively.</s>
+                    <s>Let i index a pixel from feature level l i ∈ {1, 2, ..., L} with 2-d normalized coordinates pi = (p ix , piy ) ∈ [0, 1] 2 , its corresponding bounding box is predicted by bi</s>
+                </p>
+                <formula xml:id="formula_10">= {σ(∆b ix +σ -1 (p ix )), σ(∆b iy +σ -1 (p iy )), σ(∆b iw +σ -1 (2 li-1 s)), σ(∆b ih +σ -1 (2 li-1 s))},</formula>
+                <p>
+                    <s>where the base object scale s is set as 0.05, ∆b i{x,y,w,h} ∈ R are predicted by the bounding box regression branch.</s>
+                    <s>The Hungarian loss in DETR is used for training the detection head.</s>
+                </p>
+                <p>
+                    <s>Given the predicted bounding boxes in the first stage, top scoring bounding boxes are picked as region proposals.</s>
+                    <s>In the second stage, these region proposals are fed into the decoder as initial boxes for the iterative bounding box refinement, where the positional embeddings of object queries are set as positional embeddings of region proposal coordinates.</s>
+                </p>
+                <p>
+                    <s>Initialization for Multi-scale Deformable Attention.</s>
+                    <s>In our experiments, the number of attention heads is set as M = 8.</s>
+                    <s>In multi-scale deformable attention modules, W m ∈ R Cv×C and W m ∈ R C×Cv are randomly initialized.</s>
+                    <s>Weight parameters of the linear projection for predicting A mlqk and ∆p mlqk are initialized to zero.</s>
+                    <s>Bias parameters of the linear projection are initialized to make</s>
+                </p>
+                <formula xml:id="formula_11">A mlqk = 1 LK and {∆p 1lqk = (-k, -k), ∆p 2lqk = (-k, 0), ∆p 3lqk = (-k, k), ∆p 4lqk = (0, -k), ∆p 5lqk = (0, k), ∆p 6lqk = (k, -k), ∆p 7lqk = (k, 0), ∆p 8lqk = (k, k)} (k ∈ {1, 2, ...K}) at initialization.</formula>
+                <p>
+                    <s>For iterative bounding box refinement, the initialized bias parameters for ∆p mlqk prediction in the decoder are further multiplied with 1 2K , so that all the sampling points at initialization are within the corresponding bounding boxes predicted from the previous decoder layer.</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head>A.5 WHAT DEFORMABLE DETR LOOKS AT?</head>
+                <p>
+                    <s>For studying what Deformable DETR looks at to give final detection result, we draw the gradient norm of each item in final prediction (i.e., x/y coordinate of object center, width/height of object bounding box, category score of this object) with respect to each pixel in the image, as shown in Fig.
+                        <ref type="figure" target="#fig_6">5</ref>.
+                    </s>
+                    <s>According to Taylor's theorem, the gradient norm can reflect how much the output would be changed relative to the perturbation of the pixel, thus it could show us which pixels the model mainly relys on for predicting each item.</s>
+                </p>
+                <p>
+                    <s>The visualization indicates that Deformable DETR looks at extreme points of the object to determine its bounding box, which is similar to the observation in DETR
+                        <ref type="bibr" target="#b2">(Carion et al., 2020)</ref>.
+                    </s>
+                    <s>More concretely, Deformable DETR attends to left/right boundary of the object for x coordinate and width, and top/bottom boundary for y coordinate and height.</s>
+                    <s>Meanwhile, different to DETR
+                        <ref type="bibr" target="#b2">(Carion et al., 2020)</ref>, our Deformable DETR also looks at
+                        pixels inside the object for predicting its category.
+                    </s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head>A.6 VISUALIZATION OF MULTI-SCALE DEFORMABLE ATTENTION</head>
+                <p>
+                    <s>For better understanding learned multi-scale deformable attention modules, we visualize sampling points and attention weights of the last layer in encoder and decoder, as shown in Fig.
+                        <ref type="figure">6</ref>.
+                    </s>
+                    <s>For readibility, we combine the sampling points and attention weights from feature maps of different resolutions into one picture.</s>
+                </p>
+                <p>
+                    <s>Similar to DETR
+                        <ref type="bibr" target="#b2">(Carion et al., 2020)</ref>, the instances are already separated
+                        in the encoder of Deformable DETR.
+                    </s>
+                    <s>While in the decoder, our model is focused on the whole foreground instance instead of only extreme points as observed in DETR
+                        <ref type="bibr" target="#b2">(Carion et al., 2020)</ref>.
+                    </s>
+                    <s>Combined with the visualization of ∂c ∂I in Fig.
+                        <ref type="figure" target="#fig_6">5</ref>, we can guess the reason is that our Deformable DETR
+                        needs not only extreme points but also interior points to detemine object category.
+                    </s>
+                    <s>The visualization also demonstrates that the proposed multi-scale deformable attention module can adapt its sampling points and attention weights according to different scales and shapes of the foreground object.</s>
+                    <s>width of input feature map of l th feature level A mqk attention weight of q th query to k th key at m th head A mlqk attention weight of q th query to k th key in l th feature level at m th head z q input feature of q th query p q 2-d coordinate of reference point for q th query pq normalized 2-d coordinate of reference point for q th query x input feature map (input feature of key elements) x k input feature of k th key x l input feature map of l th feature level ∆p mqk sampling offset of q th query to k th key at m th head ∆p mlqk sampling offset of q th query to k th key in l th feature level at m th head W m output projection matrix at m th head U m input query projection matrix at m th head V m input key projection matrix at m th head W m input value projection matrix at m th head φ l ( p) unnormalized 2-d coordinate of p in l th feature level exp exponential function σ sigmoid function σ -1 inverse sigmoid function</s>
+                </p>
+            </div>
+            <div
+                    xmlns="http://www.tei-c.org/ns/1.0">
+                <head>A.7 NOTATIONS</head>
+            </div>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_0">
+                <head>Figure 1 :</head>
+                <label>1</label>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>Figure 1: Illustration of the proposed Deformable DETR object detector.</s>
+                        </p>
+                    </div>
+                </figDesc>
+            </figure>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_1">
+                <head/>
+                <label/>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>; Child et al. (2019); Huang et al. (2019); Ho et al. (2019); Wang et al. (2020a); Hu et al. (2019); Ramachandran et al. (2019)) are still limited to the first category.</s>
+                            <s>Despite the theoretically reduced complexity, Ramachandran et al. (2019); Hu et al. (</s>
+                        </p>
+                    </div>
+                </figDesc>
+            </figure>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_2">
+                <head>Figure 2 :</head>
+                <label>2</label>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>Figure 2: Illustration of the proposed deformable attention module.</s>
+                        </p>
+                    </div>
+                </figDesc>
+            </figure>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_3">
+                <head>Figure 3 :</head>
+                <label>3</label>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>Figure 3: Convergence curves of Deformable DETR and DETR-DC5 on COCO 2017 val set.</s>
+                            <s>For Deformable DETR, we explore different training schedules by varying the epochs at which the learning rate is reduced (where the AP score leaps).</s>
+                        </p>
+                    </div>
+                </figDesc>
+            </figure>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_4">
+                <head>Figure 4 :</head>
+                <label>4</label>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>Figure 4: Constructing mult-scale feature maps for Deformable DETR.</s>
+                        </p>
+                    </div>
+                </figDesc>
+            </figure>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_5">
+                <head/>
+                <label/>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>bd</s>
+                        </p>
+                    </div>
+                </figDesc>
+            </figure>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" xml:id="fig_6">
+                <head>Figure 5 :</head>
+                <label>5</label>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>Figure 5: The gradient norm of each item (coordinate of object center (x, y), width/height of object bounding box w/h, category score c of this object) in final detection result with respect to each pixel in input image I.</s>
+                        </p>
+                    </div>
+                </figDesc>
+                <graphic coords="14,149.55,417.48,106.91,80.18" type="bitmap"/>
+            </figure>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_1">
+                <head>Table 1 :</head>
+                <label>1</label>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>Comparision of Deformable DETR with DETR on COCO 2017 val set.</s>
+                            <s>DETR-DC5 + denotes DETR-DC5 with Focal Loss and 300 object queries.</s>
+                        </p>
+                    </div>
+                </figDesc>
+                <table>
+                    <row>
+                        <cell>Method</cell>
+                        <cell/>
+                        <cell/>
+                        <cell cols="3">Epochs AP AP50 AP75 APS APM APL params FLOPs</cell>
+                        <cell>Training GPU hours</cell>
+                        <cell>Inference FPS</cell>
+                    </row>
+                    <row>
+                        <cell>Faster R-CNN + FPN</cell>
+                        <cell/>
+                        <cell/>
+                        <cell cols="3">109 42.0 62.1 45.5 26.6 45.4 53.4 42M 180G</cell>
+                        <cell>380</cell>
+                        <cell>26</cell>
+                    </row>
+                    <row>
+                        <cell>DETR</cell>
+                        <cell/>
+                        <cell/>
+                        <cell cols="3">500 42.0 62.4 44.2 20.5 45.8 61.1 41M</cell>
+                        <cell>86G</cell>
+                        <cell>2000</cell>
+                        <cell>28</cell>
+                    </row>
+                    <row>
+                        <cell>DETR-DC5</cell>
+                        <cell/>
+                        <cell/>
+                        <cell cols="3">500 43.3 63.1 45.9 22.5 47.3 61.1 41M 187G</cell>
+                        <cell>7000</cell>
+                        <cell>12</cell>
+                    </row>
+                    <row>
+                        <cell>DETR-DC5</cell>
+                        <cell/>
+                        <cell/>
+                        <cell>50</cell>
+                        <cell cols="2">35.3 55.7 36.8 15.2 37.5 53.6 41M 187G</cell>
+                        <cell>700</cell>
+                        <cell>12</cell>
+                    </row>
+                    <row>
+                        <cell>DETR-DC5 +</cell>
+                        <cell/>
+                        <cell/>
+                        <cell>50</cell>
+                        <cell cols="2">36.2 57.0 37.4 16.3 39.2 53.9 41M 187G</cell>
+                        <cell>700</cell>
+                        <cell>12</cell>
+                    </row>
+                    <row>
+                        <cell>Deformable DETR</cell>
+                        <cell/>
+                        <cell/>
+                        <cell>50</cell>
+                        <cell cols="2">43.8 62.6 47.7 26.4 47.1 58.0 40M 173G</cell>
+                        <cell>325</cell>
+                        <cell>19</cell>
+                    </row>
+                    <row>
+                        <cell cols="3">+ iterative bounding box refinement</cell>
+                        <cell>50</cell>
+                        <cell cols="2">45.4 64.7 49.0 26.8 48.3 61.7 40M 173G</cell>
+                        <cell>325</cell>
+                        <cell>19</cell>
+                    </row>
+                    <row>
+                        <cell cols="3">++ two-stage Deformable DETR</cell>
+                        <cell>50</cell>
+                        <cell cols="2">46.2 65.2 50.0 28.8 49.2 61.7 40M 173G</cell>
+                        <cell>340</cell>
+                        <cell>19</cell>
+                    </row>
+                    <row>
+                        <cell/>
+                        <cell>40 45</cell>
+                        <cell cols="3">41.1 43.8 44.9 45.3</cell>
+                        <cell>45.5</cell>
+                        <cell>43.6</cell>
+                    </row>
+                    <row>
+                        <cell>AP</cell>
+                        <cell>35</cell>
+                        <cell/>
+                        <cell/>
+                        <cell/>
+                    </row>
+                    <row>
+                        <cell/>
+                        <cell>30</cell>
+                        <cell/>
+                        <cell/>
+                        <cell/>
+                    </row>
+                    <row>
+                        <cell/>
+                        <cell>25</cell>
+                        <cell/>
+                        <cell/>
+                        <cell/>
+                        <cell>Deformable DETR DETR-DC5</cell>
+                    </row>
+                    <row>
+                        <cell/>
+                        <cell/>
+                        <cell cols="4">50 100 150 200 250 300 350 400 450 500 Epochs</cell>
+                    </row>
+                </table>
+            </figure>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_2">
+                <head>Table 3 :</head>
+                <label>3</label>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>Comparison of Deformable DETR with state-of-the-art methods on COCO 2017 test-dev set.</s>
+                            <s>"TTA" indicates augmentations including horizontal flip and multi-scale testing.</s>
+                        </p>
+                    </div>
+                </figDesc>
+                <table>
+                    <row>
+                        <cell>57.7</cell>
+                    </row>
+                </table>
+            </figure>
+            <figure
+                    xmlns="http://www.tei-c.org/ns/1.0" type="table" xml:id="tab_4">
+                <head>Table 4 :</head>
+                <label>4</label>
+                <figDesc>
+                    <div>
+                        <p>
+                            <s>Lookup table for notations in the paper.</s>
+                        </p>
+                    </div>
+                </figDesc>
+                <table>
+                    <row>
+                        <cell cols="2">Notation Description</cell>
+                    </row>
+                    <row>
+                        <cell>m</cell>
+                        <cell>index for attention head</cell>
+                    </row>
+                    <row>
+                        <cell>l</cell>
+                        <cell>index for feature level of key element</cell>
+                    </row>
+                    <row>
+                        <cell>q</cell>
+                        <cell>index for query element</cell>
+                    </row>
+                    <row>
+                        <cell>k</cell>
+                        <cell>index for key element</cell>
+                    </row>
+                    <row>
+                        <cell>N q</cell>
+                        <cell>number of query elements</cell>
+                    </row>
+                    <row>
+                        <cell>N k</cell>
+                        <cell>number of key elements</cell>
+                    </row>
+                    <row>
+                        <cell>M</cell>
+                        <cell>number of attention heads</cell>
+                    </row>
+                    <row>
+                        <cell>L</cell>
+                        <cell>number of input feature levels</cell>
+                    </row>
+                    <row>
+                        <cell>K</cell>
+                        <cell>number of sampled keys in each feature level for each attention head</cell>
+                    </row>
+                    <row>
+                        <cell>C</cell>
+                        <cell>input feature dimension</cell>
+                    </row>
+                    <row>
+                        <cell>C v</cell>
+                        <cell>feature dimension at each attention head</cell>
+                    </row>
+                    <row>
+                        <cell>H</cell>
+                        <cell>height of input feature map</cell>
+                    </row>
+                    <row>
+                        <cell>W</cell>
+                        <cell>width of input feature map</cell>
+                    </row>
+                    <row>
+                        <cell>H l</cell>
+                        <cell>height of input feature map of l th feature level</cell>
+                    </row>
+                    <row>
+                        <cell>W l</cell>
+                        <cell/>
+                    </row>
+                </table>
+            </figure>
+        </body>
+        <back>
+            <div type="acknowledgement">
+                <div>
+                    <head>ACKNOWLEDGMENTS</head>
+                    <p>The work is supported by the
+                        <rs type="funder">National Key R&amp;D Program of China</rs>
+                        (
+                        <rs type="grantNumber">2020AAA0105200</rs>),
+                        <rs type="projectName">Beijing Academy of Artificial Intelligence</rs>, and the
+                        <rs type="funder">National Natural Science Foundation of China</rs>
+                        under grand No.
+                        <rs type="grantNumber">U19B2044</rs>
+                        and No.
+                        <rs type="grantNumber">61836011</rs>.
+                    </p>
+                </div>
+            </div>
+            <listOrg type="funding">
+                <org type="funded-project" xml:id="_cxuPVtT">
+                    <idno type="grant-number">2020AAA0105200</idno>
+                    <orgName type="project" subtype="full">Beijing Academy of Artificial Intelligence</orgName>
+                </org>
+                <org type="funding" xml:id="_tpCMKFZ">
+                    <idno type="grant-number">U19B2044</idno>
+                </org>
+                <org type="funding" xml:id="_D8Tdys2">
+                    <idno type="grant-number">61836011</idno>
+                </org>
+            </listOrg>
+            <div type="annex">
+                <div
+                        xmlns="http://www.tei-c.org/ns/1.0">
+                    <p>
+                        <s>Figure
+                            <ref type="figure">6</ref>: Visualization of multi-scale deformable attention.
+                        </s>
+                        <s>For readibility, we draw the sampling points and attention weights from feature maps of different resolutions in one picture.</s>
+                        <s>Each sampling point is marked as a filled circle whose color indicates its correspoinding attention weight.</s>
+                        <s>The reference point is shown as green cross marker, which is also equivalent to query point in encoder.</s>
+                        <s>In decoder, the predicted bounding box is shown as a green rectangle and the category and confidence score are texted just above it.</s>
+                    </p>
+                </div>
+            </div>
+            <div type="references">
+                <listBibl>
+                    <biblStruct xml:id="b0">
+                        <monogr>
+                            <title level="m" type="main">Etc: Encoding long and structured data in transformers</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Joshua</forename>
+                                    <surname>Ainslie</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Santiago</forename>
+                                    <surname>Ontanon</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Chris</forename>
+                                    <surname>Alberti</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Philip</forename>
+                                    <surname>Pham</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Anirudh</forename>
+                                    <surname>Ravula</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Sumit</forename>
+                                    <surname>Sanghai</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:2004.08483</idno>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b1">
+                        <monogr>
+                            <title level="m" type="main">Longformer: The long-document transformer</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Iz</forename>
+                                    <surname>Beltagy</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Matthew</forename>
+                                    <forename type="middle">E</forename>
+                                    <surname>Peters</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Arman</forename>
+                                    <surname>Cohan</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:2004.05150</idno>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b2">
+                        <analytic>
+                            <title level="a" type="main">End-to-end object detection with transformers</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Nicolas</forename>
+                                    <surname>Carion</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Francisco</forename>
+                                    <surname>Massa</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Gabriel</forename>
+                                    <surname>Synnaeve</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Nicolas</forename>
+                                    <surname>Usunier</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Alexander</forename>
+                                    <surname>Kirillov</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Sergey</forename>
+                                    <surname>Zagoruyko</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ECCV</title>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b3">
+                        <monogr>
+                            <title level="m" type="main">Generating long sequences with sparse transformers</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Rewon</forename>
+                                    <surname>Child</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Scott</forename>
+                                    <surname>Gray</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Alec</forename>
+                                    <surname>Radford</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ilya</forename>
+                                    <surname>Sutskever</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:1904.10509</idno>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b4">
+                        <monogr>
+                            <title level="m" type="main">Masked language modeling for proteins via linearly scalable long-context transformers</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Krzysztof</forename>
+                                    <surname>Choromanski</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Valerii</forename>
+                                    <surname>Likhosherstov</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">David</forename>
+                                    <surname>Dohan</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Xingyou</forename>
+                                    <surname>Song</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jared</forename>
+                                    <surname>Davis</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Tamas</forename>
+                                    <surname>Sarlos</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">David</forename>
+                                    <surname>Belanger</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Lucy</forename>
+                                    <surname>Colwell</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Adrian</forename>
+                                    <surname>Weller</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:2006.03555</idno>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b5">
+                        <analytic>
+                            <title level="a" type="main">Deformable convolutional networks</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jifeng</forename>
+                                    <surname>Dai</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Haozhi</forename>
+                                    <surname>Qi</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yuwen</forename>
+                                    <surname>Xiong</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yi</forename>
+                                    <surname>Li</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Guodong</forename>
+                                    <surname>Zhang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Han</forename>
+                                    <surname>Hu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yichen</forename>
+                                    <surname>Wei</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICCV</title>
+                            <imprint>
+                                <date type="published" when="2017">2017</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b6">
+                        <analytic>
+                            <title level="a" type="main">Imagenet: A large-scale hierarchical image database</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jia</forename>
+                                    <surname>Deng</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Wei</forename>
+                                    <surname>Dong</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Richard</forename>
+                                    <surname>Socher</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Li-Jia</forename>
+                                    <surname>Li</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Kai</forename>
+                                    <surname>Li</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Li</forename>
+                                    <surname>Fei-Fei</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2009">2009</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b7">
+                        <analytic>
+                            <title level="a" type="main">Nas-fpn: Learning scalable feature pyramid architecture for object detection</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Golnaz</forename>
+                                    <surname>Ghiasi</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Tsung-Yi</forename>
+                                    <surname>Lin</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Quoc V</forename>
+                                    <surname>Le</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b8">
+                        <analytic>
+                            <title level="a" type="main">Deep residual learning for image recognition</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Kaiming</forename>
+                                    <surname>He</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Xiangyu</forename>
+                                    <surname>Zhang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Shaoqing</forename>
+                                    <surname>Ren</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jian</forename>
+                                    <surname>Sun</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2016">2016</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b9">
+                        <monogr>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jonathan</forename>
+                                    <surname>Ho</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Nal</forename>
+                                    <surname>Kalchbrenner</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Dirk</forename>
+                                    <surname>Weissenborn</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Tim</forename>
+                                    <surname>Salimans</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:1912.12180</idno>
+                            <title level="m">Axial attention in multidimensional transformers</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b10">
+                        <analytic>
+                            <title level="a" type="main">Local relation networks for image recognition</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Han</forename>
+                                    <surname>Hu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zheng</forename>
+                                    <surname>Zhang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zhenda</forename>
+                                    <surname>Xie</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Stephen</forename>
+                                    <surname>Lin</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICCV</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b11">
+                        <analytic>
+                            <title level="a" type="main">Ccnet: Criss-cross attention for semantic segmentation</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zilong</forename>
+                                    <surname>Huang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Xinggang</forename>
+                                    <surname>Wang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Lichao</forename>
+                                    <surname>Huang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Chang</forename>
+                                    <surname>Huang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yunchao</forename>
+                                    <surname>Wei</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Wenyu</forename>
+                                    <surname>Liu</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICCV</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b12">
+                        <monogr>
+                            <title level="m" type="main">Transformers are rnns: Fast autoregressive transformers with linear attention</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Angelos</forename>
+                                    <surname>Katharopoulos</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Apoorv</forename>
+                                    <surname>Vyas</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Nikolaos</forename>
+                                    <surname>Pappas</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Franc</forename>
+                                    <surname>¸ois</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Fleuret</forename>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:2006.16236</idno>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b13">
+                        <analytic>
+                            <title level="a" type="main">Adam: A method for stochastic optimization</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">P</forename>
+                                    <surname>Diederik</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jimmy</forename>
+                                    <surname>Kingma</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <surname>Ba</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICLR</title>
+                            <imprint>
+                                <date type="published" when="2015">2015</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b14">
+                        <analytic>
+                            <title level="a" type="main">Reformer: The efficient transformer</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Nikita</forename>
+                                    <surname>Kitaev</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Łukasz</forename>
+                                    <surname>Kaiser</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Anselm</forename>
+                                    <surname>Levskaya</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICLR</title>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b15">
+                        <analytic>
+                            <title level="a"
+                                   type="main">Deep feature pyramid reconfiguration for object detection</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Tao</forename>
+                                    <surname>Kong</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Fuchun</forename>
+                                    <surname>Sun</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Chuanqi</forename>
+                                    <surname>Tan</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Huaping</forename>
+                                    <surname>Liu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Wenbing</forename>
+                                    <surname>Huang</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ECCV</title>
+                            <imprint>
+                                <date type="published" when="2018">2018</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b16">
+                        <analytic>
+                            <title level="a" type="main">Microsoft coco: Common objects in context</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Tsung-Yi</forename>
+                                    <surname>Lin</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Michael</forename>
+                                    <surname>Maire</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Serge</forename>
+                                    <surname>Belongie</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">James</forename>
+                                    <surname>Hays</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Pietro</forename>
+                                    <surname>Perona</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Deva</forename>
+                                    <surname>Ramanan</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Piotr</forename>
+                                    <surname>Dollár</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">C</forename>
+                                    <surname>Lawrence</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zitnick</forename>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ECCV</title>
+                            <imprint>
+                                <date type="published" when="2014">2014</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b17">
+                        <analytic>
+                            <title level="a" type="main">Feature pyramid networks for object detection</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Tsung-Yi</forename>
+                                    <surname>Lin</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Piotr</forename>
+                                    <surname>Dollár</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ross</forename>
+                                    <surname>Girshick</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Kaiming</forename>
+                                    <surname>He</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Bharath</forename>
+                                    <surname>Hariharan</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Serge</forename>
+                                    <surname>Belongie</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2017">2017</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b18">
+                        <analytic>
+                            <title level="a" type="main">Focal loss for dense object detection</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Tsung-Yi</forename>
+                                    <surname>Lin</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Priya</forename>
+                                    <surname>Goyal</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ross</forename>
+                                    <surname>Girshick</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Kaiming</forename>
+                                    <surname>He</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Piotr</forename>
+                                    <surname>Dollár</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICCV</title>
+                            <imprint>
+                                <date type="published" when="2017">2017</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b19">
+                        <analytic>
+                            <title level="a" type="main">Deep learning for generic object detection: A survey</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Li</forename>
+                                    <surname>Liu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Wanli</forename>
+                                    <surname>Ouyang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Xiaogang</forename>
+                                    <surname>Wang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Paul</forename>
+                                    <surname>Fieguth</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jie</forename>
+                                    <surname>Chen</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Xinwang</forename>
+                                    <surname>Liu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Matti</forename>
+                                    <surname>Pietikäinen</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="j">IJCV</title>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b20">
+                        <analytic>
+                            <title level="a" type="main">Generating wikipedia by summarizing long sequences</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">J</forename>
+                                    <surname>Peter</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Mohammad</forename>
+                                    <surname>Liu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Etienne</forename>
+                                    <surname>Saleh</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ben</forename>
+                                    <surname>Pot</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ryan</forename>
+                                    <surname>Goodrich</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Lukasz</forename>
+                                    <surname>Sepassi</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Noam</forename>
+                                    <surname>Kaiser</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <surname>Shazeer</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICLR</title>
+                            <imprint>
+                                <date type="published" when="2018">2018</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b21">
+                        <analytic>
+                            <title level="a" type="main">Path aggregation network for instance segmentation</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Shu</forename>
+                                    <surname>Liu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Lu</forename>
+                                    <surname>Qi</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Haifang</forename>
+                                    <surname>Qin</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jianping</forename>
+                                    <surname>Shi</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jiaya</forename>
+                                    <surname>Jia</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2018">2018</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b22">
+                        <analytic>
+                            <title level="a" type="main">Image transformer</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Niki</forename>
+                                    <surname>Parmar</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ashish</forename>
+                                    <surname>Vaswani</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jakob</forename>
+                                    <surname>Uszkoreit</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Łukasz</forename>
+                                    <surname>Kaiser</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Noam</forename>
+                                    <surname>Shazeer</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Alexander</forename>
+                                    <surname>Ku</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Dustin</forename>
+                                    <surname>Tran</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICML</title>
+                            <imprint>
+                                <date type="published" when="2018">2018</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b23">
+                        <monogr>
+                            <title level="m"
+                                   type="main">Blockwise self-attention for long document understanding</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jiezhong</forename>
+                                    <surname>Qiu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Hao</forename>
+                                    <surname>Ma</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Omer</forename>
+                                    <surname>Levy</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Scott</forename>
+                                    <surname>Wen-Tau Yih</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Sinong</forename>
+                                    <surname>Wang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jie</forename>
+                                    <surname>Tang</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:1911.02972</idno>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b24">
+                        <analytic>
+                            <title level="a" type="main">Stand-alone self-attention in vision models</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Prajit</forename>
+                                    <surname>Ramachandran</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Niki</forename>
+                                    <surname>Parmar</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ashish</forename>
+                                    <surname>Vaswani</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Irwan</forename>
+                                    <surname>Bello</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Anselm</forename>
+                                    <surname>Levskaya</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jonathon</forename>
+                                    <surname>Shlens</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">NeurIPS</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b25">
+                        <analytic>
+                            <title level="a" type="main">Faster r-cnn: Towards real-time object detection with region proposal networks</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Kaiming</forename>
+                                    <surname>Shaoqing Ren</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ross</forename>
+                                    <surname>He</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jian</forename>
+                                    <surname>Girshick</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <surname>Sun</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">NeurIPS</title>
+                            <imprint>
+                                <date type="published" when="2015">2015</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b26">
+                        <monogr>
+                            <title level="m" type="main">Efficient content-based sparse attention with routing transformers</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Aurko</forename>
+                                    <surname>Roy</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Mohammad</forename>
+                                    <surname>Saffar</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ashish</forename>
+                                    <surname>Vaswani</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">David</forename>
+                                    <surname>Grangier</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:2003.05997</idno>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b27">
+                        <analytic>
+                            <title level="a" type="main">Revisiting the sibling head in object detector</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Guanglu</forename>
+                                    <surname>Song</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yu</forename>
+                                    <surname>Liu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Xiaogang</forename>
+                                    <surname>Wang</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b28">
+                        <analytic>
+                            <title level="a" type="main">Efficientdet: Scalable and efficient object detection</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Mingxing</forename>
+                                    <surname>Tan</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ruoming</forename>
+                                    <surname>Pang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Quoc V</forename>
+                                    <surname>Le</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b29">
+                        <analytic>
+                            <title level="a" type="main">Sparse sinkhorn attention</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yi</forename>
+                                    <surname>Tay</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Dara</forename>
+                                    <surname>Bahri</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Liu</forename>
+                                    <surname>Yang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Donald</forename>
+                                    <surname>Metzler</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Da-Cheng</forename>
+                                    <surname>Juan</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICML</title>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b30">
+                        <monogr>
+                            <title level="m" type="main">Efficient transformers: A survey</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yi</forename>
+                                    <surname>Tay</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Mostafa</forename>
+                                    <surname>Dehghani</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Dara</forename>
+                                    <surname>Bahri</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Donald</forename>
+                                    <surname>Metzler</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:2009.06732</idno>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b31">
+                        <analytic>
+                            <title level="a"
+                                   type="main">Raft: Recurrent all-pairs field transforms for optical flow</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zachary</forename>
+                                    <surname>Teed</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jia</forename>
+                                    <surname>Deng</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ECCV</title>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b32">
+                        <analytic>
+                            <title level="a" type="main">Fcos: Fully convolutional one-stage object detection</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Chunhua</forename>
+                                    <surname>Zhi Tian</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Hao</forename>
+                                    <surname>Shen</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Tong</forename>
+                                    <surname>Chen</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <surname>He</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICCV</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b33">
+                        <analytic>
+                            <title level="a" type="main">Attention is all you need</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ashish</forename>
+                                    <surname>Vaswani</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Noam</forename>
+                                    <surname>Shazeer</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Niki</forename>
+                                    <surname>Parmar</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jakob</forename>
+                                    <surname>Uszkoreit</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Llion</forename>
+                                    <surname>Jones</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Aidan</forename>
+                                    <forename type="middle">N</forename>
+                                    <surname>Gomez</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Łukasz</forename>
+                                    <surname>Kaiser</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Illia</forename>
+                                    <surname>Polosukhin</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="j">NeurIPS</title>
+                            <imprint>
+                                <date type="published" when="2017">2017</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b34">
+                        <monogr>
+                            <title level="m" type="main">Axial-deeplab: Stand-alone axial-attention for panoptic segmentation</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Huiyu</forename>
+                                    <surname>Wang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yukun</forename>
+                                    <surname>Zhu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Bradley</forename>
+                                    <surname>Green</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Hartwig</forename>
+                                    <surname>Adam</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Alan</forename>
+                                    <surname>Yuille</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Liang-Chieh</forename>
+                                    <surname>Chen</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:2003.07853</idno>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b35">
+                        <monogr>
+                            <title level="m" type="main">Linformer: Self-attention with linear complexity</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Sinong</forename>
+                                    <surname>Wang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Belinda</forename>
+                                    <surname>Li</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Madian</forename>
+                                    <surname>Khabsa</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Han</forename>
+                                    <surname>Fang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Hao</forename>
+                                    <surname>Ma</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:2006.04768</idno>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b36">
+                        <analytic>
+                            <title level="a"
+                                   type="main">Pay less attention with lightweight and dynamic convolutions</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Felix</forename>
+                                    <surname>Wu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Angela</forename>
+                                    <surname>Fan</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Alexei</forename>
+                                    <surname>Baevski</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Michael</forename>
+                                    <surname>Yann N Dauphin</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <surname>Auli</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICLR</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b37">
+                        <analytic>
+                            <title level="a"
+                                   type="main">Aggregated residual transformations for deep neural networks</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Saining</forename>
+                                    <surname>Xie</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ross</forename>
+                                    <surname>Girshick</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Piotr</forename>
+                                    <surname>Dollár</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zhuowen</forename>
+                                    <surname>Tu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Kaiming</forename>
+                                    <surname>He</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2017">2017</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b38">
+                        <analytic>
+                            <title level="a" type="main">Auto-fpn: Automatic network architecture adaptation for object detection beyond classification</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Hang</forename>
+                                    <surname>Xu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Lewei</forename>
+                                    <surname>Yao</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Wei</forename>
+                                    <surname>Zhang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Xiaodan</forename>
+                                    <surname>Liang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zhenguo</forename>
+                                    <surname>Li</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICCV</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b39">
+                        <monogr>
+                            <title level="m" type="main">Big bird: Transformers for longer sequences</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Manzil</forename>
+                                    <surname>Zaheer</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Guru</forename>
+                                    <surname>Guruganesh</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Avinava</forename>
+                                    <surname>Dubey</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Joshua</forename>
+                                    <surname>Ainslie</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Chris</forename>
+                                    <surname>Alberti</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Santiago</forename>
+                                    <surname>Ontanon</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Philip</forename>
+                                    <surname>Pham</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Anirudh</forename>
+                                    <surname>Ravula</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Qifan</forename>
+                                    <surname>Wang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Li</forename>
+                                    <surname>Yang</surname>
+                                </persName>
+                            </author>
+                            <idno type="arXiv">arXiv:2007.14062</idno>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                        <note type="report_type">arXiv preprint</note>
+                    </biblStruct>
+                    <biblStruct xml:id="b40">
+                        <analytic>
+                            <title level="a" type="main">Bridging the gap between anchor-based and anchor-free detection via adaptive training sample selection</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Shifeng</forename>
+                                    <surname>Zhang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Cheng</forename>
+                                    <surname>Chi</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yongqiang</forename>
+                                    <surname>Yao</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zhen</forename>
+                                    <surname>Lei</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Stan</forename>
+                                    <forename type="middle">Z</forename>
+                                    <surname>Li</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2020">2020</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b41">
+                        <analytic>
+                            <title level="a" type="main">M2det: A single-shot object detector based on multi-level feature pyramid network</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Qijie</forename>
+                                    <surname>Zhao</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Tao</forename>
+                                    <surname>Sheng</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Yongtao</forename>
+                                    <surname>Wang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zhi</forename>
+                                    <surname>Tang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ying</forename>
+                                    <surname>Chen</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Ling</forename>
+                                    <surname>Cai</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Haibin</forename>
+                                    <surname>Ling</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">AAAI</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b42">
+                        <analytic>
+                            <title level="a" type="main">An empirical study of spatial attention mechanisms in deep networks</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Xizhou</forename>
+                                    <surname>Zhu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Dazhi</forename>
+                                    <surname>Cheng</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Zheng</forename>
+                                    <surname>Zhang</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Stephen</forename>
+                                    <surname>Lin</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jifeng</forename>
+                                    <surname>Dai</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">ICCV</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                    <biblStruct xml:id="b43">
+                        <analytic>
+                            <title level="a" type="main">Deformable convnets v2: More deformable, better results</title>
+                            <author>
+                                <persName>
+                                    <forename type="first">Xizhou</forename>
+                                    <surname>Zhu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Han</forename>
+                                    <surname>Hu</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Stephen</forename>
+                                    <surname>Lin</surname>
+                                </persName>
+                            </author>
+                            <author>
+                                <persName>
+                                    <forename type="first">Jifeng</forename>
+                                    <surname>Dai</surname>
+                                </persName>
+                            </author>
+                        </analytic>
+                        <monogr>
+                            <title level="m">CVPR</title>
+                            <imprint>
+                                <date type="published" when="2019">2019</date>
+                            </imprint>
+                        </monogr>
+                    </biblStruct>
+                </listBibl>
+            </div>
+        </back>
+    </text>
+</TEI>

@@ -1,0 +1,568 @@
+A Brief Survey of Visual Saliency Detection
+Salient object detection models mimic the behavior of human beings and capture the most salient region/object from the images or scenes. 
+This field has many important applications in both computer vision and pattern recognition tasks. 
+Despite hundreds of models proposed in this field, it still has a large room for research. 
+This paper demonstrates a detailed overview of the recent progress of saliency detection models in terms of heuristic-based techniques and deep learning-based techniques. 
+We have discussed and reviewed its co-related fields, such as Eyefixation-prediction, RGBD salient-object-detection, co-saliency object detection, and video-saliency-detection models. 
+We have reviewed the key issues of the current saliency models and discussed future trends and recommendations. 
+The broadly utilized datasets and assessment strategies are additionally investigated in this paper. 
+Introduction:
+The human vision system (HVS) has the incredible capability to recognize and focus the impressive objects or regions quickly, which are more visually distinct and prominent in the images/sceneries This process has been explored in computer vision [1] [2] [3] [4] to detect those salient objects which have more importance and valuable information inside the images or videos, such as object recognition tasks, scene perception, and underwater vision, etc. 
+This is an emerging topic and has recently engrossed the wide consideration of researchers from various disciplines. 
+The mechanism of detecting a salient-object from an image is called saliency detection or salient-objectdetection. 
+The basic concept of salient-object-detection is shown in Figure 1 . 
+The first row represents the original images, and the corresponding ground-truth of each image is shown in the second row. 
+Saliency detection process first locates and identifies the correct location/region of the object, and then segments it from its background. 
+For this purpose, a lot of models have been proposed, which have achieved a good performance in simple images/scenes having a single object. 
+however, it is still difficult to find a salient-object in complex scenes, which have a more complex and cluttered background [5] . 
+Thereinto, bottom-up saliency detection is the mechanism that automatically captures the more focused and stimuli objects' regions of human visual attention without any prior knowledge [6] . 
+Usually, saliency is termed as variance and contrast between a pixel and its surrounding locality [7] . 
+Moreover, saliency-map is used to describe the degree of image saliency. 
+In the saliency-map, each saliency value represents the pixel values of its corresponding regions in the image. 
+It has a long history and it is still considered as an active research area in computer vision research. 
+In general, good saliency detection approaches must ensure precise object detection, high resolution and computational efficiency [8] . 
+Currently, different researchers have been classified as state-of-the-art methods based on different principles. 
+In this work, we discuss comprehensively salient-object-detection models. 
+We also discuss the common datasets and evaluation measures used for saliency-detection approaches. 
+We summarized the related work and suggest some recommendations for future research work. 
+The remaining paper is organized as follows: In section 2, we briefly review various salient-objectdetection models such as RGBD salient-objectdetection models, Co-saliency-detection models, and video-saliency-detection models. 
+In section 3, we discuss briefly the co-related databases for saliency detection. 
+In section 4, we enlist the databases and applications of salient-object detection and finally, we provide the conclusion and future recommendations. 
+2. Review of visual saliency detection models:
+Visual attention has been explored in multiple disciplines of computer vision [9] [10] [11] [12] . 
+Based on the early cognitive theories, in 1980, Treisman and Gelade [13] presented a theory of feature integration and proposed feature integration model and feature registration model for visual attention. 
+Wolfe et al. [14] proposed a biological structure (Guided-Search-Model) and Koch and Ullman [15] proposed a Computational Attention framework. 
+These theories are founded on bottom-up center-surround mechanisms. 
+In 1998, Itti et al. presented a visual attention model [12, 1] to describe human visual attention, which generates a map for saliency detection by combining three different feature maps (i.e., color, orientation, and intensity) at various scales based on center-surround mechanisms. 
+recently hundreds of visual attention models have been proposed, including fixation point prediction models. 
+afterward, Liu et al. [16] defined saliency detection as a binary segmentation work. 
+Zhang and Sclaroff [17] analyzed the saliency-map by using Boolean map topology. 
+To get a saliency-map, Li et al. [9] incorporated a reconstruction error scheme via dense and sparse representation. 
+Zhu et al. [18] added a simple boundary to compute the background measure and find the spatial format in the image regions along with their corresponding boundaries. 
+Consequently, an optimization method was adopted to incorporate different low-level cues such as background measures and obtained uniform saliency-maps. 
+Scharfenberger et al. [19] presented a statistical pattern scheme, which robustly uses the essential heterogeneous textural features of the image and computes the relevant saliency of every region in the image effectively. 
+In addition, there are several other techniques rely on mathematical calculation. 
+Hou and Zhang [2] proposed the residual spectrum framework by using the Fourier transform phase spectra to generate a saliency map. 
+ Achanta et al. [20] obtained a saliency map based on local contrast by integrating low-level features. 
+These classic models have yet achieved an admirable performance, but, due to the absence of high-level semantic information, these low-level models are still getting tough to achieve the desired results. 
+Nowadays, the resurgence of the deep-learningbased Convolutional Neural Network [21] and especially fully Convolutional Neural Network [22] provides a feasible technology for saliency detection. 
+Different than traditional methods, which use the lowlevel visual information mostly based on contrastpriors [23] , CNN based methods use high-level semantic information and abolish the need for handcrafted features. 
+A CNN normally has hundreds or even ten thousands of parameters and neurons with various receptive field sizes. 
+Neuron with the large receptive-field size is used to identify global information for the most salient-regions of the image, and the small receptive fields are used to identify the local information between the small regions of the image. 
+The interest of researchers is rising in the CNNs model due to its tremendous performance and more desirable properties compared to classical hand-crafted feature-based models. 
+From the viewpoint of information processing mechanisms, saliency detection approaches can be generally categorized as bottom-up approaches and top-down models. 
+The bottom-up methods are based on low-level visual features without high-level semantic information. 
+On the other hand, the top-down approaches assume that the extrinsic cues for saliency detection with more semantic information. 
+The topdown methods [2, 24] are generally task-driven and require abundant training data with human-labeled ground truths. 
+Thus these models can extract high-level semantic features from images to describe the specific objects (e.g. 
+car, pedestrian). 
+However, due to the complication and variation of daily tasks and behaviors, the high-level methods are not much explored. 
+In the last two decades, research work in this zone has developed in two directions: visual-attentionprediction (i.e., eye fixation-prediction) and saliency detection in computer vision. 
+The earlier class emphasizes on locating the fixation-points of a human observer at the first glimpse [25, 26] , whereas the latter class tries to identify or/and segment the most prominent and salient objects from the original image [27] . 
+In the following sub-section, we briefly review the fixation prediction models while providing comprehensive detail on salient-object-detection models. 
+2.1 Fixation Prediction Models:
+To simulate visual attention, eye-fixation-prediction models have generally been corroborated against eye actions of human attention. 
+Eyeball movements express important information concerning cognitive procedures such as analysis, scene perception, and visual search. 
+Thus, they are frequently preserved as a proxy for changes of attention [7] . 
+Primates have a strong talent to analyze complicated scenes in real-time. 
+Visual systems will first make selections in the collected information before the extra processing of visual information. 
+it can lessen dramatically the complication of obtained information. 
+This selection method is accomplished in a limited field of view, named visualattention-prediction. 
+HVS imposes a solid dynamic selectivity process when sensing the exterior surroundings; in that scenario, dynamic selection functions as the procedure of the visual-attention-point transfer. 
+Moreover, HVS can quickly grasp huge volumes of image information. 
+The overhead sentiments elucidate the biological foundation of attention-point-prediction. Figure 2 shows some samples of human eye fixation prediction, where the red light blobs show the more salient-regions. 
+The initial classes of attention-prediction models are engrossed in human-visual-attention and eye gaze prediction. 
+Itti et al.'s basic model used three simple feature channels (i.e., color, orientation, and intensity). 
+This model becomes the basis of future models in this field and the standard benchmark for assessment. 
+It has been presented to associate with human eye flux in free-viewing tasks [28, 29] . 
+ Le Meur et al. [30] presented a method for bottom-up saliency detection constructed on contrast-sensitivity functions, perceptual-decomposition, center-surround interactions, and visual-masking. 
+Later, Le Meur et al. [31] prolonged this model to the spatiotemporal field by combining chromatic, achromatic and spatial-temporal based information. 
+In this modified model, they extracted the early visual-features from the visual input into some single parallel channels. 
+A feature map is achieved for each channel, and then a distinctive saliency-map is constructed from the union of those channels. 
+ Kootstra et al. [32] proposed three symmetrysaliency basic operators and made their comparison with human eye-tracking data. 
+This technique is constructed on the radial symmetry operators and isotropic-symmetry of Reisfeld et al. [33] and the color-symmetry of Heidemann [34] . 
+2.2 Saliency detection models
+In this paper, the literature of saliency detection has been classified into heuristic-based and learning-based approaches. 
+In saliency detection, contrast is a very important factor for salient region identification [35] [36] . 
+The brain is very sensitive to high-contrast objects/ regions in an image. 
+Traditional heuristic approaches of the saliency detection are mostly based on low-level visual features and most of the computational frameworks are unsupervised [37] . 
+These conventional bottom-up methods follow the heuristic features approach (i.e., such as contrast, location, and texture) during saliency detection. 
+Heuristic features are usually called visual priors or cues for saliency detection [38] [39] . 
+The contrastprior is a very crucial feature and one of the most used priors. 
+Concretely, the contrast priors comprise of local-contrast prior and global-contrast prior, and the contrast-prior assumes that the salient-regions are always dissimilar from their neighborhoods or scenes [40] . 
+Beside contrast-priors, location priors consist of center-priors and background-priors. 
+Center-priors describe the salient-object appears in the middle of the image, while the background-priors state that a border of an image has more chances to be part of the background. 
+In this sub-section, we will discuss some important cues or priors in heuristic-based saliency detection models. 
+2.2.1 Heuristic-based saliency detection models
+A. Saliency detection based on local contrast
+Contrast represents the obvious difference between two or more pixels/regions in an image. 
+The distance between the two features is called a contrast-based saliency value. 
+The edges of a salient-object produce a high saliency score in local-contrast saliency methods [39] , thus highlighting the entire salient target. 
+Localcontrast based saliency detection [41] [42] [43] [44] 9, 45, 46, 24, 47] has been proposed, which calculates the saliency value map by considering local features (i.e., color, illumination, orientation, and other motion information) between different regions. 
+ Itti et al. [41] presented a center-surround method and by using a linear and non-linear combination of multi-scale saliency-map to extract low-level elements (i.e., color, intensity, texture, and orientation). 
+Ma and Zhang [42] used color contrast as a saliency measure in a local neighborhood. 
+In [43] , Jiang et al. introduced a regional level saliency descriptor primarily based on local-contrast, backgroundness, and other well-known features. 
+ Jiang et al. [44] proposed a strategy based on multi-scale local contrast regions, which computes saliency values throughout different regional segmentation to create robustness and combines each value of these regions to obtain a pixel-wise saliency map. 
+In [9] , the authors adopted a similar framework by estimating regional saliency using multiple hierarchical segmentation. 
+ Li et al. [45] lengthened the pairwise local-contrast with the aid of creating a hypergraph, which is made by a non-parametric multiscale non-parametric gathering of superpixels, in order to obtain both interior consistency and exterior separation of regions. 
+Salient object detection is then achieved via looking for salient vertices and hyperedges in the hypergraph. 
+ Liu et al. [24] proposed a multi-scale contrast based saliency-detection algorithm by linearly merging local features in a Gaussian image pyramid. 
+ Goferman et al. [47] consecutively devised a model based on local low-level contrast, global-contrast, visual organization policies and other high-level elements to capture conspicuous salient items along with their contexts. 
+Jian et al. [48] designed a saliency-detection model based on principal local color contrast. 
+B. Saliency detection based on global contrast
+Unlike local-contrast based methods, a global-contrast based method [23, [49] [50] [51] [52] [53] [54] [55] usually separates an object from its surroundings. 
+Global-contrast based methods have advantages over local-contrast based techniques as they generate excessive saliency values at their object boundaries. 
+In global feature consideration, similar saliency values are disseminated in similar regions leading to generate high saliency cost. 
+Cheng et al. proposed a color histogram as the global-contrast and calculated the weighted sum of color difference for every region with all other regions of the same image [23] . 
+ Harel et al. [49] presented a global-based saliency-detection method based on graph theory. 
+ Zhai and Shah [50] computed the saliency score by calculating the sum of the color difference of each pixel with all other pixels. 
+Achanta et al. [51] presented a frequency-tuned model that estimates pixels level saliency score by directly computing the color difference from its average image color. 
+ Perazzi et al. [48] measured the global-contrast by applying the uniqueness of the element and the spatial distribution of the image. 
+Goferman et al. [52] proposed a patch uniqueness method for saliency estimation by considering global contrast with respect to other patches. 
+ Yan et al. [53] introduced a hierarchical saliency-detection approach to address the small-scale changes in the high contrast structure. 
+Shen et al. [54] introduced a low-rank recovery technique to add lowlevel visual structures with high-level priors for saliency detection. 
+ Imamoglu et al. [55] used the wavelet transform to produce multiscale structures that curb local contrast with global saliency. 
+Perazzi et al. [48] applied Gaussian filters to compute the global uniqueness and spatial distribution for salient object detection. 
+Though adequate research has been carried on global priors, however, it still has weaknesses in capturing the semantic information. 
+C. Saliency detection based on center-prior
+The primitive center-prior is actually based on the idea that a salient object frequently lies close to the middle of the image [53, 56, 57, 44, 43] . 
+The center-prior tries to highlight the center region or combines with other cues to highlight the salient region/object as a spatial feature during saliency detection. 
+However, we know that the salient object does not appear every time in the image center. 
+To conquer this drawback, Xie et al. [57] utilized a convex hull of interest points to predict the coarse center of the salient object. 
+ Jian et al. [35] used perceptual directional patches based on a discrete wavelet frame transformed to a fixed position of the salient object. 
+D. Saliency detection based on backgroundnessprior
+Backgroundness prior [58, 9, [59] [60] [61] deems the narrow border as a background region of the image. 
+The saliency score can be calculated as the contrast against the background by considering the background seeds as a reference. 
+Jiang et al. [58] offered a saliencydetection method by using absorbing Markov Chain, in which superpixels are the transit and absorbing nodes around the center and border of the image. 
+ Li et al. [9] proposed a saliency-detection scheme based on dense and sparse reconstruction errors by using image boundaries as background templates. 
+ Wei et al. [60] constructed an undirected weighted graph and estimated the saliency value as the shortest distance to the background. 
+ Yang et al. [61] proposed a twoscheme saliency computation model by performing a manifold ranking approach on the basis of an undirected weighted graph by considering the relevance score of each side in the background queries. 
+Saliency detection may fail based on pseudobackground, specifically when the item attaches the boundary. 
+Boundary connectivity prior [23, 18] is used to resolve this problem. 
+Naturally, the background is more connected to the border than any salient object. 
+ Zhu et al. [18] used this idea to find the boundary connectivity score by estimating the length of the image border with respect to the spanning area of the salient region. 
+Recently, a saliency-detection model based on background seeds by object proposals and extended random walk is proposed [38] . 
+E. Saliency detection based on objectness prior
+Beyond these techniques, objectness prior can also be used to assist salient object detection by using object proposals, which was introduced by Alexe et al. [62] to measure the probability value that there exists a whole object by assessing score of an objectness for every random window of the image. 
+Chang et al. [63] presented a computational scheme by combining the regional saliency and objectness into a graphical saliency. 
+ Jiang et al. [64] computed regional objectness based on average objectness value of its all regional pixels. 
+According to the objectness prior, Jia and Han [65] calculated the saliency score for each region and then compared these to the soft foreground and background. 
+To connect objectness with the saliency score, local saliency is calculated by randomly taking a great number of sampling windows [66] . 
+For images of complex scenes, Li et al. [67] proposed a three-centerbiased objectness measure. 
+They proposed a cotransduction approach to fuse boundary superpixels and objectness labels with each other. 
+Moreover, Jiang et al. [64] computed the saliency score by non-linearly fusing the scores of uniqueness, objectness, and focusness. 
+F. Saliency detection based on Bayesian framework
+Regarding saliency computation, the Bayesian model [57] is presented for finding salient objects by approximating the pixel x posterior probability as the foreground in the image. 
+For saliency prior calculation, the interest pixels are estimated via a convex-hull function, which splits the image into inner and outsides regions and then obtains a rough estimation score for foreground and background. 
+ Liu et al. [68] used an optimization model based on a Bayesian framework for saliency detection by roughly estimating a convex-hull to classify the input image into potential foreground and pure background regions. 
+To generate a saliency map, a common Linear Elliptic mechanism with Dirichlet boundary is presented using these cues to model the diffusion of the seeds to other regions. 
+Table 1 shows some representative methods of visually heuristic-based models using different cues/priors. 
+G. Discussion
+The above-discussed priors are the most common priors used in the heuristic-based saliency detection models. 
+There are some other traditional techniques also introduced for saliency detection such as frequency domain analysis [51] , cellular automata [76] , sparse representation [9] , random walks [59] , low-rank recovery [77] , compactness prior [78] and orientation prior [12] . 
+These traditional-based approaches for salientobject-detection consist of intrinsic cues, which aim to withdraw different cues from the given input image by In this overview, based on common priors/cues, our classification only specifies the supremacy of the priors, because a model can consist of the single or the combination of different priors. 
+The local and global are the most frequently used uniqueness saliency priors for saliency detection [235] . 
+The traditionally heuristic-based approaches for saliency detection have got a great achievement in the field of computer vision, but still, it fails in some spatial cases, especially when the image contains a very complex scene, low contrast (e.g. 
+underwater images) and interlaced objects. 
+To overcome these problems, the learning-based approaches (supervised learning, semi-supervised learning or unsupervised learning-based approaches) are applied which we will introduce in the next section. 
+2.2.2 Learning-based saliency detection:
+All of the above-mentioned methods which we studied among traditional-based approaches are using intrinsic low-level cues and based on unsupervised techniques, and these techniques are sometimes insufficient to detect accurately salient targets especially when the image is complex and shares common visual features. 
+To tackle these issues, learning-based methods with training data are utilized to find a salient object in the complex background image. 
+A. Classic Learning-based saliency detection methods
+These are supervised or semi-supervised learning based saliency detection methods, also called data-driven approaches, in which high-level features and supervised information are integrated to enhance the degree of accuracy for saliency maps. 
+Judd et al. [79] proposed a model for Eye-fixation-prediction via a Support Vector Machine (SVM) classifier based on a training dataset including fixation locations of fifteen viewers. 
+In [24] , Liu et al. presented a binary saliency estimation scheme based on a conditional random field (CRF). 
+ Yang et al. [80] proposed a method that trains a Conditional random field (CRF) and a discriminative dictionary for saliency detection. 
+The designed method includes a layered structure starting from the top-down manner, which is trained under structured supervision and then followed a max-margin mechanism for efficient learning. 
+In [81] , Borji et al. integrated low-level features (e.g., orientation, color, and intensity) with high-level visual-features (e.g., humans, faces and cars, etc.) to train a direct mapping approach by means of AdaBoost classifier for eye fixations. 
+ Wang et al. [82] proposed a method from multiple instances learning, where low-level, mid-level and high-level features are integrated for salient object detection. 
+ Jiang et al. [43] proposed a model of saliency detection as a regression structure and then trained a regression forest classifier to generate saliency values. 
+In [91] , Lu et al. presented a model and trained it to learn optimal seeds, and then these seeds are propagated through a diffusion process. 
+Tong et al. [91] [35] put forward a salient-object-detection model via bootstrap learning technique, instead of training only a classifier in a large dataset. 
+They also train a group of weak SVMs in order to obtain a strong classifier by incorporating the weak classifier through the multi-kernel boosting method. 
+As the classic learning-based methods utilize prior knowledge and occasionally outperform the traditional hand-crafted feature-based saliency-detection techniques, these methods boost the performance of saliency detection. 
+Owing to the classic learning-based approaches are still hand-crafted features, which may degrade the performance of the models if they are not carefully collected. 
+But, recently the development of CNNs-based approaches turned the trend of researchers to deep-learning approaches instead of classical machine learning algorithms, due to their tremendous performance. 
+B. Deep-Learning based saliency detection models
+In this section, we introduce Deep-Learning based saliency detection models, especially CNNs and FCNbased based approaches. 
+Convolutional-Neural-Networks (CNNs) [21] has attracted great attention from researchers for its functionality in representing high-level semantics and has been successfully applied in many computer vision problems [22, 83] . 
+Recently, CNNs [84, 85] has also shown its effectiveness in the field of saliency detection and has the capability to capture the most salient regions without prior knowledge. 
+Generally, saliency-detection approaches established on CNNs can be classified into two basic classes: (1) regionbased models, and (2) FCN-based (i.e., pixels-based) models, according to their processing with input images. 
+The region-based approaches divide the input images into multi-scale or smaller regions. 
+Then, CNN is utilized to extract the high-level features of these small regions and then input to multi-layer perceptrons (MLPs) to get the saliency value of each small region. 
+The region-based models achieved a good performance against traditional state-of-the-art models, however, these models can't persevere the spatial information due to the segmentation of small regions. 
+To overcome this demerit, a Fully Convolutional-Neural-Network (i.e. 
+FCN-based approach) is designed, also called endto-end models by predicting saliency map directly with the end-to-end network. 
+Wang et al. [86] developed deep networks for saliency computation by combining shape, texture and contrast information from the local regions of the input image. 
+In the global search stage, a list of candidate object regions is created via an object proposal method [87] . 
+In [88] , Lee et al. proposed a unified deep learning framework for saliency detection by utilizing high-level and low-level features of the image. 
+The VGGNet [89] is trained to extract the high-level features and then the low-level features are integrated to identify the salient regions. 
+He et al. [84] proposed a region-based model to learn feature representations from superpixels. 
+It can reduce the computational cost as compared to pixel-wise CNN. 
+Zou et al. [90] proposed a hierarchical-related feature (HARF) framework for saliency detection, which integrates the basic features from regions using a multi-level deep learning network. 
+ Kim et al. [91] proposed a two-bran CNN based saliency-detection model by considering the coarse representation and fine representation. 
+A number of region candidates are generated through selective search [92] method and then taken as inputs to the CNN. 
+ Wang et al. [93] proposed a fast R-CNN based multi-scale mask framework for saliency detection, which segments the input image into multiscale regions and an edge-based propagation approach is used to refine the saliency map. 
+In [94] , Kim et al. proposed a CNN model to estimate the saliency values of each image patches/region. 
+Li et al. [95] utilized both low-level features captured through hand-crafted methods and high-level features by using CNNs methods to enhance the saliency accuracy. 
+In this model, candidate bounding boxes with interior region masks are produced by using a selective search method [92] . 
+ Li et al. [85] captured deep features from multiscale regions for saliency detection. 
+And a superpixel refinement scheme is utilized to obtain an enhanced spatial coherence result. 
+ Zhao et al. [96] introduced a multi-context deep learning model, which captures the local and global scale features from the given superpixels to predict the corresponding saliency value of each region. 
+In [97] , Hariharan et al. presented a hypercolumn approach for salient object segmentation, and the features of different type layers are fused for further classification purposes. 
+ Liu et al. [97] proposed a hierarchically refine scheme which gradually produces a saliency map by exploiting the VGG net to produce a global coarse prediction. 
+In [98] , a refinement subnetwork recurrent convolutional-layers (RCL) are designed to fine-tune the coarse-level prediction map into fine-level saliency map. 
+The recent advanced CNNs saliency-detection frameworks have gotten considerably better results than earlier hand-crafted features methods. 
+Furthermore, the CNNs extracted features comprises more high-level features because these CNNs are typically pre-trained for visual recognition activities on very large datasets. 
+However, the Region-based CNNs are functioned at the segment-based or patch level rather than utilizing pixel-level, where each pixel is basically allocated the saliency score of its enclosing segment. 
+As a result, it gives a blurred saliency map that lacks the fine details of the salient objects and their boundaries. 
+Moreover, all the segmented patches or regions of the images are processed as an independent sample for classification purposes; even they may overlap each other. 
+This redundancy causes a significant increase in computation as well as requires more space during training and testing. 
+Furthermore, the region-based CNNs models cannot preserve the contextual information well. 
+Thus, to overcome the shortcomings of region-based CNNs, the well-known end-to-end based Fully Convolution Network is adopted, which predicts pixel-wise saliency maps. 
+As we know that the region-based CNNs techniques can't well preserve the contextual information of the salient object because CNN is operated independently for each image patches or regions. 
+To dispose of the above issue, Fully-Convolutional-Networks (FCNs) [22] operates on pixel-levels instead of regions or patches level. 
+FCNs based saliency-detection techniques can eliminate problems such as vague predictions over the blurriness boundaries of the salient objects. 
+FCNs-based models for salient object detection also have drawn the attention of the researchers due to its tremendous performance. 
+Long et al. [22] introduced an FCNs based saliency-detection model, which is trained pixels-to-pixels by presenting the meaningful information obtained by deep and coarse layers. 
+ Li et al. [99] presented a model with a spatial pooling stream (SPS) and a pixel-wise fully convolutional stream (FCS) to generate a saliency map. 
+ Tang et al. [100] used the deeply supervised net [101] and designed a holistically-nested edge detector (HED) [83] for saliency detection. 
+In [102], Tang et al. proposed a saliency-detection scheme via fusing both pixel-level CNN and regionlevel CNN saliency prediction. 
+ Kruthiventi et al. [103] proposed an incorporated deep architecture for fixation prediction and salient object detection by fully connected CRF [104] . 
+In [105] , the authors designed a recurrent attentional convolutional-deconvolution (RACDNN) approach for saliency detection. 
+In RACDNN, a segment of the input image is chosen in each time-step by a spatial transformer [106] . 
+ Zhang et al. [107] proposed a saliency-detection method based on CNNs and a multi-level amalgam framework. 
+The Deeplab [108] scheme is employed to get the high-level features, and a multi-scale binary-pixel-labeling framework is also employed to recover spatial coherency. 
+ Li et al. [109] 
+Discussion:
+As compared to region-based CNNs models, FCNs based models are the end-to-end based CNNs models utilizing pixel-level values for predicting saliencymaps, and hence, also called pixel-to-pixel CNNs models. 
+The FCN-based approaches are very efficient and overcome the limitation of region-based CNNs models. 
+It can also preserve the contextual information in a very good manner and hence, provide a more robust result. 
+As region-based CNN models use a separate network for utilizing local and global features, the FCN-based models learn local and global features in one network. 
+While the shallower layers provide global information and more details about edges of the object, while the deeper layers provide the highsemantic, local and more meaningful information. 
+These FCN-based networks are mostly pretrained/learned on ImageNet dataset [128] for image classification purpose, and these learned models can be then fine-tuned for multiple purpose (e.g., object detection [129] , object-localization [130] , and saliency detection [96, 122] . 
+The pre-trained models minimize the training cost and provide more sophisticated results than training from scratch. 
+Furthermore, the FCN models contain a stack of different types of layers, which can perform a different type of function, and hence, provide structure-wise flexibility and diversity than previous region-based CNNs models. 
+A brief summary of deep learning-based models is shown in Table 2 , and a visual comparison of some conventional heuristic-based and new learning-based methods is shown in Figure 7 . 
+Although Deep learning techniques, especially FCNs based methods, have achieved a very great performance, yet it fails in many circumstances that need to improve in the future. 
+For example, it needs improvements in low-contrast images, which have more common foreground and background similarity, transparent objects, and images that contain complex backgrounds. 
+Similarly, the repetition of poolings and strides operations in FCNs minimize image resolution and degrade the performance of the models. 
+more time and large memory is also a challenging issue for these deep models. 
+Also, these methods require a large amount of training data. 
+To resolve these issues, there are several different types of CNN-based architectures proposed in recent years. 
+Some approaches have shown tremendous response and need to be further explored in the future. 
+For example, multi-scale and multi-level deep networks can utilize the features at different layers by using fusion, skip-connections, and short-connections among different levels. 
+Similarly, the encoder-decoder architecture is the most promising approach and has shown a great performance in different classification and segmentation tasks. 
+In these types of methods, the high-level features are back-propagated to lower-layer and making a stronger union of multi-level features. 
+Another good approach for the promising result is to use ResNet [131] which is a deep network and can perform the complicated task very well. 
+ResNet is more powerful than VGGNet [132] . 
+The fusion of different cross-models also can boost performance. 
+A standard training-loss function can also boost performance and require more attention in the future. 
+Similarly, the embedded applications such as mobiles, robotics, autonomous driving, etc., need a lot of research in the salient object-detection area to reduce time, memory space and energy consumption 
+2.3 RGBD saliency detection
+RGBD saliency detection is an emerging topic and still has a large research gap for improvements. 
+Dissimilar from 2D-image saliency detection methods, the depth cue has to be incorporated in saliency detection for 3Dimages. 
+RGBD saliency detection methods utilize color information and depth cue at the same time to identify the salient-object. 
+There are commonly two ways to incorporate the depth cues with 2-D images[133]: (1) Depth feature-based methods [134] [135] [136] [137] [138] [139] , which aim to incorporate the depth facts as an additional material along with color measurements. 
+(2) Depth-measure based methods [140] [141] [142] [143] , which capture the comprehensive information from the depth cue, such as shape and structure via utilizing designed Depthmeasures. 
+These are the hand-crafted-features based methods with depth cues to detect a salient-object in an image. 
+Various studies have worked on saliency detection for 3D multimedia content. 
+ Lang et al. [134] perceived salient-objects by incorporating global-context depth priors into 2D models. 
+ Ju et al. [135] presented the RGBD saliency process created on anisotropic centersurround variance, in which saliency is estimated as how much an object is different from its surroundings. 
+In [139], Fang et al. extracted color, texture, luminance, and depth feature from the RGBD based images to estimate the contrast feature maps. 
+Then, the combination and improvement methods are exploited to get the resultant 3D saliency-map. 
+ Song et al. [136] utilized the depth information as a regional feature for computing low-level contrast-based saliency, and also used as a weighting feature for measuring mid-level saliency. 
+Then high-level location priors are applied to build the high-level saliency-map. 
+In the last stage, a multiscale discriminative saliency fusion technique is applied to combine the multiple saliency-maps and get the concluding saliency output. 
+Furthermore, motivated by the assessment that the salient-regions are definitely dissimilar from their local and global surroundings in the depth feature map, a "depth contrast" is a general depth property to be calculated. 
+For this purpose, Niu et al. [138] computed global-contrast with domain knowledge to estimate the stereo saliency. 
+In [137], Peng et al. proposed a multicontextual contrast framework for calculating depth saliency by considering the contrast-prior, global uniqueness, and background-prior to the depth-map. 
+Then a multi-level RGBD saliency approach is exploited to fuse the low contrast features, mediumlevel local alliance, and high-level prior techniques. 
+ Ju et al. [140] proposed a depth-aware framework for saliency detection by applying an anisotropic centersurround difference (ACSD) measure, Furthermore, they built a huge dataset for stereo saliency detection, which contains 1985 stereo images and estimated depth-maps. 
+Coalescing the ACSD measure method with color saliency-map, In [141], Guo et al. proposed a salient-object-detection model for RGB-D images established on evolution strategy. 
+It is a re-iterative generation process to enhance the early saliency-map and produce the final output. 
+As the backgrounds include the regions that are extremely mutable in depth-map, some high contrast background regions might raise false-positive. 
+To get a ride over this disturbing, Feng et al. [142] used a Local-Background-Enclosure measure (LBE) framework to straightly extract a salient region from depth-map, which calculates the ratio of object margins located in frontal of background. 
+ Wang et al. [143] introduced a multistage salient-object-detection scheme for RGBD images by joining the Minimum-Barrier Distance transform saliency-map and multi-layer cellular automata-based saliency-map. 
+ Recently, 37] is also applied in RGBD saliency detection to learn more discriminatory RGBD features. 
+In [144], Qu et al. proposed a CNN model for RGBD saliency detection. 
+They combined the low-level saliency features such as local-contrast, global-contrast, spatial-prior and background-prior and generated coarse saliency vectors. 
+These vectors are then combined with depth modalities and fed into CNN to train it from scratch to produce the RGBD hyperfeatures. 
+ Han et al. [145] proposed a two-stream latetime fusion structure to combine RGBD deep features. 
+A stage-wise approach is followed to train the network and obtained optimistic performance. 
+Similarly in [37] , Wang, et al. proposed RexNet which produces end-toend saliency-map with a sharp-edged object. 
+In this method, first, the image is divided into two independent segments: edge regions and superpixel regions. 
+The network then produced end-to-end saliency score for these regions, and the context in multiple layers are combined with regional saliency scores. 
+The proposed model is then extended to RGBD saliency detection by applying depth refinement. 
+ Chen et al. [146] proposed an end-to-end RGBD salientobject-detection network, which is correspondentaware for combining cross-modal and cross-level features. 
+The presented cross-modal connections and level-wise supervisions clearly motivate the capturing of complementary facts from the counterpart, and thus, growing fusion capability by decreasing fusion uncertainty. 
+In 
+Discussion:
+Currently, there are three ways to capture the depthmap for 3D-images: (1) structured light technique [149] are used to extract the depth information by the variation of a light signal produced by the camera. 
+This is a good technique but mostly sensitive to illumination. 
+binocular imaging) [151], captures two photos by using two cameras at different positions and finds the distance of the object through triangular rules. 
+This method has a low cost but requires post-processing steps. 
+So, it is true that RGBD images need further research on how to get good quality depth information and then how to utilize it in a proper way because the improper use of the depth information leads to performance degradation. 
+Figure 3 shows some different conditions of depth-maps, and 
+2.4 Co-Saliency-Detection
+Co-saliency-detection is the process that tries to discover the most common and salient-objects from a given group of images. 
+For this purpose, the interimage correspondence feature is used as a simple attribute check to distinguish the shared objects (attributes-wise) from all other salient-objects. 
+The low-level or high-level features are first calculated for every image in the sequence to obtain a co-saliencymap. 
+The low-level features are the heuristic characteristics of an image, represent color, texture, and luminance, etc. while the high-level features represent the semantic information obtained via deep learning techniques, two types of models are utilized to extract the intra-image and inter-image features for cosaliency detection. 
+The intra-image saliency models are used to extract a feature from an individual image, and the inter-image saliency models are used to extract the features from a group of images. 
+For intra-image cosaliency, the common saliency detection methods can be utilized, however, the inter-image models use different types of techniques, such as similarity basedmatching, low-rank based analysis, clustering, and method of propagation. 
+After calculating these two types of models, a fusion scheme is utilized to incorporate these models and obtain a final cosaliency-map. 
+Co-saliency-detection is often nearly correlated to the notion of a co-segmentation scheme that plans to segment most identical objects or regions from multiple images [152] . 
+As indicated in [153] , there are three main variations between the co-saliency process and the co-segmentation process. 
+First, Co-saliencydetection approaches focus only on encountering the salient-objects that are common, while on the other hand similar non-salient parts of the background can also be considered in co-segmentation methods [154, 155] . 
+Second, a few co-segmentation approaches, e.g., [156] , want user response to lead the process of segmentation in a vague situation. 
+Third, salientobject-detection frequently performs as a preprocessing step, and hence more real and efficient approaches are favored than co-segmentation approaches, particularly over a huge number of images. 
+The traditional-based methods are basically the earliest and the simple methods for Co-saliencydetection by using hand-captured co-saliency features for scoring each pixel/region in the image group. 
+Generally, these are low-level methods that are comprised of four basic components containing preprocessing, feature extraction, applying low-level cues, and weighted combination. 
+ Chang et al. [157] proposed a fully unsupervised method to resolve the co-segmentation problem. 
+They produced an optimized CRF model by establishing a co-saliency prior to the clue about conceivable foreground locations to substitute user input data and a unique global-energy term to get the co-segmentation procedure efficiently. 
+ Tan et al. [158] presented an autonomous Co-saliency-detection scheme that originated on the similarity matrix, which measures the co-saliency process by using the bipartite superpixellevel mechanism of graph matching across the set of image pairs. 
+ Fu et al. [153] presented a cluster-based Co-saliency-detection approach by utilizing the global contrast and spatial distribution cues on a single image, and use the corresponding cues over a group of images to find the saliency co-occurrence. 
+ Li et al. [159] presented a co-saliency model by utilizing a low-rank matrix recovery scheme for computing intra saliency detection and a region-level fusion scheme. 
+The region-level fusion scheme utilizes the similarities that exist among different regions and the global uniformity measures over the image set. 
+The pixel-level refinement scheme is utilized to measure the similarities between pixel and region as well as their object priors. 
+ Ye et al. [160] proposed a saliency detection framework based on object discovery and recovery using gross similarity matching. 
+They first generated an exemplar saliency map by discovering the consistent exemplars for co-salient objects. 
+Then a local and global recovery of co-salient object regions, foci of attention area and border connectivity of the regions are exploited to create final co-saliency maps for all corresponding image set. 
+ Li et al. [161] introduced a saliency-guided co-saliency detection scheme, where the first step recuperates the co-salient chunks, lost in the single saliency map by using the efficient manifold ranking scheme, and the second step extracts the correlated relationship via a ranking scheme with different types of queries. 
+ Ge et al. [162] proposed a two-stage propagation method for cosaliency detection, where the inter-saliency propagation stage is exploited to recognize shared features and build the pairwise shared foreground cue maps, and the intra-saliency propagation stage is utilized to suppress the background locations and refine the processing of the first stage. 
+ Song et al. [163] proposed an RGBD Co-saliency-detection model by using bagging-based clustering. 
+The candidate object regions are created by utilizing region presegmentation and RGBD single saliency maps. 
+Then a clustering via feature bagging technique is executed recurrently to compute various weak co-saliency measures based on the cluster level. 
+Finally, an adaptive fusing multiple (WCS) map is utilized to evaluate the clustering quality. 
+In [164], Huang et al. designed a scheme for Co-saliency-detection by considering color feature reinforcement method, and co-saliency map are obtained by utilizing feature coding coefficients and salient foreground dictionary. 
+In [165], Cong et al proposed an energy function refinement and hierarchical sparsity reconstruction framework for RGBD co-saliency detection. 
+A hierarchical sparsity reconstruction scheme is utilized to formulate the inter-image correspondence with the help of an intra saliency map. 
+The global sparsity reconstruction framework is utilized with the ranking scheme and captures the global characteristics among the entire image via a common dictionary, and the pairwise sparsity reconstruction model is utilized to find the co-relationship among the images via a set of a pairwise dictionary. 
+Finally, an energy function is adapted to improve inter-image consistency and intraimage smoothness. 
+In [166], Li et al planned a lowrank weighted Co-saliency-detection framework through a two-stage EMR. 
+A two-stage ranking method is utilized to create multiple co-saliency maps for each input image, and then for each image, a group of variable sizes of salient regions is extracted and fused the co-saliency maps with their corresponding superpixels. 
+Then an adaptive weight for each cosaliency map is designed via sparse error matrix. 
+Finally, the co-saliency maps and their corresponding weights are multiplied to obtain the fusion results and optimized further by using Graph Cuts. 
+Recently, learning-based Co-saliency-detection methods have attracted much research attention and attained a reasonable performance, comprising deep learning, self-paced learning, and metric learning. 
+These methods directly learn the features of the cosalient-objects from a given image group, instead, relying on hand-crafted cues. 
+In [167] Zhang et al proposed a co-saliency object detection framework by introducing looking deep and looking at wide perceptions under the Bayesian framework. 
+The term looking deep aims that the high-level features are extracted by using CNN with multiple layers to discover better representation, and the term looking wide tries to detect some visually identical neighbors to effectually suppress the mutual background regions. 
+ Zhang et al. [168] proposed a self-paced multipleinstance-learning (SP-MIL) framework by integrating the MIL and SPL models, where the Multi-Instance-Learning (MIL) model specifies to train a predictor for every instance via rising inter-class differences and reducing the intra-class difference. 
+The self-paced learning (SPL) aims to progressively learn from the easy/faithful examples to more composite/confusable ones. 
+In [169], Wei et al. proposed a pixel-to-pixel based group-wise deep Co-saliency-detection framework. 
+A block of thirteen convolutional-layers are introduced to capture the basic features, and then, the group-wise properties and individual properties are extracted to specify the group-wise properties and single image properties. 
+Finally, a combined learning scheme with the convolution-deconvolution process is devised to get the co-saliency map. 
+To cope with the wide variation in the image scene, Han et al. [170] proposed a metric learning co-saliency model through a new objective function, in which metric learning aims to learn a distance metric to bring the same-class sample closer and make the different-class samples far away from each other. 
+. Figure 4 . 
+An example of Co-saliency-detection by using the iCoseg dataset. 
+The 1st row displays the input images and the 2nd row represents the corresponding ground-truth images Discussion: 
+Co-saliency-detection is an emerging topic for the research community and achieved considerable progress in the last few years, there is still a very large space for future improvement in this field. 
+Here we enlist some major issues that need development in this field: (1) image complexity, co-saliency models need considerable improvements for complex and clutter images. 
+( 2 ) if the foreground consists of different types of objects with multiple colors, then it is difficult to find only salient objects. 
+( 3 ) Co-saliency cannot perform well on large-scale data, because it contains more outliers, noise and variation ( 4 ) co-saliency models are not efficient and consume more time. 
+( 5 ) Inter-correspondence constraint needs a lot of improvements, to effectively monopolize the common attributes among multiple images. 
+A summary of cosaliency techniques is presented in Table 4 and Figure 4 , shows the common salient objects among several images. 
+2.5 Video Saliency
+Video sequences utilize the sequential feature, motion and color appearance information for the perceiving and identification of scenes. 
+In video-saliency, an object is salient if it has some repetition, motionrelevancy and some other distinctive targets in the video sequences. 
+These are the unsupervised methods exploiting the low-level cues, such as color-appearance, motion-cue, and some other prior constraints. 
+The traditional-based video-saliency methods further split into the Fusion-based Model and Direct-pipeline-based Models [133] . 
+Fusion-based models first compute the spatial saliency (i.e., spatial-cue, describe the intraframe information in each frame) and their corresponding temporal-saliency (temporal cue, represents the inter-frame association among different frames). 
+Then, the results of these two saliency-maps are combined to obtain video-saliency-detection. 
+Spatial saliency detection utilizes the center-surround, contrast-prior, background-prior, sparse re-construction and low-rank analysis to get the saliency representation in each separate frame, while the temporal saliency detection exploits the motion cue to describe the moving objects in the video. 
+ Fang et al. [172] obtained static saliency using luminance, color and texture features in a compressed domain, and get motion saliency using motion cue and then, a fusion method is utilized to achieve the final saliency-map for each video frame. 
+ Ren et al. [173] obtained a spatial saliency by using a sparse reconstruction method to detect the regions with high center-surround contrast. 
+For temporal saliency, a reconstruction process for the target patch and their neighboring overlapping patches are used to reconstruct the target patch. 
+Finally, a fusion mechanism is applied for video-saliency. 
+In [174], Liu et al. extracted superpixel-wise low-level features and frame-wise global features for spatial saliency. 
+For temporal saliency integrated the motion uniqueness of superpixels and finally fused the spatial and temporal saliency-maps by using the adaptive fusion method. 
+ Xi et al. [175] used background-prior for spatial saliency and SIFT flow and bidirectional consistent propagation for temporal saliency and fused these both saliencies by using simple addition to get the final saliency. 
+In [176], Chen et al used color contrast and gradient guided contrast for spatial and temporal saliency-maps respectively and applied a fusion method to get the final saliency. 
+The models in this class use spatiotemporal features to directly discover the salient-object. 
+ Xue et al. [177] used a low-rank and sparse decomposition scheme on video slices as a temporal feature and separated the foreground from backgrounds. 
+The spatial information is utilized to keep the completeness of the discovered motion objects. 
+ Wang et al. [178] proposed a spatiotemporal saliency approach built on the gradient flow and energy improving scheme, which is good for complicated scenes, different motion arrangements, and dissimilar looks. 
+The gradient flow field describes the salient parts by integrating the intra-frame and inter-frame. 
+ Liu et al. [179] proposed a dynamic pipeline scheme for video-saliency-detection by utilizing the graph-based motion saliency based on superpixel-level, spatial propagation, and temporal propagation. 
+ Guo et al. [180] presented the videosaliency method by computing spatial saliency and motion saliency and then applied object proposal scheme for ranking and voting, to filter non-salientregions and estimated the initial saliency. 
+Finally, initial saliency is refined by considering temporal consistency and appearance diversity. 
+In [181], Kim et al. random walk with restart is used to identify the salient-object, in which the temporal consistency and motion distinctiveness are exploited to extract temporal consistency and a quick variation is utilized as the restarting distribution of the random walker. 
+Similarly, [182] and [183] proposed a geodesic distance-based method to compute superpixel-wise saliency by using undirected inter-frame and intra-frame graphs constructed from spatiotemporal edges, appearance, and motion. 
+In summary, fusion techniques are comparatively more natural than direct-pipeline techniques. 
+Furthermore, the spatial saliency methods are image saliency methods which can provide a basis for spatiotemporal saliency and can be used directly in video-saliency. 
+Indeed, deep-learning-based video-saliency methods have demonstrated a great performance over the existing traditional-based (hand-crafted features based) methods. 
+These learning-based methods independently extract the features from each individual frame and then utilize frame-by-frame processing to calculate saliency. 
+ Le et al. [184] presented a deep learning model to extract the Spatio-temporal deep-features (STF). 
+The region-based CNN is applied to extract the local features and the global features are extracted from temporal-segments by using a block-based CNN. 
+Using the STF features, a Random Forest (RF) and Spatio-temporal CRF (CRF) are presented to achieve the ultimate saliency. 
+In [185], Wang et al. proposed a deep learning model to detect salient-objects in the video. 
+The static network generates a fixed saliencymap for every frame using FCNs and then the framepairs map and static saliency are fed into a dynamic network to generate the dynamic saliency-map. 
+ Le et al. [186] presented an end-to-end 3D Recurrent Fully-Convolutional-Network (DSRFCN3D) for salientregion-detection in video streams, which contains an encoder, decoder and refinement networks respectively. 
+The encoder network captures 3D features (both spatial and temporal information) from a feeding video block. 
+The decoder network estimates the precise saliency voxel from the 3D deep feature by gradually refining the intermediate saliency voxel through supervised learning at every hidden 3D deconvolution layer [101] . 
+On the other hand, the refinement method along with skip-connection layers and 3D recurrent-convolutionlayer (RCL) is designed to learn the relevant contextual evidence. 
+In [187] Li et al introduced an unsupervised video-saliency by using the saliency-guided stacked scheme of autoencoders. 
+First, the saliency cues captured from the spatiotemporal acquaintances at three different stages (i.e., pixel-, superpixel-and object-levels) are collected as a feature-vector of highdimension properties. 
+In the second step, the initial saliency-map is obtained by learning the stacked autoencoders by the unsupervised way. 
+At last, some postprocessing actions are applied to further enhance the salient-object and demolish the false clue., Similarly, Cong et al. [188] proposed a sparse reconstruction and propagation method to detect salient objects in video. 
+Discussion:
+To sum up, video-saliency-detection is also an emerging field for future research, as it is largely unexplored and there are still many challenges that need to be addressed. 
+The key issue in video-saliencydetection is how to abolish the background and fixed objects in order to find more relevant salient items in the video. 
+For this purpose, mostly optical flow is used, but it is not an efficient technique and also does not provide much more accuracy. 
+Recently deep learning techniques outperformed the traditional techniques, but the major issue in deep learning is the non-availability of large annotated datasets for video-saliency-detection. 
+The next key issue in the video-saliency-detection is to find robust techniques to capture the inter-frames attributes that provide a consistent appearance saliency-map for all frames, for this purpose some energy function is adapted to improve the consistency, but still, it needs further improvements. 
+Video-saliency also needs improvements, where most of the frames consist of complex backgrounds and multiple objects. 
+A video-saliency-detection summary is shown in Table 5 , and some example video-frames are shown in Figure 5Error ! 
+Reference source not found., which shows the same salient object among different frames of the same video. 
+3. Datasets and Applications
+3.1 Datasets for saliency detection:
+In this section, we presented the most common datasets used for saliency detection techniques like RGB-D saliency-detection, co-saliency-detection, and videosaliency-detection. 
+As the advancement in saliency detection techniques, more challenging datasets have been introduced to further challenge the state-of-the-art models. 
+The early datasets contain a very simple background and a single image in the foreground, having the ground-truth being annotated with the bounding-box methods, such as MSRA-A and MSRA-B [192] . 
+The recent datasets are very complex and cluttered background having more than one object, being annotated with pixel-level ground-truth annotation, Pixel-based annotation datasets carry more accurate results than bounding-box annotation. 
+For simple RGB image saliency detection, we collected a total of 10 datasets, as shown in table 6 , such as 5] , UCSB [194] , OSIE [195] , ECSSD [25] , DUT-OMRON [61] , MSRA10K [196] , ACSD [51] , and XPIE [198] . 
+There are some datasets which also hold the fixation data, collected for each image during the free-viewing process, such as Judd-A, UCSB, and OSIE. 
+The list of RGBD datasets consists of RGBD1000 [137] , NJUD [140] , DES [199] as shown in Table 7 . some example images from PASCAL challenging dataset is shown in Figure 6 . 
+For Co-saliency-detection we listed a total of 8 datasets that are used commonly, as shown in Table 8 VOS [187] and DAVIS [208] , as shown in Table 9 . 
+The DAVIS dataset is one of the frequently used and more challenging datasets, containing 50 video series along with pixel-wise ground-truth for every video frame. 
+The UVSD dataset is a new dataset and particularly designed for video-saliency-detection which contains 18 unrestricted videos with complex motion patterns and more scattered scenes, with pixelwise annotated ground-truth for each video frame. 
+An extended video-saliency-detection dataset called VOS is created, which comprises 116103 total frames that distributed in two-hundred (i.e. 
+200) video sequences. 
+This dataset contains 7467 binary ground-truth annotated frames, which is good enough to train and learn a deep learning model to capture the salientobjects in the video. 
+A dataset is the collection of data for a specific application domain. 
+Unfortunately, each dataset may suffer from different types of biases, which can affect the performance of the models. 
+For example, Torralba and Efros acknowledged three biases in the field of computer vision, called selection bias, capture bias (i.e., center-bias) and negative-set-bias [209] . 
+Selection bias occurs, when someone prefers a specific type of image during data assembling and it may produce an error because the individual prefers his own choice while violating standard rules for selection. 
+The selection bias collects more similar images in the dataset and hence, lacks variability in the dataset. 
+To avoid selection bias, it is necessary to have an independent selection. 
+The Capture bias transmits the effect of image structure into the dataset (i.e., People tend to capture the images of similar objects in a similar way), which also lack variability in the dataset. 
+For example, center-bias means that most of the captured objects lie in the center of images. 
+This type of bias makes the dataset challenging for quantitative comparison and sometimes even produces an ambiguous comparison. 
+For example, a petty saliency method that contains a Gaussian blob at the center of an image, always produce the best score than many fixation prediction methods [79 ] . 
+The Negative-set bias represents that an individual personally not like to include a particular object into the dataset, while a dataset must represent every possible thing. 
+The Negative-set-bias can disturb the ground-truth by employing the annotator's particular favorite to some particular object. 
+Hence, it is encouraged to have more varieties of images in a good dataset. 
+3.2 Applications of saliency detection:
+Saliency-detection technique is usually used in the field of image retrieval [210, 211] [43, 227] image editing and manipulating [228, 229] , human-robot interaction [230, 231] and visual tracking [36, 232, 233] . 
+3.3 Evaluation Measures
+The qualitative and quantitative evaluation techniques are the two common techniques to assess the performance of salient-object-detection models. 
+The qualitative technique visually compares the predicted saliency maps with their corresponding ground-truth masks. 
+It is the more simple technique but it has no fixed value and hence, varies from person to person. 
+On the other hand, a quantitative evaluation gives a fixed value, acceptable for each observer. 
+There are different types of evaluation techniques available in the literature for comparing predicted saliency maps with their corresponding ground-truth. 
+Here we only discuss the standard top-five techniques that consider as a standard in salient object detection. 
+All of these techniques consider overlapping regions between predicted maps and their corresponding ground-truth masks. 
+For mathematical notation, we use G for ground-truth mask and S for predicted saliency map. 
+We use | • | for both binary masks to indicate the number of entries in the mask. 
+Figure 6 . 
+Some example images from PASCAL challenging dataset. 
+The key phase in this process is the binarization of S to B. Three most frequent methods such as fixed threshold, adaptive threshold [51] and GrabCut method [235]masks are used for the binarization process. 
+2. F-Measure.
+Precision and recall cannot comprehensively estimate the excellence of the saliency map. 
+For this purpose, the F-measure method The qualitative as a harmonic weighted-mean of the Precision and Recall methods with a non-negative weight 
+whereas P is the Precision and R represents Recall. 
+the 2 value is often set to 0.3 to raise the weight of precision more than recall [51] . 
+3. Receiver-Operating-Characteristics
+(ROC) curve. 
+Similarly, true positive rates (TPR) and false positive (FPR) can be calculated by applying a fixed threshold during saliency-map binarization. 
+where and indicate the complement sets of binary mask and ground-truth G correspondingly. 
+The ROC curve is the plotting of TPR values against FPR values by trying all probable thresholds. 
+4. Arear under the ROC curve (AUC).
+As the name indicates, it is computed as the area under the ROC curve. 
+The performance of AUC over a perfect saliency method will get exactly 1 score, while the performance of AUC at random guessing will get around about 0.5 scores. 
+5. Mean-Absolute-Error (MAE).
+The above overlap-based assessment measures actually do not focus on the assignment of the true negative saliency value (i.e., the pixels marked correctly as nonsalient). 
+They prefer those approaches that can effectively allocate high saliency values to salient pixels but mostly they neglect the detection of nonsalient-regions. 
+Furthermore, for some applications [223] , the saliency-map sometimes requires more consideration than its binary mask. 
+Hence, Meanabsolute-error (MAE) is an easy and reliable assessment metric for saliency-map. 
+It is calculated as the average of pixel-wise absolute error between the saliency-map S and the corresponding ground-truth G, normalized to [0, 1], which is defined as follows: 
+where H and W denote the height and width of the image respectively. 
+ [9] , (d) FES [69] , (e) GR [72] , (f) MC [58] , (g) ELD [88] , (h) PiCANet[236], (i) NLDF [70] , (j) RAS [118] . 
+3.1. Discussion and Future recommendations:
+In this review, we comprehensively presented a survey on salient object detection and discussed the conventional-heuristic-based approaches and new learning-based approaches. 
+We also discussed the corelated areas such as fixation prediction, RGBDsaliency detection, Co-saliency-detection, and videosaliency-detection. 
+A visual comparison of some example heuristic and learning-based models are shown in Figure 7 , which shows clearly that deep learning-based models outperform in the state-of-theart models. 
+This review provides depth insights and guidelines for upcoming progress in saliency detection. 
+The heuristic-based approaches follow the intrinsic cues, due to which these methods are working well in a specific environment and cannot generalize well in other scenarios. 
+Recently, deep learning-based models have shown great performance over the conventional heuristic-based methods. 
+Deep learning-based methods follow extrinsic cues and can collect high-level semantic knowledge from large datasets, and hence have the power to generalize well in different scenarios. 
+These methods also called task-driven methods, because they can learn features from a specific dataset and can effectively apply the learned knowledge for other environments. 
+Although the deep-learning methods outperformed all conventional heuristic-based methods, yet they have many issues that need to be tackled in the future. 
+the following are some considerable issues that need to be tackled in the future: 
+Needs large-data for training: The learning-based techniques require a large number of data for extracting features during training, it is very difficult to have a large number of data in different environments. 
+To tackle this issue, different augmentation techniques have been proposed for creating false data. 
+however still, the performance is not as the original dataset and needs further efforts. 
+The other option is to design such a model that can be trained on little data. 
+Encoderdecoder models require fewer data comparatively and require further exploration. 
+Dataset bias: Dataset bias also can degrade the performance of the if the collector violates the standard rules. 
+For this purpose, proper knowledge will be needed to collect the dataset. 
+Feature-loss due to pooling and strides: In learningbased methods, the resolution of the image becomes smaller and smaller due to different pooling and stride operation and causes to lose important features during training. 
+For this purpose, different multi-scale, multilevel, skip-connection, short-connection networks are encouraged to recover the loss features. 
+Manual-annotations:
+The learning-based methods require manual-annotations for each corresponding instance in the dataset. 
+It is very difficult to generate large data with the corresponding pixel-level annotation. 
+For this purpose, unsupervised-learning is encouraged in the future. 
+Unsupervised-learning methods are most time-efficient than supervisedlearning approaches. 
+Complex background: CNNs techniques achieved great success in simple background images. 
+However, the complex and clutter background images still require much improvement in salient-object detection. 
+As we know, saliency detection has vast applications and attracted much attention from researchers. 
+For this 1. 
+Instance level salient object detection: the recent approaches of salient-object detection are objectagnostic (i.e., the salient regions do not split into objects), however, the humans have the talent to split the salient or stimuli objects at instance-level. 
+Instancelevel saliency approach can be used in several applications, such as video compression and photo editing. 
+2. Flexible
+3. Collaboration among different modules:
+In computer vision, the collaboration and sharing of information among common tasks such as object segmentation, object-detection, object-tracking, and object-categorization strongly boost each other. 
+Similarly, the contextual and prior information from other modules can also boost the salient object detection. 
+Especially, exploring the association between salient object detection, fixation prediction, and semantic perception models can benefit each other. 
+4.
+Extending the salient object detection behavior into other fields: apart from image and video, the visual-saliency concept can be extended into speech recognition, auditory perceptions, touch behavior, and scene-captioning. 
+5. 3D
+Object Detection: RGB-D images can improve the performance of salient object detection, however, there is very narrow work in this field. 
+6. Co-saliency and video saliency need more advanced techniques:
+In the case of Co-saliency detection, the inter-image correspondence technique is used to find the common salient objects among a group of images. 
+For this purpose, different techniques have been adopted. 
+However, it needs much consideration in the future. 
+similarly, in video saliency, the inter-frame correspondence techniques also need further exploration to find a robust association among multiple frames for salient-object detection. 
+7. Interpretable deep learning Models:
+Inerpretablity techniques can help in understanding the predictions of a specific model in a specific scenario. 
+By using these approaches, we can learn which type of dataset, model, and hyper-parameters can perform excellently in salient object detection. 
+8. Emotion-based saliency detection:
+The combination of visual-based saliency models with emotion-based models can be used to extend the performance of saliency detection. 
+These models find the relationship of saliency with emotion, that how images can invoke human emotion. 
+Figure 1. 
+An example of salient-objects and their corresponding ground-truth. 
+Figure 2. Examples of Human eye-fixation-prediction. 
+[147], Wang et al. proposed a twostream CNN by utilizing a fusion strategy. 
+Similarly, in [148], Liu et al. proposed a fusion-based two-stream network for RGBD saliency detection. 
+The depth structure information help in the foreground and background identification. 
+Then a propagation-based module is used for the identification of object boundaries. 
+Figure 3. 
+A 3D saliency conditions in RGBD images. 
+(a) Color-depth saliency: both RGB images and depth images are salient. 
+(b)Color saliency: only RGB images are salient. 
+(c) Depth saliency: only depth images are salient. 
+Figure 5. 
+A video-saliency-detection example on the DAVIS dataset. 
+The first row represents the original video frames of input data and the second row represents the corresponding ground-truths. 
+Figure 7. 
+A visual comparison of saliency-maps. 
+(a) Original image, (b) Ground-truth, (c) DSR 
+Figure 8. 
+The MAE score graph for non-learning and learning-based models. 
+The * means the heuristic-based salient object detection models. 
+following research trends may play an important role in the future. 
+presented a multi-task CNN 
+A brief summary of deep-learning-based saliency detection models. 
+Zeng et al. merged three independent CNNs for global-features, local-features, and spatial consistency. 
+Feng et al. [120] designed Attentive Feedback and Boundary-Enhanced Loss for extracting structure-wise and boundary-wise features. 
+Similarly, in [121], Qin et al. proposed a predict-refine architecture with an encoder-decoder module to get a saliency map with more refine boundaries. 
+A brief summary of RGBD saliency detection. 
+A brief summary of Co-saliency detection. 
+A brief summary of video-saliency detection Models. 
+A list of salient-object detection datasets for RGB. 
+A list of salient-object detection datasets for RGBD Images. 
+A list of Co-saliency-detection datasets. 
+Network Architecture: it is verified that the deeper CNNs model can capture more accurate salient objects based on their high-level semantic knowledge. 
+For this purpose, deeper networks like ResNet can be the more preferable choice in the future. 
+Similarly, to avoid features losing, encoder-decoder and multi-level network can perform well in model selection. 
