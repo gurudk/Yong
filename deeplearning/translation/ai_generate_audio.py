@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import torch
 from melo.api import TTS
@@ -5,7 +6,7 @@ import re
 
 torch.cuda.empty_cache()
 
-tr_file_path = "paper/test_tr_output/A brief survey for visual saliency detection_cn.txt"
+tr_file_path = "paper/test_tr_output/On the Opportunities and Risks of Foundation Models_cn_clean.txt"
 
 
 def generate_cn_audio(file_path):
@@ -17,12 +18,12 @@ def generate_cn_audio(file_path):
 
     tr_file = open(tr_file_path, 'r')
     lines = tr_file.readlines()
-    for i in range(236, len(lines)):
+    for i in range(0, len(lines)):
         str_line = re.sub(r"[\s]+", "", lines[i])
         if str_line != "":
             # Speed is adjustable
             speed = 1.0
-            device = 'cpu'  # or cuda:0
+            device = 'cuda'  # or cuda:0
             model = TTS(language='ZH', device=device)
             speaker_ids = model.hps.data.spk2id
 

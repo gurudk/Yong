@@ -4,6 +4,7 @@ import time
 import requests, uuid, json
 import re
 import random
+import os
 
 from xml.dom import minidom
 from pathlib import Path
@@ -23,7 +24,8 @@ def get_source_text(file_path):
 
 
 # Add your key and endpoint
-key = os.getenv("ms_api_key")
+key = os.environ["ms_api_code"]
+# key = "093fd9512d994764beb3dbfebff5c55f"
 endpoint = "https://api.cognitive.microsofttranslator.com"
 
 # location, also known as region.
@@ -47,13 +49,13 @@ headers = {
     'X-ClientTraceId': str(uuid.uuid4())
 }
 
-file_path = "paper/test_tr_output/Deformable DETR.txt"
+file_path = "paper/test_tr_output/On the Opportunities and Risks of Foundation Models.txt"
 base_name = Path(file_path).stem
 out_txt_file = "paper/test_tr_output/" + base_name + "_cn.txt"
 
 contents = get_source_text(file_path)
-print(contents)
-print(len(contents))
+# print(contents)
+# print(len(contents))
 
 tr_results = []
 for i in range(0, len(contents)):
@@ -64,10 +66,9 @@ for i in range(0, len(contents)):
 
     request = requests.post(constructed_url, params=params, headers=headers, json=body)
     response = request.json()
-
-    tr_results.append(response[0]["translations"][0]["text"])
     print(response)
-    time.sleep(random.uniform(0.01, 0.1))
+    tr_results.append(response[0]["translations"][0]["text"])
+    time.sleep(random.uniform(0.01, 0.05))
 
 save_contents(out_txt_file, tr_results)
 

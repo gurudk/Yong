@@ -1,5 +1,6 @@
 from xml.dom import minidom
 import re
+from pathlib import Path
 
 
 def get_content(file_name):
@@ -72,8 +73,9 @@ def save_contents(file_path, contents):
     out_file.close()
 
 
-file_path = "paper/test_tei/Token2Token ViT.xml"
-en_text_file_path = "paper/test_tr_output/Token2Token ViT.txt"
+file_path = "paper/test_tei/On the Opportunities and Risks of Foundation Models.xml"
+basename = Path(file_path).stem
+en_text_file_path = "paper/test_tr_output/" + basename + ".txt"
 
 contents = get_content(file_path)
 

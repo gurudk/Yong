@@ -5,9 +5,10 @@ import re
 
 sounds = []
 
-file_path = "paper/test_wav/How To Do Great Work_en_clean_india"
+file_path = "paper/test_wav/Let Go of Your Labels with Unsupervised Transfer_cn"
 paper_parent = Path(file_path).parent.resolve().parent
-out_path = paper_parent.joinpath("test_merge").joinpath("How To Do Great Work_en_clean_india.mp3")
+suffix_name = file_path.split("/")[-1]
+out_path = paper_parent.joinpath("test_merge").joinpath(suffix_name + ".mp3")
 
 from os import listdir
 from os.path import isfile, join
