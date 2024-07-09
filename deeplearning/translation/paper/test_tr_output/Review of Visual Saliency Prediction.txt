@@ -1,0 +1,410 @@
+Review of Visual Saliency Prediction: Development Process from Neurobiological Basis to Deep Models
+The human attention mechanism can be understood and simulated by closely associating the saliency prediction task to neuroscience and psychology. 
+Furthermore, saliency prediction is widely used in computer vision and interdisciplinary subjects. 
+In recent years, with the rapid development of deep learning, deep models have made amazing achievements in saliency prediction. 
+Deep learning models can automatically learn features, thus solving many drawbacks of the classic models, such as handcrafted features and task settings, among others. 
+Nevertheless, the deep models still have some limitations, for example in tasks involving multi-modality and semantic understanding. 
+This study focuses on summarizing the relevant achievements in the field of saliency prediction, including the early neurological and psychological mechanisms and the guiding role of classic models, followed by the development process and data comparison of classic and deep saliency prediction models. 
+This study also discusses the relationship between the model and human vision, as well as the factors that cause the semantic gaps, the influences of attention in cognitive research, the limitations of the saliency model, and the emerging applications, to provide new saliency predictions for follow-up work and the necessary help and advice. 
+1. Introduction
+Approximately 80% of the information that humans receive every day comes from vision. 
+However, human visual nerve resources are limited [1] . 
+An information bottleneck exists in the human visual pathway. 
+For instance, the visual system receives hundreds of megabytes of visual media data every second, but the information processing speed is only 40 bits per second [2] . 
+In this process, the visual attention mechanism plays an important role [3] . 
+Among the information received in our daily lives, only a small amount of stimuli can enter the visual system for further processing at any time, thereby avoiding computational waste and reducing the difficulty of analysis. 
+The development of the Internet and the popularization of smart devices have enhanced the speed of information collection and dissemination, even reaching an unprecedented level. 
+However, if all information is indiscriminately allocated with the same computing resources, then it will lead to a waste of computing resources and excessive time consumption. 
+Knowing how to select interesting content from massive scenes for analysis and processing in the same way as human beings is therefore a very important endeavor. 
+Visual saliency prediction is a mechanism that imitates human visual attention, including relevant knowledge such as neurobiological, psychological, and computer vision. 
+Early attention models often used cognitive psychological knowledge to find information about behaviors, tasks, or goals. 
+For example, Itti et al. [4] proposed a saliency prediction model based on the bottom-up model, from which the deep learning models have gradually flourished. 
+Compared with the classic models, the performance of these newly developed models has been greatly improved, and the performance is gradually approaching the human inter-observer. 
+The significance of the research on visual saliency detection lies in two aspects: first, as a verifiable prediction, it can be used as a model-based hypothesis test to understand human attention mechanisms at the behavioral and neural levels. 
+Second, the saliency prediction model based on the attention mechanism has been widely used in numerous ways, such as target prediction [4] , target tracking [5] , image segmentation [6] , image classification [7] , image stitching [8] , video surveillance [9] , image or video compression [10] , image or video retrieval [11] , salient object detection [12] , video segmentation [13] , image cropping [14] , visual SLAM (Simultaneous Localization and Mapping) [15] , end-to-end driving [16] , video question answering [17] , medical diagnosis [18] , health monitoring [19] and so on. 
+The current research on saliency detection mainly involves two types of tasks, namely, saliency prediction (or eye fixation prediction) and Salient Object Detection (SOD). 
+Both types of tasks aim to detect the most significant area of a picture or a video. 
+However, differences exist between these two models and their application scenarios. 
+Saliency prediction is informed by the human visual attention mechanism and predicts the possibility of the human eyes to stay in a certain position in the scene. 
+By contrast, salient object detection, as the other branch, focuses on the perception and description of the object level, which is a pure computer vision task. 
+The two types of tasks asre shown in Figure 1 . 
+Numerous researchers have recently investigated SOD tasks. 
+Presumably, as a pure visual task, SOD can be more easily and directly applied to certain visual scenes, which is more driven by applications in different fields. 
+Benefiting from large-scale benchmarking and deep learning, SOD has been developing rapidly and has shown amazing achievements [20] . 
+In recent years, many researchers have made outstanding contributions. 
+Wang et al. [21] proposed a general framework using iterative top-down and bottom-up saliency inference. 
+In addition, the framework used parameter sharing and weight sharing to reduce the amount of parameters. 
+Besides, Wang et al. [22] proposed the PAGE-Net, which mainly included two modules: pyramid attention and salient edge detection. 
+With an enlarged receptive field, PAGE-Net obtained the edge information by predicting the edge of significant objects through supervised learning. 
+The model proposed by Zhang et al. [23] applied joint training to the two almost opposite tasks of SOD and COD(Camouflaged Object Detection). 
+The Dual ReFinement Network (DRFNet) proposed by Zhang et al. [24] can be directly applied to high-resolution images. 
+DRFNet consisted of a shared feature extractor and two effective refinement heads, which could obtain more discriminative features from high-resolution images. 
+However, the salient object is not necessarily the only possible salient target in the graph. 
+Other complicated factors should be considered. 
+In addition to its wide range of applications, the saliency prediction task is related to human vision itself, and it is closely related to neuroscience and psychology. 
+Consequently, saliency prediction has been widely used in interdisciplinary and emerging subjects. 
+The main contributions of this study are as follows: 
+•
+This research focused on the task of saliency prediction, analyzed the psychological and physiological mechanisms related to saliency prediction, introduced the classic models that have been affected by saliency prediction, and determined the impact of these theories on deep learning models. 
+•
+The visual saliency model based on deep learning was analyzed in detail, and the performance evaluation measures of the representative experimental datasets and the model under static and dynamic conditions were discussed and summarized, respectively. 
+•
+The limitations of the current deep learning model were analyzed, the possible directions for improvement were proposed, new application areas based on the latest progress of deep learning were discussed, and the contribution and significance of saliency prediction with respect to future development trends were presented. 
+2. Psychological and Neurobiological Basis of Visual Saliency
+Attention mechanism has always been an important subject of neuroscience and psychology. 
+In the mid-1950s, cognitive psychology gradually emerged. 
+Attention was regarded as an important mechanism of human brain information processing, and several influential attention models, such as the filter model (1958), attenuation model (1960) , and response selection model (1963) , among others, were produced. 
+Treisman [25] proposed an important model called Feature Integration Theory (FIT) to vividly illustrate the selective role of visual attention. 
+The visual process in this model was divided into a pre-attention stage and a focal attention stage. 
+Feature integration was implemented after extracting the location-related features. 
+Koch and Ullman [26] enhanced FIT by integrating the returninhibition mechanism to achieve a focus shift. 
+Moreover, on the basis of criticisms of the early FIT model, Wolfe [27] proposed the guided search model to explain and predict search results. 
+These neurological and psychological studies have provided an important basis and criteria for calculating visual saliency, such as center surround antagonism, global rarity, or maximization of information. 
+Visual saliency prediction mainly used mathematical models to simulate the human visual attention function and subsequently calculated the importance of visual information. 
+The simulation of the human visual attention system mainly used some of the important achievements in visual physiology and psychology mentioned above. 
+Notably, visual saliency prediction did not study eye movement strategies in visual attention but rather calculates the information pertaining to the different degrees of importance with respect to scenes for eye movement decision-making. 
+These studies have played a guiding and standardizing role in the subsequent development of saliency detection models. 
+3. Classic Visual Saliency Models
+The classic visual saliency model considered the psychological and neurobiological basis, and most of them were handcrafted feature models. 
+As a research basis of psychology, classic visual saliency models could be usually divided into two models according to the level of information processing: bottom-up saliency models (data-driven, task-agnostic model), and top-down saliency models (task-driven, task-specific model). 
+3.1. Bottom-Up Visual Saliency Models
+Bottom-up visual saliency models usually extract low-level features, such as contrast, color, and texture. 
+The difference between low-level features and background features strongly attract attention resources. 
+This attention prediction mechanism is involuntary and entails fast processing. 
+For example, the presence of pedestrians, vehicles, individual flowers, and beasts in an image will show strong visual saliency. 
+Among them, the local contrast model is based on the physiological and psychological principles of FIT and the center surround antagonism, and it defines a certain mechanism when selecting salient areas in an image to realize the simulation of the visual attention mechanism. 
+For example, the earliest model of Itti [4] could simulate the process of shifting human visual attention without any prior information. 
+According to the features captured from images, the model analyzed visual stimuli, allocated computing resources, selected the salient areas in the scene according to the saliency intensity of different positions, and simulated the process of human visual attention transfer. 
+Although the performance of the model was general, it was the first successful attempt from the neurobiological model, which is of great significance. 
+Since then, other researchers have contributed improvements. 
+Harel [28] changed the graph-based visual saliency (GBVS) model to the Markov random field with non-linear combination in the synthesis stage. 
+The model formed activation maps on certain feature channels, and then normalized them in a way which highlighted conspicuity and admitted combination with other maps. 
+Ma and Zhang [29] used local contrast analysis to extract the saliency maps of an image, and on this basis, Tie Liu et al. [30] used 9 × 9 neighborhoods and adopted a conditional random field (CRF) learning model. 
+Borji [31] analyzed local rarity based on the sparse coding. 
+Sclaroff et al. [32] proposed a saliency prediction model based on Boolean Map. 
+In addition, researchers have used other models to predict saliency by using local or global contrast. 
+Some of the notable examples include the pixel-level contrast saliency model proposed by Zhai and Shah [33] , the sliding windows-based model for global contrast calculation proposed by Wei [34] , the color contrast linear fusion model proposed by Margolin [35] , the frequency tuning model proposed by Achanta [36] , and the color space quantization model proposed by Cheng [37] . 
+Other researchers have used the superpixel [38] [39] [40] as the processing unit to calculate the variance of color space distribution as a means of improving the computational efficiency. 
+Some models have been based on information theory and image transformation. 
+The essence of these models based on information theory is to calculate the maximum information sampling from the visual environment, select the richest part from the scene, and discard the remaining part. 
+Among them, the Attention-based on Information Maximization (AIM) model of Bruce and Tsotsos [41] was influential. 
+The AIM model has used Shannon's self-information measure to calculate the saliency of the image. 
+Firstly, a certain number of natural image blocks were randomly selected for training to obtain the basic function. 
+Then, the image was divided into blocks of the same size, the basis coefficients of the corresponding blocks were extracted as the features of the block through Independent Component Analysis (ICA), the distribution of each feature was obtained through probability density estimation, and finally the probability density of the feature was obtained. 
+Other notable models included the incremental coding length model proposed by Hou [42] , the rare linear combination model proposed by Mancas [43] , the self-similarity prediction model proposed by Seo [44] and the Mahalanobis distance calculation model proposed by Rosenholtz [45] . 
+As for the use of image transformation models for saliency prediction, the spectral residual model proposed by Hou [46] did not examine the foreground characteristics but rather utilizes the research background. 
+The areas that did not match these features are the areas of interest. 
+After calculating the residual spectrum, the residual spectrum was mapped back to the spatial domain by inverse Fourier transform to obtain the saliency map. 
+On this basis, Guo [47] proposed a model that used the phase spectrum to obtain the saliency map and Holtzman-Gazit [48] extracted a variety of resolutions for the picture. 
+Sclaroff [49] proposed a Boolean Map based saliency model(BMS) by discovering surrounding regions via boolean maps. 
+The model obtained saliency maps by analyzing the topological structure of boolean maps. 
+Although BMS was simple to implement and efficient to run, it performed well in the classical models. 
+3.2. Top-Down Visual Saliency Models
+The top-down visual saliency model is often based on certain specific tasks. 
+Due to the diversity and complexity of tasks, modeling is also more difficult [50] . 
+The top-down visual saliency model is mainly based on the Bayesian model. 
+In addition, the Bayesian model can be regarded as a special case of the decision theoretical model, as both simulate the biological calculation process of human visual saliency. 
+The Bayesian model in saliency prediction is a probabilistic combination model that combined scene information and prior information according to Bayesian rules. 
+The model proposed by Torrallba et al. [51] multiplied the bottom-up and top-down saliency maps to obtain the final saliency map. 
+On this basis, Ehinger et al. [52] integrated the feature prior information of the target into the above framework. 
+Xie et al. [53] proposed a saliency prediction model based on posterior probability. 
+The SUN model proposed by Zhang et al. [54] used visual features and spatial location as the prior knowledge. 
+The model based on decision theory in saliency prediction is a strategy model that decides the optimal plan based on the information and evaluation criteria requirements, i.e., how to make optimal decisions about perceptual information of the surrounding environment. 
+Gao and Vasconcelos [55, 56] believe that the salient features in the recognition process are derived from other classes of interest, and they defined top-down attention as a classification problem with the smallest expected error. 
+Kim et al. [57] recommended a temporal and spatial saliency model based on motion perception grouping. 
+Gu et al. [58] proposed a model based on the decision theory mechanism to predict regions of interest. 
+Early machine learning models often use a variety of machine learning methods, such as Convolutional Neural Networks (CNNs), Support Vector Machines (SVMs), or probability kernel density estimation, and they mostly combined the bottom-up and topdown methods. 
+Notable examples included the nonlinear mapping model proposed by Kienzle et al. [59] , the regression classifier model proposed by Peters et al. [60] , and the linear SVM model proposed by Judd et al. [61] . 
+Those early machine learning models had a certain exploratory nature for subsequent deep learning models, and they played an important guiding role for the subsequently developed deep learning models. 
+Although these classical models were designed in a variety of ways, their performance gradually reached a bottleneck due to handcrafted features. 
+The development process of neurobiological models and classic models is shown in Figure 2 . 
+4. Deep Visual Saliency Models
+In 2014, Vig et al. [62] proposed a deep convolutional network named eDN that could be implemented in fully automatic data-driven mode to extract features. 
+Compared with the classic model, eDN could automatically learn the image expression and obtain the final saliency map by fusing the feature maps from different layers. 
+However, due to the limited number of datasets and the limited number of trainable graphs in the data set, the depth of the network was not enough, as the structural scalability was limited. 
+Since then, more researchers have used deep models to study saliency prediction, and the application of deep models in static and dynamic saliency prediction has achieved better results. 
+4.1. Static Models
+After eDN, Kümmerer et al. [63] proposed a CNN model named Deep Gaze I based on image classification by using the AlexNet [64] network. 
+The major innovation of Deep Gaze I was the application of transfer learning for saliency prediction by using pre-trained weights on ImageNet [65] , connecting them to the output layer of AlexNet. 
+The network contains a central deviation that was converted into a probability distribution by using a softmax function. 
+The typical saliency datasets were relatively small, and the training effect was limited. 
+ImageNet has a good training effect as a million-level database, but the training resources are huge and the training time is excessive. 
+The use of transfer learning based on ImageNet makes it easier to learn the features of deep CNNs (DCNN) and attain much better generalization effects. 
+Kruthiventi et al. [66] proposed the DeepFix model in the same year, by using the VGG-16 [67] network as the main feature extraction network, allowing the network to use location-related information. 
+Compared with AlexNet, the VGG-16 network is simpler and more effective. 
+Using a better target prediction network becomes a better choice. 
+Then, DeepGaze II [68] switched to VGG-19 [67] , retrained the image features on the SALICON [69] dataset, and then fine-tuned on the MIT1003 [70] dataset. 
+As a result, the performance of the updated model has been significantly improved compared with that of Deep Gaze I. 
+This development trend indicated that retraining deep features and the task of fine-tuning contribute to performance enhancement. 
+Many researchers have adopted small-scale retraining and fine-tuning with the successful use of transfer learning. 
+Similarly, many researchers have adopted models that can capture relatively fine or coarse features by adjusting the input of different resolutions as a means of achieving better results. 
+Among them, Pan et al. [71] proposed two saliency models: shallow ConvNet (JuntingNet) and deep ConvNet (SalNet) to train end-to-end architectures. 
+SALICON was used to train a convolutional network by using VGG-16 network with dual-branch multi-scale features. 
+Dual-branch can effectively improve the model performance, but the calculation cost and memory are higher in training and testing. 
+Then, by combining migration-integrating information on different image scales, the model could greatly surpass the level of advancements at the time. 
+The probability distribution prediction model proposed by Jetley et al. [72] defined saliency as a generalized Bernoulli distribution, and it included a fully end-to-end training deep CNN that combined the classic softmax loss with the calculation of the different probability distributions. 
+Their results showed that the new loss function was more effective than the classic loss function (e.g., Euclidean) in saliency prediction. 
+Liu and Han [73] proposed a Deep Spatial Contextual Long-Term Recurrent Convolutional Network (DSCLRCN) model. 
+First, CNN was used to learn the local saliency of small image regions, and then images in the horizontal and vertical directions were scanned using the Long Short-Term Memory networks (LSTMs) to capture the global context. 
+These two operations allowed DSCLRCN to effectively merge local and global contexts at the same time for inferring the saliency maps of the image. 
+The ML-Net model proposed by Cornia et al. [74] combined the advantages of the above models. 
+Their model consisted of a feature extraction DCNN, a feature coding network, and an a priori learning network. 
+At the same time, the loss function of the network was weighted by three parts: NSS, CC, and SIM. 
+The SALICON model also used differentiable metrics, such as NSS, CC, SIM, and KL divergence, to train the network. 
+The SAM-ResNet model and SAM-VGG model subsequently proposed by Cornia et al. [75] combined the full convolutional network and the cyclic convolutional network to obtain a spatial attention mechanism. 
+SalGAN [76] used adversarial networks for training, and it consisted of two parts, a generator and a discriminator. 
+The network learned the parameters through the backpropagation of the downsampled binary cross entropy loss calculation. 
+The success of the model indicated that the choice of an appropriate loss function can be treated as a method for improving the prediction effect. 
+In recent years, some excellent models have been proposed for saliency prediction. 
+Jia et al. [77] proposed a saliency model called EML-Net based on the similarities between images and the integration of Extreme Learning Machines (ELMs). 
+Wang et al. [78] proposed the Deep Visual Attention (DVA) model in which the architecture was trained in multiple scales to predict pixel saliency based on a skip-layer network. 
+The model proposed by Gorji [79] used shared attention to enhance saliency prediction. 
+Dodge et al. [80] proposed a model called MxSalNet, which was formulated as a mixture of experts. 
+Mahdi et al. [81] proposed a deep feature-based saliency (DeepFeat) model to utilize features by combining bottom-up and top-down saliency maps. 
+AKa et al. [82] proposed the MSI-Net based on an encoder-decoder structure and it includes a module with multiple convolutional layers at different dilation rates to capture multi-scale features. 
+4.2. Dynamic Models
+Unlike the settings of the static models, the observation time in dynamic models is reduced from approximately 4 s to 0.05 s. 
+In addition, due to the obvious motion information in videos, predicting the saliency of the dynamic video is more difficult. 
+As a result, much fewer dynamic models exist. 
+Nevertheless, as the demand for applications continues to grow, the research on dynamic models has also been continuously developing. 
+Dynamic models usually add temporal information to CNNs or use LSTMs for modeling. 
+Early dynamic models mainly combined static saliency features with temporal information based on the bottom-up model. 
+Gao et al. [83] integrated additional motion information, and Seo et al. [84] used a local regression kernel to calculate the similarity between the pixels in the video and its surrounding area. 
+However, the performance of these models were restricted by their handcrafted features. 
+The emergence of deep learning frameworks has improved this situation. 
+Bak et al. [85] proposed the dynamic model and added motion features based on the two-stream network. 
+Due to the final fusion of the information of the two streams, the network was limited in learning spatiotemporal features. 
+Chaabouni et al. [86] added residual motion and RGB color planes of two consecutive frames to CNN based on transfer learning. 
+The model of Leifman et al. [87] merged the RGB color planes, dense optical flow map, and saliency map into a seven-layer CNN network. 
+Wang et al. [88] proposed a spatiotemporal residual attentive network (STRA-Net), which learned a stack of local attentions as well as global attention priors to filter out unrelated information. 
+The model has advantages in precisely locating dynamic human fixations as well as capturing the temporal attention transitions. 
+LSTMs are also widely used in dynamic models. 
+Bazzani et al. [89] used 3D CNNs to connect with the LSTMs and projected the output of the LSTMs to a Gaussian mixture model. 
+The Object-to-Motion (OM)-CNN model proposed by Jiang et al. [90] analyzed intraframe saliency based on the salient object networks and the motion information networks. 
+On this basis, Gorji [91] proposed a multi-stream convolutional LSTM (ConvLSTM) network with three networks (gaze following, rapid scene change, and attention feedback) based on the static model. 
+The ACLNet proposed by Wang et al. [92] used an enhanced CNN-LSTMs to encode static saliency information. 
+However, the ability of the network to capture motion information was limited. 
+In this manner, LSTMs can focus on learning temporal saliency representations across consecutive frames and avoid overfitting. 
+Hang et al. [93] designed an attention-aware ConvLSTM to obtain spatial features from static networks and temporal features from dynamic networks, subsequently integrating them. 
+The features extracted from consecutive frames were used to predict the salient regions, and a final salient map is generated for each video frame. 
+In the past two years, the dynamic saliency field has gradually developed in the direction of omnidirectional images (ODIs) and 3D ODIs. 
+Xu et al. [94] used adversarial networks to predict the saliency of ODIs by imitating the head trajectory of the object and applied generative adversarial simulation models to train deep models. 
+The development process of saliency prediction models is shown in Figure 3 . 
+5. Visual Saliency Prediction Datasets
+Many databases for target detection and image segmentation can be used as experimental data; many of them have been obtained by eye-tracking devices and manual annotations. 
+The performance of saliency maps generated by different saliency models needs to be quantitatively evaluated. 
+At present, the application of visual saliency prediction is mainly conducted for images and videos. 
+The corresponding databases are also divided into two types: static and dynamic. 
+In these datasets, SALICON has the largest amount of data for static models. 
+Most models could use transfer learning to fine-tune on SALICON. 
+Mit300 and cat2000, as databases containing the most model comparisons, are usually used for model performance testing. 
+5.1. Static Datasets
+5.2. Dynamic Datasets
+The discussion in Section 4.2 has established the particularities of dynamic information and human attention and the limitation of eye movement equipment, which have led to difficulties in observing dynamic data. 
+Incidentally, owing to the growth of application requirements, some large datasets have emerged in recent years. 
+At present, the dynamic dataset mainly consists of the following: For early dynamic models, the DIEM, Hollywood-2, and UCF-sports datasets were the three most widely used datasets in video saliency research. 
+In recent years, with the continuous updating of datasets, there are more models also using the DHF1K database for training and testing. 
+The DHF1K database has a huge amount of data and a wide range of application. 
+6. Evaluation Measures for Visual Saliency Prediction
+The metrics of visual saliency prediction mostly use similarities and differences between estimated predicted values and the Ground Truth (GT) and then outputs an evaluation score to judge the similarity or difference degree between them. 
+Given a set of true values used to define the scoring function, the saliency prediction map can be used as the input, and the result of evaluating the accuracy of the prediction is returned. 
+The evaluation measures are as follows: 
+AUC variant: The Area Under Curve (AUC) is used as a measurement standard for the two-class pattern recognition problem. 
+Different from the AUC in tasks, such as target detection and image segmentation, given the particularity of the saliency prediction task, the following AUC variants are often used in the saliency prediction tasks: 
+• AUC-Judd: Judd et al. 
+[102] proposed a variant of the AUC called AUC-Judd. 
+For a given threshold, the true-positive probability is the ratio of the pixels predicted as significant on all true-valued salient points, whereas the false-positive probability is the ratio of pixels predicted as significant on non-salient points. 
+This variant uses the uniform random sampling of non-focus points to calculate the false positive rate and defines the saliency mapping value above the threshold of these pixels as false positive. 
+The false positive calculation in AUC-Borji is a discrete approximation of the calculation in AUC-Judd. 
+Due to the use of random sampling, the same model may be evaluated with different results. 
+•
+Shuffled AUC: Shuffled AUC (sAUC) [97] is also a commonly used AUC variant. 
+It reduces the sensitivity of the AUC to the center shift by sampling the salient point distribution of other images. 
+AUC-Judd, AUC-Borji, and sAUC, as variants of AUC, are widely used in the evaluation of saliency models. 
+Their values are positively correlated with model performance. 
+Although AUC is an important evaluation measure, it cannot distinguish the relative importance of different regions. 
+Therefore, other distribution-based similarity evaluation measures are needed: 
+•
+Normalized Scanpath Saliency (NSS): NSS is a unique evaluation measure of saliency prediction. 
+It is used to calculate the average normalized significance value at the point of interest [104] . 
+The calculation formula of NSS is 
+where P is the average value at the gaze point Q of the human eye, N is the total number of human eye gazes, i represents the i-th pixel, and N is the total number of pixels at the gaze point. 
+A positive NSS indicates consistency between mappings, whereas a negative NSS is the opposite. 
+The NSS value is negatively correlated with model performance. 
+• Linear Correlation Coefficient (CC):
+The CC is the statistic used to measure the linear correlation between two random variables. 
+For the significance prediction evaluation, the prediction significance map (P) and the true value view (G) can be regarded as the two random variables. 
+The calculation formula of CC is 
+where cov is the covariance, σ is the standard deviation. 
+The CC can equally distinguish false positives and false negatives at the value range of (-1,1). 
+A value close to the two ends indicates a better model performance. 
+•
+Earth Movers Distance (EMD): EMD [105] represents the distance between the two 2D maps denoted by G and S, and it calculates the minimum cost of converting the estimated probability distribution of the saliency map S into the probability distribution of the GT map denoted by G. Therefore, a low EMD corresponds to a high-quality saliency map. 
+In saliency prediction, EMD represents the minimum cost of converting the probability distribution of the saliency map into human-eye attention maps called the fixation map. 
+•
+Kullback-Leibler (KL) Divergence: KL divergence is a general information theory measurement corresponding to the difference between two probability distributions. 
+The calculation formula of KL is 
+Similar to other distribution-based measures, KL divergence takes the predicted saliency map (P) and the true value view (G) as the input and evaluates the loss of information where P is used to approximate G, ε is the regularization constant. 
+Furthermore, KL divergence is an asymmetric dissimilarity measure. 
+A low score indicates that the saliency map is close to the true value. 
+•
+(6) Similarity Metric (SIM): SIM measures the similarity between two distributions. 
+After normalizing the input map, SIM is calculated as the sum of the minimum values at each pixel. 
+The calculation formula of SIM is 
+Given the predicted significance map (P) and the true value view (G), a SIM of 1 means that the distribution is the same, whereas a SIM of 0 means no overlap. 
+SIM can penalize predictions that fail to consider all true densities. 
+In general, these evaluation measures are complementary. 
+A good model should be good under a variety of evaluation measures, because these measures reflect different aspects of the saliency map. 
+Usually, a variety of evaluation measures are selected when evaluating the model. 
+As a widely used measure of location based, AUC is essential. 
+At the same time, a variety of other measures such as CC, SIM and other distribution-based measures should be selected to reflect other salient map factors such as relatively saliency region or similarity. 
+Thus far, we have summarized the abovementioned six common evaluation measures based on whether they are appropriate as probability distribution, similarity, and continuous GT tools for statistics and classification. 
+The details are shown in Table 1 . 
+7. Performance of Visual Saliency Prediction Models
+The MIT benchmark has the most comprehensive saliency model and evaluation benchmark. 
+In this chapter, the static image performance evaluation results of the models in the MIT300 and CAT2000 datasets are selected over the MIT benchmark. 
+Then, the performance of the dynamic model is selected over the DHF1K dataset. 
+The data have been obtained from the running results of the MIT benchmark, the author's study, and the author's program on GitHub. 
+The MIT benchmark has a total of eight evaluation measures (including three AUC variants). 
+A total of 93 static models are evaluated. 
+The following 16 models with much better performance are selected for comparison: eDN, Deep Gaze I, Deep Gaze II, DeepFix, SALICON, SalNet, ML-Net, SalGAN, EML-Net, SAM-VGG, SAM-ResNet, AIM, Judd Model, GBVS, ITTI, and SUN. 
+In addition, MIT also considers five baselines. 
+One of these baselines, namely, the infinite humans, is used as the reference measure. 
+The infinitehumans baseline can simulate the gaze point under the observation of infinite people, which is similar to the highest score. 
+The obtained results are shown in Table 2 . 
+The best indicators are marked in bold. 
+Thus far, the CAT2000 dataset comprises a total of 31 evaluated models, 10 of which are neural network-based models. 
+The obtained results are shown in Table 3 . Table 2 shows the results of the MIT300 dataset. 
+The AUC-Judd index is arranged in descending order. 
+The top models are all based on deep learning. 
+EML-NET performed best, and it got the highest scores under a variety of measures. 
+Based on the AUC-Judd measure, DeepGaze II and EML-NET are in the top two ranks with a score of 0.88. 
+DeepGaze II ranks first in AUC-Borji with a score of 0.86. 
+Based on the sAUC measure, SALICON performed best with a score of 0.74. 
+The rankings produced by different evaluation methods vary greatly. 
+DeepGaze II and DeepFix perform well in AUC, but other scores are average. 
+Although SAM-ResNet, SAM-VGG, EML-NET and SalGAN did not get the highest score in AUC, these models are outstanding. 
+Table 3 shows the results of the CAT2000 dataset. 
+AUC-Judd is arranged in descending order. 
+Based on the AUC-Judd measure, SAM-ResNet, MSI-Net and SAM-VGG are tied in the top rank with 0.88 (infinite-humans score of 0.90). 
+In the classic model, the performance of BMS is the superior one. 
+Its AUC-Borji score is the highest, and other scores are almost higher than eDN. 
+In general, the models that perform well on the MIT300 dataset also perform well on the CAT2000 dataset. 
+The saliency maps of the model over the CAT2000 database are shown in Figure 4 . AUC-Judd, sAUC, NSS, CC, and SIM are used as the five evaluation measures to judge the performance of the model over the DHF1K dataset. 
+The average is taken after calculating the score for each frame. 
+The evaluation results are mainly based on the public results of the DHF1K dataset. 
+The model performance is shown in Table 4 . STRA -Net ranks first in all ratings, followed by ACLNet. 
+Among the dynamic models, OM-CNN outperforms the other types. 
+Among the static models, the performance of SALICON is superior. 
+The results indicate that the performance of the deep model is better than adding time information to the classic model. 
+8. Commonalities and Limitations of the Deep Saliency Models
+Although the structures of the various deep saliency models differ from one another, they have many commonalities. 
+Compared with the classic model, the deep saliency model automatically captures features. 
+Although the classic models can manually encode features, deep networks with multi-layer structures can automatically capture more features. 
+The CNN-based saliency model is trained in an end-to-end manner, and combined with feature extraction and saliency prediction, it can greatly improve the performance compared with that of the classic model. 
+The success of these saliency prediction models indicates the importance of automatically capturing features based on the deep learning framework. 
+Aiming at improving model performance, saliency models often perform similar optimization. 
+First, in view of reducing the loss of image features in a series of convolution and pooling layers, some models use the multi-scale network or skip layers to preserve the loss information. 
+Second, using transfer-learning methods or adding some pre-trained classification networks or LSTMs to the model can play a role in adding prior knowledge, and this scheme has a significant impact on the model results. 
+Finally, as evaluation measures have a great influence on model performance, some models often select multiple evaluation measures to train the model (i.e., ML-Net). 
+Dynamic models also include multistream, multi-modal, and 3D CNNs and other forms. 
+However, the overall framework type is less than the static models in terms of multi-tasking, action recognition, and other frameworks and thus need to be developed. 
+Although the deep saliency model can sufficiently capture features, a wide gap exists between the result and the GT. 
+The problem can be resolved by studying how to imitate human analysis scenes and understand the mechanism of the human gaze. 
+Aimed at achieving these aspects on the model, a higher level of visual understanding is required. 
+In particular, besides using the conventional optimization model and finding a better loss function, saliency prediction can be explored and improved on the basis of the following: 
+1. 
+New Datasets: Datasets are extremely important to model performance [120] . 
+The GT and measurement prediction errors obtained from the data have a significant impact on the model performance. 
+In earlier years, the collection of saliency datasets relied on eye tracking data, and the datasets had fewer images. 
+Although the emergence of SALICON improved the result, the gap remains to be an order of magnitude with respect to datasets in related fields (e.g., ImageNet). 
+The JFT-300M dataset recently collected by Sun et al. 
+[121] contains 300 million images, and it performs the target recognition model that is trained on this dataset well. 
+The difference in performance between the use of eye tracking data and similar SALICON data collected with mouse clicks is clearly controversial. 
+2. 
+Multi-modal approaches: With the development of saliency prediction in the dynamic field, an increasing number of features in different modes, such as vision, hearing, and subtitles, can be used to train models. 
+This multi-modal feature input mode has proven to be an effective way to improve model performance. 
+Understand high-level semantics: The deep saliency models are good at extracting common features, such as humans and textures, among others. 
+The saliency predictor can also be used to handle these features. 
+However, as shown in Figure 5 , the most interesting or significant parts of an image are not necessarily all of these features. 
+Human visual models often entail a reasoning process based on sensory stimuli. 
+To establish the reason behind the relative importance of image regions on the saliency model, researchers can use higher-level features, such as emotions, gaze direction, and body posture. 
+Moreover, aiming to approach the human-level saliency prediction, researchers need to carry out cognitive attention research to help overcome the aforementioned limitations. 
+A few useful explorations have been offered. 
+For example, Zhao [98] showed through his experimental results that emotion has a priority effect. 
+Nonetheless, the existing saliency model still cannot fully explain the high-level semantics in the scene. 
+The concept of "semantic gap" and the process of determining the relative importance of objects still cannot be resolved; moreover, whether the saliency in natural scenes is guided by objects or low-level features is a matter of debate [124] . 
+The research on the saliency prediction task is closely related to cognitive disciplines, and its findings can help to improve the subsequent various visual research. 
+With the great success of the deep model in saliency prediction, new developments in deep learning have also provided the possibility for new applications and tasks of saliency models. 
+For example, Aksoy et al. [16] proposed a novel attention-based model for making braking decisions and other driving decisions like steering and acceleration. 
+Jia et al. [19] proposed a multimodal salient wave detection network for sleep staging called SalientSleepNet, which translated the time series classification problem into a saliency detection problem and applies it to sleep stage classification. 
+ Wei et al. [125] used a saliency model to pursue their research on autism spectrum disorder (ASD). 
+They found that children with ASD, particularly autism, were informed by special objects and less on social objects (e.g., face), and the application of the verification model of obviousness is helpful in monitoring and evaluating their condition. 
+O'Shea et al. [126] proposed a model for detecting seizure events from raw electroencephalogram (EEG) signals with less dependency on the availability of precise clinical labels. 
+This work opens new avenues for the application of deep learning to neonatal EEG. 
+Theism et al. 
+[127] used a fully connected network and Fisher pruning to increase the saliency calculation speed by 10 times as a means of providing ideas for applications with high real-time requirements. 
+ Fan et al. [128] proposed a model to detect shared attention in videos to infer shared attention in third-person social scene videos, which were significant for studying human social interactions. 
+They proposed a new video dataset VACATION [129] and a spatialtemporal graph reasoning model to explicitly represent the diverse gaze interactions in the social scenes and to infer atomic-level gaze communication by message passing. 
+9. Conclusions
+The development of visual saliency prediction tasks has produced numerous methods, and all of them have played an important role in various research directions. 
+Deep networks can automatically capture features and effectively combine feature extraction and saliency prediction. 
+Furthermore, performance can be significantly improved with respect to the classic model that uses handcrafted features. 
+However, the features extracted by the deep saliency model may not fully represent the salient objects and regions in an image, especially in complex scenes that contain advanced information, such as emotion, text, or symbolic information. 
+In view of further improving the performance of the model, the reasoning process of HVS must be imitated to realize the discrimination of relatively important areas in the scene. 
+In this review, we have summarized the literature about saliency prediction, including the early psychological and physiological mechanisms, the classic models affected by this task, the introduction of visual saliency models based on deep learning, and the data comparisons and summaries in the static and dynamic fields. 
+The reasons for the superiority and the limitations of the saliency model are also analyzed, and the ways of improvement and possible development directions are identified. 
+Although the visual saliency model based on deep learning has made great progress, there is still room for exploration in the aspects of visualization and multi-modality and the understanding of high-level semantics, especially the research on attention mechanisms and the application related to cognitive science. 
+Figure 1. 
+Two saliency detection tasks: (a) Original image, (b) Saliency prediction task, (c) Salient object detection task. 
+Figure 2. Development process of neurobiological models and classic models. 
+Figure 3. Development process of deep saliency prediction models. 
+Figure 4. Saliency maps over the CAT2000 dataset. 
+Figure 5. 
+An animal in the picture attracting more attention than humans. 
+[41]NTO dataset: In 2006, Bruce et al.[41]established the TORONTO dataset. 
+It is one of the earliest and most widely used datasets of computer vision. 
+It includes 120 color images with a resolution of 511 × 681. 
+The images contain indoor and outdoor scenes and a total of 20 recorded observers' eye movement data. 
+• MIT300 dataset: In 2012, Judd et al. [70] of MIT established the MIT300 dataset. 
+It contains 300 natural images from Flickr's creation and sharing and the eye movement data of 39 observers. 
+At that time, the MIT300 dataset was the most influential and most widely used in the dataset saliency field. 
+The dataset is generally not used as a training set. 
+However, the model comprising the MIT300 dataset can be evaluated. 
+• MIT1003 dataset: The MIT1003 dataset was also established by Judd et al. [61]. 
+It contains a total of 1003 images from Flickr's collection of images and the LabelMe website and the eye movement data of 15 observers. 
+The MIT1003 dataset can be regarded as a supplement to the MIT300 dataset. 
+The MIT1003 and MIT300 datasets can be used as a training set and a test set for performance evaluation, respectively. 
+• DUT-OMRON dataset: In 2013, Yang et al. [95] established the DUT-OMRON dataset. 
+It contains 5168 images, and each image provides eye movement data of 5 observers. 
+This dataset is annotated with eye movement data, but it mainly focuses on salient object detection, with one or more salient objects and a relatively complex background. 
+images in MS-COCO. 
+It is currently the largest attention dataset in terms of scale and context variability. 
+The difference from the abovementioned databases is that the SALICON dataset does not use an eye tracker to record eye movement data but rather uses the Amazon Mechanical Turk platform; however, the eye movement data recorded by the mouse was used to evaluate the performance of the model. 
+Tavakoli et al. [97] emphasized that problems may arise in evaluating model performance when eye movement data are recorded by the mouse. 
+Nonetheless, the SALICON dataset is the largest dataset in the current field, and it continues to be widely used by current mainstream saliency prediction models based on deep learning technology. 
+The SALICON dataset offers eye movement data for the training set (10,000 pictures) and validation set (5000 pictures), and it can retain the eye movement data of the test set (5000 pictures). 
+• EMOd dataset: The EMOd dataset is a new dataset proposed by Fan et al. [98]. 
+It contains 1019 emotional images with target-level and image-level annotations. 
+It was designed for studying visual saliency and image emotion. 
+In the image labeling process of the EMOd dataset, the main target objects in each image are labeled with attributes, such as target contour, target name, emotional category (negative, neutral, or positive), and semantic category. 
+The four semantic categories are as follows: the target directly related to humans, the target related to human non-visual perception, the target designed to attract attention or interact with humans, and the target with implicit signs. 
+Each target is coded to have one or more categories. 
+Furthermore, the EMOd dataset has a total of 4302 targets with fine contours, emotional labels, and semantic labels. 
+The number of positive, neutral, and negative targets are 839, 2429, and 1034, respectively. 
+duration of 19,420 s. 
+The DHF1K dataset also provides calibration for movement mode and number of objects, among others, thus providing convenience for studying high-level information of the dynamic attention mechanism. 
+• LEDOV dataset: The LEDOV dataset [101] was established by Wang et al. in 2018. 
+It includes daily activities, sports, social activities, art performances, and other content. 
+A total of 538 videos, with a resolution of 720px, contain a total of 179,336 frames of video and 5,058,178 gaze locations. 
+Summary of evaluation measures for visual saliency prediction. 
+Performance of the static models over the MIT300 dataset. 
+Performance of the static models over the CAT2000 dataset. 
+Performance of the dynamic models over the DHF1K dataset. 
+[79]rot et al. [122]used audio data to help video prediction.The shared attention proposed by Gorji et al.[79]could effectively improve model performance.3.Visualization: The black box model of deep learning is difficult to present in a manner that humans can understand. 
+However, saliency prediction itself is a representation of visual concepts. 
+Visualized CNNs have many benefits for understanding models, in- 
+cluding the meaning of filters, visual patterns, or visual concepts. 
+Bylinskii et al. [123] designed a visual dataset and found that a specific type of database may be better for training. 
+Visualization can help us better understand a model, and it also brings the possibility of proposing better models and databases. 
+4. 

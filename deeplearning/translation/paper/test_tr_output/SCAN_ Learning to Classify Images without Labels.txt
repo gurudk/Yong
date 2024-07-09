@@ -1,0 +1,370 @@
+SCAN: Learning to Classify Images without Labels
+Can we automatically group images into semantically meaningful clusters when ground-truth annotations are absent? 
+The task of unsupervised image classification remains an important, and open challenge in computer vision. 
+Several recent approaches have tried to tackle this problem in an end-to-end fashion. 
+In this paper, we deviate from recent works, and advocate a two-step approach where feature learning and clustering are decoupled. 
+First, a self-supervised task from representation learning is employed to obtain semantically meaningful features. 
+Second, we use the obtained features as a prior in a learnable clustering approach. 
+In doing so, we remove the ability for cluster learning to depend on low-level features, which is present in current end-to-end learning approaches. 
+Experimental evaluation shows that we outperform state-of-the-art methods by large margins, in particular +26.6% on CI-FAR10, +25.0% on CIFAR100-20 and +21.3% on STL10 in terms of classification accuracy. 
+Furthermore, our method is the first to perform well on a large-scale dataset for image classification. 
+In particular, we obtain promising results on ImageNet, and outperform several semi-supervised learning methods in the low-data regime without the use of any groundtruth annotations. 
+The code is made publicly available here. 
+1 Introduction and prior work
+Image classification is the task of assigning a semantic label from a predefined set of classes to an image. 
+For example, an image depicts a cat, a dog, a car, an airplane, etc., or abstracting further an animal, a machine, etc. Nowadays, this task is typically tackled by training convolutional neural networks [28, 44, 19, 53, 47] on large-scale datasets [11, 30] that contain annotated images, i.e. images with their corresponding semantic label. 
+Under this supervised setup, the networks excel at learning discriminative feature representations that can subsequently be clustered into the predetermined classes. 
+What happens, however, when there is no access to ground-truth semantic labels at training time? 
+Or going further, the semantic classes, or even their total number, are not a priori known? 
+The desired goal in this case is to group the images into clusters, such that images within the same cluster belong to the same or similar semantic classes, while images in different clusters are semantically dissimilar. 
+Under this setup, unsupervised or self-supervised learning techniques have recently emerged in the literature as an alternative to supervised feature learning. 
+Representation learning methods [13, 39, 58, 35, 16] use self-supervised learning to generate feature representations solely from the images, omitting the need for costly semantic annotations. 
+To achieve this, they use pre-designed tasks, called pretext tasks, which do not require annotated data to learn the weights of a convolutional neural network. 
+Instead, the visual features are learned by minimizing the objective function of the pretext task. 
+Numerous pretext tasks have been explored in the literature, including predicting the patch context [13, 33] , inpainting patches [39] , solving jigsaw puzzles [35, 37] , colorizing images [58, 29] , using adversarial training [14, 15] , predicting noise [3] , counting [36] , predicting rotations [16] , spotting artifacts [23] , generating images [41] , using predictive coding [38, 20] , performing instance discrimination [51, 18, 7, 48, 32] , and so on. 
+Despite these efforts, representation learning approaches are mainly used as the first pretraining stage of a two-stage pipeline. 
+The second stage includes finetuning the network in a fully-supervised fashion on another task, with as end goal to verify how well the self-supervised features transfer to the new task. 
+When annotations are missing, as is the case in this work, a clustering criterion (e.g. 
+K-means) still needs to be defined and optimized independently. 
+This practice is arguably suboptimal, as it leads to imbalanced clusters [4] , and there is no guarantee that the learned clusters will align with the semantic classes. 
+As an alternative, end-to-end learning pipelines combine feature learning with clustering. 
+A first group of methods (e.g. 
+DEC [52] , DAC [6] , DeepCluster [4] , DeeperCluster [5] , or others [1, 17, 54] ) leverage the architecture of CNNs as a prior to cluster images. 
+Starting from the initial feature representations, the clusters are iteratively refined by deriving the supervisory signal from the most confident samples [6, 52] , or through cluster re-assignments calculated offline [4, 5] . 
+A second group of methods (e.g. 
+IIC [24] , IMSAT [21] ) propose to learn a clustering function by maximizing the mutual information between an image and its augmentations. 
+In general, methods that rely on the initial feature representations of the network are sensitive to initialization [6, 52, 4, 5, 22, 17, 54] , or prone to degenerate solutions [4, 5] , thus requiring special mechanisms (e.g. 
+pretraining, cluster reassignment and feature cleaning) to avoid those situations. 
+Most importantly, since the cluster learning depends on the network initialization, they are likely to latch onto low-level features, like color, which is unwanted for the objective of semantic clustering. 
+To partially alleviate this problem, some works [24, 21, 4] are tied to the use of specific preprocessing (e.g. 
+Sobel filtering). 
+In this work we advocate a two-step approach for unsupervised image classification, in contrast to recent end-to-end learning approaches. 
+The proposed method, named SCAN (Semantic Clustering by Adopting Nearest neighbors), leverages the advantages of both representation and end-to-end learning approaches, but at the same time it addresses their shortcomings: 
+-In a first step, we learn feature representations through a pretext task. 
+In contrast to representation learning approaches that require K-means clustering after learning the feature representations, which is known to lead to cluster degeneracy [4] , we propose to mine the nearest neighbors of each image based on feature similarity. 
+We empirically found that in most cases these nearest neighbors belong to the same semantic class (see Figure 2 ), rendering them appropriate for semantic clustering. 
+-In a second step, we integrate the semantically meaningful nearest neighbors as a prior into a learnable approach. 
+We classify each image and its mined neighbors together by using a loss function that maximizes their dot product after softmax, pushing the network to produce both consistent and discriminative (one-hot) predictions. 
+Unlike end-to-end approaches, the learned clusters depend on more meaningful features, rather than on the network architecture. 
+Furthermore, because we encourage invariance w.r.t. the nearest neighbors, and not solely w.r.t. 
+augmentations, we found no need to apply specific preprocessing to the input. 
+Experimental evaluation shows that our method outperforms prior work by large margins across multiple datasets. 
+Furthermore, we report promising results on the large-scale ImageNet dataset. 
+This validates our assumption that separation between learning (semantically meaningful) features and clustering them is an arguably better approach over recent end-to-end works. 
+2 Method
+The following sections present the cornerstones of our approach. 
+First, we show how mining nearest neighbors from a pretext task can be used as a prior for semantic clustering. 
+Also, we introduce additional constraints for selecting an appropriate pretext task, capable of producing semantically meaningful feature representations. 
+Second, we integrate the obtained prior into a novel loss function to classify each image and its nearest neighbors together. 
+Additionally, we show how to mitigate the problem of noise inherent in the nearest neighbor selection with a self-labeling approach. 
+We believe that each of these contributions are relevant for unsupervised image classification. 
+2.1 Representation learning for semantic clustering
+In the supervised learning setup, each sample can be associated with its correct cluster by using the available ground-truth labels. 
+In particular, the mapping between the images D = X 1 , . . . 
+, X |D| and the semantic classes C can generally be learned by minimizing a cross-entropy loss. 
+However, when we do not have access to such ground-truth labels, we need to define a prior to obtain an estimate of which samples are likely to belong together, and which are not. 
+End-to-end learning approaches have utilized the architecture of CNNs as a prior [54, 6, 52, 17, 4, 5] , or enforced consistency between images and their augmentations [24, 21] to disentangle the clusters. 
+In both cases, the cluster learning is known to be sensitive to the network initialization. 
+Furthermore, at the beginning of training the network does not extract high-level information from the image yet. 
+As a result, the clusters can easily latch onto low-level features (e.g. 
+color, texture, contrast, etc.), which is suboptimal for semantic clustering. 
+To overcome these limitations, we employ representation learning as a means to obtain a better prior for semantic clustering. 
+In representation learning, a pretext task τ learns in a self-supervised fashion an embedding function Φ θ -parameterized by a neural network with weights θ -that maps images into feature representations. 
+The literature offers several pretext tasks which can be used to learn such an embedding function Φ θ (e.g. 
+rotation prediction [16] , affine or perspective transformation prediction [57] , colorization [29] , in-painting [39] , instance discrimination [51, 18, 7, 32] , etc.). 
+In practice, however, certain pretext tasks are based on specific image transformations, causing the learned feature representations to be covariant to the employed transformation. 
+For example, when Φ θ predicts the transformation parameters of an affine transformation, different affine transformations of the same image will result in distinct output predictions for Φ θ . 
+This renders the learned feature representations less appropriate for semantic clustering, where feature representations ought to be invariant to image transformations. 
+To overcome this issue, we impose the pretext task τ to also minimize the distance between images X i and their augmentations T [X i ], which can be expressed as: 
+Any pretext task [51, 18, 7, 32] that satisfies Equation 1 can consequently be used. 
+For example, Figure 1 shows the results when retrieving the nearest neighbors under an instance discrimination task [51] which satisfies Equation 1. 
+We observe that similar features are assigned to semantically similar images. 
+An experimental evaluation using different pretext tasks can be found in Section 3.2. 
+To understand why images with similar high-level features are mapped closer together by Φ θ , we make the following observations. 
+First, the pretext task output is conditioned on the image, forcing Φ θ to extract specific information from its input. 
+Second, because Φ θ has a limited capacity, it has to discard information from its input that is not predictive of the high-level pretext task. 
+For example, it is unlikely that Φ θ can solve an instance discrimination task by only encoding color or a single pixel from the input image. 
+As a result, images with similar high-level characteristics will lie closer together in the embedding space of Φ θ . 
+We conclude that pretext tasks from representation learning can be used to obtain semantically meaningful features. 
+Following this observation, we will leverage the pretext features as a prior for clustering the images. 
+2.2 A semantic clustering loss
+Mining nearest neighbors. 
+In Section 2.1, we motivated that a pretext task from representation learning can be used to obtain semantically meaningful features. 
+However, naively applying K-means on the obtained features can lead to cluster degeneracy [4] . 
+A discriminative model can assign all its probability mass to the same cluster when learning the decision boundary. 
+This leads to one cluster dominating the others. 
+Instead, we opt for a better strategy. 
+Let us first consider the following experiment. 
+Through representation learning, we train a model Φ θ on the unlabeled dataset D to solve a pretext task τ , i.e. instance discrimination [7, 18] . 
+Then, for every sample X i ∈ D, we mine its K nearest neighbors in the embedding space Φ θ . 
+We define the set N Xi as the neighboring samples of X i in the dataset D. Figure 2 quantifies the degree to which the mined nearest neighbors are instances of the same semantic cluster. 
+We observe that this is largely the case across four datasets 1 (CIFAR10 [27] , CIFAR100-20 [27] , STL10 [9] and ImageNet [11] ) for different values of K. Motivated by this observation, we propose to adopt the nearest neighbors obtained through the pretext task τ as our prior for semantic clustering. 
+Loss function. 
+We aim to learn a clustering function Φ η -parameterized by a neural network with weights η -that classifies a sample X i and its mined neighbors N Xi together. 
+The function Φ η terminates in a softmax function to perform a soft assignment over the clusters C = {1, . . . 
+, C}, with Φ η (X i ) ∈ [0, 1] C . 
+The probability of sample X i being assigned to cluster c is denoted as Φ c η (X i ). 
+We learn the weights of Φ η by minimizing the following objective: 
+Here, • denotes the dot product operator. 
+The first term in Equation 2 imposes Φ η to make consistent predictions for a sample X i and its neighboring samples N Xi . 
+Note that, the dot product will be maximal when the predictions are one-hot (confident) and assigned to the same cluster (consistent). 
+To avoid Φ η from assigning all samples to a single cluster, we include an entropy term (the second term in Equation 2 ), which spreads the predictions uniformly across the clusters C. If the probability distribution over the clusters C is known in advance, which is not the case here, this term can be replaced by KL-divergence. 
+Remember that, the exact number of clusters in C is generally unknown. 
+However, similar to prior work [52, 6, 24] , we choose C equal to the number of ground-truth clusters for the purpose of evaluation. 
+In practice, it should be possible to obtain a rough estimate of the amount of clusters 2 . 
+Based on this estimate, we can overcluster to a larger amount of clusters, and enforce the class distribution to be uniform. 
+We refer to Section 3.4 for a concrete experiment. 
+Implementation details. 
+For the practical implementation of our loss function, we approximate the dataset statistics by sampling batches of sufficiently large size. 
+During training we randomly augment the samples X i and their neighbors N Xi . 
+For the corner case K = 0, only consistency between samples and their augmentations is imposed. 
+We set K ≥ 1 to capture more of the cluster's variance, at the cost of introducing noise, i.e. not all samples and their neighbors belong to the same cluster. 
+Section 3.2 experimentally shows that choosing K ≥ 1 significantly improves the results compared to only enforcing consistency between samples and their augmentations, as in [24, 21] . 
+Discussion. 
+Unlike [40, 25, 49, 2, 34, 59, 52] we do not include a reconstruction criterion into the loss, since this is not explicitly required by our target task. 
+After all, we are only interested in a few bits of information encoded from the input signal, rather than the majority of information that a reconstruction criterion typically requires. 
+It is worth noting that the consistency in our case is enforced at the level of individual samples through the dot product term in the loss, rather than on an approximation of the joint distribution over the classes [24, 21] . 
+We argue that this choice allows to express the consistency in a more direct way. 
+2.3 Fine-tuning through self-labeling
+The semantic clustering loss in Section 2.2 imposed consistency between a sample and its neighbors. 
+More specifically, each sample was combined with K ≥ 1 neighbors, some of which inevitably do not belong to the same semantic cluster. 
+These false positive examples lead to predictions for which the network is less certain. 
+At the same time, we experimentally observed that samples with highly confident predictions (p max ≈ 1) tend to be classified to the proper cluster. 
+In fact, the highly confident predictions that the network forms during clustering can be regarded as "prototypes" for each class (see Section 3.5). 
+Unlike prior work [6, 4, 52] , this allows us to select samples based on the confidence of the predictions in a more reliable manner. 
+Hence, we propose a self-labeling approach [43, 31, 46] In particular, during training confident samples are selected by thresholding the probability at the output, i.e. p max > threshold. 
+For every confident sample, a pseudo label is obtained by assigning the sample to its predicted cluster. 
+A cross-entropy loss is used to update the weights for the obtained pseudo labels. 
+To avoid overfitting, we calculate the cross-entropy loss on strongly augmented versions of the confident samples. 
+The self-labeling step allows the network to correct itself, as it gradually becomes more certain, adding more samples to the mix. 
+We refer to Section 3.2 for a concrete experiment. 
+Algorithm 1 summarizes all the steps of the proposed method. 
+We further refer to it as SCAN, i.e. 
+Semantic Clustering by Adopting Nearest neighbors. 
+3 Experiments
+3.1 Experimental setup
+Datasets. 
+The experimental evaluation is performed on CIFAR10 [27] , CIFAR100-20 [27] , STL10 [9] and ImageNet [11] . 
+We focus on the smaller datasets first. 
+The results on ImageNet are discussed separately in Section 3.5. 
+Some prior works [24, 6, 52, 54] trained and evaluated on the complete datasets. 
+Differently, we train and evaluate using the train and val split respectively. 
+Doing so, allows to study the generalization properties of the method for novel unseen examples. 
+Note that this does not result in any unfair advantages compared to prior work. 
+The results are reported as the mean and standard deviation from 10 different runs. 
+Finally, all experiments are performed using the same backbone, augmentations, pretext task and hyperparameters. 
+Training setup. 
+We use a standard ResNet-18 backbone. 
+For every sample, the 20 nearest neighbors are determined through an instance discrimination task based on noise contrastive estimation (NCE) [51] . 
+We adopt the SimCLR [7] implementation for the instance discrimination task on the smaller datasets, and the implementation from MoCo [8] on ImageNet. 
+The selected pretext task satisfies the feature invariance constraint from Equation 1 w.r.t. the transformations applied to augment the input images. 
+In particular, every image is disentangled as a unique instance independent of the applied transformation. 
+To speed up training, we transfer the weights, obtained from the pretext task to initiate the clustering step (Section 2.2). 
+We perform the clustering step for 100 epochs using batches of size 128. 
+The weight on the entropy term is set to λ = 5. 
+A higher weight avoids the premature grouping of samples early on during training. 
+The results seem to be insensitive to small changes of λ. 
+After the clustering step, we train for another 200 epochs using the self-labeling procedure with threshold 0.99 (Section 2.3). 
+A weighted cross-entropy loss compensates for the imbalance between confident samples across clusters. 
+The class weights are inversely proportional to the number of occurrences in the batch after thresholding. 
+The network weights are updated through Adam [25] with learning rate 10 -4 and weight decay 10 -4 . 
+The images are strongly augmented by composing four randomly selected transformations from RandAugment [10] during both the clustering and selflabeling steps. 
+The transformation parameters are uniformly sampled between fixed intervals. 
+For more details visit the supplementary materials. 
+Validation criterion During the clustering step, we select the best model based on the lowest loss. 
+During the self-labeling step, we save the weights of the model when the amount of confident samples plateaus. 
+We follow these practices as we do not have access to a labeled validation set. 
+3.2 Ablation studies
+Method. 
+We quantify the performance gains w.r.t. the different parts of our method through an ablation study on CIFAR10 in Table 1 . 
+K-means clustering of the NCE pretext features results in the lowest accuracy (65.9%), and is characterized by a large variance (5.7%). 
+This is to be expected since the cluster assignments can be imbalanced (Figure 3 ), and are not guaranteed to align with the ground-truth classes. 
+Interestingly, applying K-means to the pretext features outperforms prior state-of-the-art methods for unsupervised classification based on end-to-end learning schemes (see Sec. 3.3). 
+This observation supports our primary claim, i.e. it is beneficial to separate feature learning from clustering. 
+Updating the network weights through the SCAN-loss -while augmenting the input images through SimCLR transformations -outperforms K-means (+15.9%). 
+Note that the SCAN-loss is somewhat related to K-means, since both methods employ the pretext features as their prior to cluster the images. 
+Differently, our loss avoids the cluster degeneracy issue. 
+We also research the effect of using different augmentation strategies during training. 
+Applying transformations from RandAgument (RA) to both the samples and their mined neighbors further improves the performance (78.7% vs. 81.8%). 
+We hypothesize that strong augmentations help to reduce the solution space by imposing additional invariances. 
+Fine-tuning the network through self-labeling further enhances the quality of the cluster assignments (81.8% to 87.6%). 
+During self-labeling, the network corrects itself as it gradually becomes more confident (see Figure 4 ). 
+Importantly, in order for self-labeling to be successfully applied, a shift in augmentations is required (see Table 1 or Figure 5 ). 
+We hypothesize that this is required to prevent the network from overfitting on already well-classified examples. 
+Finally, Figure 6 shows that self-labeling procedure is not sensitive to the threshold's value. 
+Pretext task. 
+We study the effect of using different pretext tasks to mine the nearest neighbors. 
+In particular we consider two different implementations of the instance discrimination task from before [51, 7] , and RotNet [16] . 
+The latter trains the network to predict image rotations. 
+As a consequence, the distance between an image X i and its augmentations T [X i ] is not minimized in the embedding space of a model pretrained through RotNet (see Equation 1 ). 
+Differently, the instance discrimintation task satisfies the invariance criterion w.r.t. the used augmentations. 
+Table 2 shows the results on CIFAR10. 
+First, we observe that the proposed method is not tied to a specific pretext task. 
+All cases report high accuracy (> 70%). 
+Second, pretext tasks that satisfy the invariance criterion are better suited to mine the nearest neighbors, i.e. 83.5% and 87.6% for inst. 
+discr. 
+versus 74.3% for RotNet. 
+This confirms our hypothesis from Section 2.1, i.e. it is beneficial to choose a pretext task which imposes invariance between an image and its augmentations. 
+sensitive to the value of K, and even remain stable when increasing K to 50. 
+This is beneficial, since we do not have to fine-tune the value of K on very new dataset. 
+In fact, both robustness and accuracy improve when increasing the value of K upto a certain value. 
+We also consider the corner case K = 0, when only enforcing consistent predictions for images and their augmentations. 
+the performance decreases on all three datasets compared to K = 5, 56.3% vs 79.3% on CIFAR10, 24.6% vs 41.1% on CIFAR100-20 and 47.70% vs 69.8% on STL10. 
+This confirms that better representations can be learned by also enforcing coherent predictions between a sample and its nearest neighbors. 
+Number of neighbors.
+Convergence. Figure 8 shows the results when removing the false positives from the nearest neighbors, i.e. sample-pairs which belong to a different class. 
+The results can be considered as an upper-bound for the proposed method in terms of classification accuracy. 
+A desirable characteristic is that the clusters quickly align with the ground truth, obtaining near fully-supervised performance on CIFAR10 and STL10 with a relatively small increase in the number of used neighbors K. 
+The lower performance improvement on CIFAR100-20 can be explained by the ambiguity of the superclasses used to measure the accuracy. 
+For example, there is not exactly one way to group categories like omnivores or carnivores together. 
+3.3 Comparison with the state-of-the-art
+Comparison. 
+Table 3 compares our method to the state-of-the-art on three different benchmarks. 
+We evaluate the results based on clustering accuracy (ACC), normalized mutual information (NMI) and adjusted rand index (ARI). 
+The proposed method consistently outperforms prior work by large margins on all three metrics, e.g. 
++26.6% on CIFAR10, +25.0% on CIFAR100-20 and +21.3% on STL10 in terms of accuracy. 
+We also compare with the state-of-the-art in representation learning [7] (Pretext + K-means). 
+As shown in Section 3.2, our method outperforms the application of K-means on the pretext features. 
+Finally, we also include results when tackling the problem in a fully-supervised manner. 
+Our model obtains close to supervised performance on CIFAR-10 and STL-10. 
+The performance gap is larger on CIFAR100-20, due to the use of superclasses. 
+Other advantages. 
+In contrast to prior work [6, 24, 21] , we did not have to perform any dataset specific fine-tuning. 
+Furthermore, the results on CIFAR10 can be obtained within 6 hours on a single GPU. 
+As a comparison, training the model from [24] requires at least a day of training time. 
+3.4 Overclustering
+So far we assumed to have knowledge about the number of ground-truth classes. 
+The method predictions were evaluated using a hungarian matching algorithm. 
+However, what happens if the number of clusters does not match the number of ground-truth classes anymore. 
+Table 3 reports the results when we overestimate the number of ground-truth classes by a factor of 2, e.g. 
+we cluster CIFAR10 into 20 rather than 10 classes. 
+The classification accuracy remains stable for CIFAR10 (87.6% to 86.2%) and STL10 (76.7% to 76.8%), and improves for CIFAR100-20 (45.9% to 55.1%) 3 . 
+We conclude that the approach does not require knowledge of the exact number of clusters. 
+We hypothesize that the increased performance on CIFAR100-20 is related to the higher intra-class variance. 
+More specifically, CIFAR100-20 groups multiple object categories together in superclasses. 
+In this case, an overclustering is better suited to explain the intra-class variance. 
+Table 4 : Validation set results for 50, 100 and 200 randomly selected classes from ImageNet. 
+The results with K-means were obtained using the pretext features from MoCo [8] . 
+We provide the results obtained by our method after the clustering step ( * ), and after the self-labeling step ( †). 
+3.5 ImageNet
+Setup. 
+We consider the problem of unsupervised image classification on the large-scale ImageNet dataset [11] . 
+We first consider smaller subsets of 50, 100 and 200 randomly selected classes. 
+The sets of 50 and 100 classes are subsets of the 100 and 200 classes respectively. 
+Additional details of the training setup can be found in the supplementary materials. 
+Quantitative evaluation. 
+Table 4 compares our results against applying Kmeans on the pretext features from MoCo [8] . 
+Surprisingly, the application of K-means already performs well on this challenging task. 
+We conclude that the pretext features are well-suited for the down-stream task of semantic clustering. 
+Training the model with the SCAN-loss again outperforms the application of K-means. 
+Also, the results are further improved when fine-tuning the model through self-labeling. 
+We do not include numbers for the prior state-ofthe-art [24] , since we could not obtain convincing results on ImageNet when running the publicly available code. 
+We refer the reader to the supplementary materials for additional qualitative results on ImageNet-50. 
+Prototypical behavior. 
+We visualize the different clusters after training the model with the SCAN-loss. 
+Specifically, we find the samples closest to the mean embedding of the top-10 most confident samples in every cluster. 
+The results are shown together with the name of the matched ground-truth classes in Fig. 9 . Importantly, we observe that the found samples align well with the classes of the dataset, except for 'oboe' and 'guacamole' (red). 
+Furthermore, the discriminative features of each object class are clearly present in the images. 
+Therefore, we regard the obtained samples as "prototypes" of the various clusters. 
+Notice that the performed experiment aligns well with prototypical networks [45] . 
+ImageNet -1000 classes. 
+Finally, the model is trained on the complete Im-ageNet dataset. 
+Figure 11 shows images from the validation set which were assigned to the same cluster by our model. 
+meaningful, e.g. 
+planes, cars and primates. 
+Furthermore, the clusters capture a large variety of different backgrounds, viewpoints, etc. 
+We conclude that (to a large extent) the model predictions are invariant to image features which do not alter the semantics. 
+On the other hand, based on the ImageNet ground-truth annotations, not all sample pairs should have been assigned to the same cluster. 
+For example, the ground-truth annotations discriminate between different primates, e.g. 
+chimpanzee, baboon, langur, etc. 
+We argue that there is not a single correct way of categorizing the images according to their semantics in case of ImageNet. 
+Even for a human annotator, it is not straightforward to cluster each image according to the ImageNet classes without prior knowledge. 
+Based on the ImageNet hierarchy we select class instances of the following superclasses: dogs, insects, primates, snake, clothing, buildings and birds. 
+Fig-ure 10 shows a confusion matrix of the selected classes. 
+The confusion matrix has a block diagonal structure. 
+The results show that the misclassified examples tend to be assigned to other clusters from within the same superclass, e.g. the model confuses two different dog breeds. 
+We conclude that the model has learned to group images with similar semantics together, while its prediction errors can be attributed to the lack of annotations which could disentangle the fine-grained differences between some classes. 
+Finally, Table 5 compares our method against recent semi-supervised learning approaches when using 1% of the images as labelled data. 
+We obtain the following quantitative results on ImageNet: Top-1: 39.9%, Top-5: 60.0%, NMI: 72.0%, ARI: 27.5%. 
+Our method outperforms several semi-supervised learning approaches, without using labels. 
+This further demonstrates the strength of our approach. 
+ [51] ResNet-50 -39.2 BigBiGAN [15] ResNet-50(4x) -55.2 PIRL [32] ResNet-50 -57.2 CPC v2 [20] ResNet-161 52.7 77.9 SimCLR [7] ResNet-50 48.3 75.5 
+SCAN (Ours)
+ResNet-50 39.9 60.0 
+4 Conclusion
+We presented a novel framework to unsupervised image classification. 
+The proposed approach comes with several advantages relative to recent works which adopted an end-to-end strategy. 
+Experimental evaluation shows that the proposed method outperforms prior work by large margins, for a variety of datasets. 
+Furthermore, positive results on ImageNet demonstrate that semantic clustering can be applied to large-scale datasets. 
+Encouraged by these findings, we believe that our approach admits several extensions to other domains, e.g. 
+semantic segmentation, semi-supervised learning and few-shot learning. 
+B ImageNet
+B.1 Training setup
+We summarize the training setup for ImageNet below. 
+Pretext Task Similar to our setup on the smaller datasets, we select discrimination as our pretext task. 
+In particular, we use the implementation from MoCo [8] . 
+We use a ResNet-50 model as backbone. 
+Clustering
+Step We freeze the backbone weights during the clustering step, and only train the final linear layer using the SCAN-loss. 
+More specifically, we train ten separate linear heads in parallel. 
+When initiating the self-labeling step, we select the head with the lowest loss to continue training. 
+Every image is augmented using augmentations from SimCLR [7] . 
+We reuse the entropy weight from before (5.0), and train with batches of size 512, 1024 and 1024 on the subsets of 50, 100 and 200 classes respectively. 
+We use an SGD optimizer with momentum 0.9 and initial learning rate 5.0. 
+The model is trained for 100 epochs. 
+On the full ImageNet dataset, we increase the batch size and learning rate to 4096 and 30.0 respectively, and decrease the number of neighbors to 20. 
+Self-Labeling
+Step We use the strong augmentations from RandAugment to finetune the weights through self-labeling. 
+The model weights are updated for 25 epochs using SGD with momentum 0.9. 
+The initial learning rate is set to 0.03 and kept constant. 
+Batches of size 512 are used. 
+Importantly, the model weights are updated through an exponential moving average with α = 0.999. 
+We did not find it necessary to apply class balancing in the cross-entropy loss. 
+B.2 ImageNet -Subsets
+Confusion matrix Figure S3 shows a confusion matrix on the ImageNet-50 dataset. 
+Most of the mistakes can be found between classes that are hard to disentangle, e.g. 
+'Giant Schnauzer' and 'Flat-coated Retriever' are both black dog breeds, 'Guacamole' and 'Mashed Potato' are both food, etc. 
+Prototype examples Figure S4 shows a prototype image for every cluster on the ImageNet-50 subset. 
+This figure extends Figure 9 from the main paper. 
+Remarkably, the vast majority of prototype images can be matched with one of the ground-truth classes. 
+Low confidence examples Figure S5 shows examples for which the model produces low confidence predictions on the ImageNet-50 subset. 
+In a number of cases, the low confidence output can be attributed to multiple objects being visible in the scene. 
+Other cases can be explained by the partial visibility of the object, distracting elements in the scene, or ambiguity of the object of interest. 
+B.3 ImageNet -Full
+We include additional qualitative results on the full ImageNet dataset. 
+In particular, Figures S6, S7 and S8 show images from the validation set that were assigned to the same cluster. 
+These can be viewed together with Figure 11 in the main paper. 
+Additionally, we show some mistakes in Figure S9 . 
+The failure cases occur when the model focuses too much on the background, or when the network cannot easily discriminate between pairs of similarly looking images. 
+However, in most cases, we can still attach some semantic meaning to the clusters, e.g. 
+animals in cages, white fences. 
+C Experimental setup
+C.1 Datasets
+Different from prior work [24, 6, 52, 54] , we do not train and evaluate on the full datasets. 
+Differently, we use the standard train-val splits to study the generalization properties of our models. 
+Additionally, we report the mean and standard deviation on the smaller datasets. 
+We would like to encourage future works to adopt this procedure as well. 
+Table S1 provides an overview of the number of classes, the number of images and the aspect ratio of the used datasets. 
+The selected classes on ImageNet-50, ImageNet-100 and ImageNet-200 can be found in our git repository. 
+Fig. 1: Images (first column) and their nearest neighbors (other columns) [51]. 
+Fig. 2: Neighboring samples tend to be instances of the same semantic class. 
+Fig. 3: K-means cluster assignments are imbalanced. 
+Fig. 6: Ablation threshold during self-labeling step. 
+Fig. 9: Prototypes obtained by sampling the confident samples. 
+Fig. 11: Clusters extracted by our model on ImageNet (more in supplementary). 
+Fig. S2: Low confidence predictions. 
+which are: only partially visible, occluded, under bad lighting conditions, etc. 
+Fig. S3: Confusion matrix on ImageNet-50. 
+Fig. S6: Example clusters of ImageNet-1000 (1). 
+Fig. S7: Example clusters of ImageNet-1000 (2). 
+Fig. S8: Example clusters of ImageNet-1000 (3). 
+Fig. S9: Incorrect clusters of ImageNet-1000 predicted by our model. 
+to exploit the already well-classified examples, and correct for mistakes due to noisy nearest neighbors.Algorithm 1 Semantic Clustering by Adopting Nearest neighbors (SCAN) 1: Input: Dataset D, Clusters C, Task τ , Neural Nets Φ θ and Φη, Neighbors ND = {}. 
+2: Optimize Φ θ with task τ . 
+Ablation Method CIFAR10 
+Ablation Pretext CIFAR10 
+State-of-the-art comparison: We report the averaged results for 10 different runs after the clustering ( * ) and self-labeling steps ( †), and the best model. 
+Opposed to prior work, we train and evaluate using the train and val split respectively, instead of using the full dataset for both training and testing. 
+The obtained clusters are semantically 
+Comparison with supervised, and semi-supervised learning methods using 1% of the labelled data on ImageNet. 
+Datasets overview 

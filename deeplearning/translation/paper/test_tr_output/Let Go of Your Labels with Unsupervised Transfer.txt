@@ -1,0 +1,468 @@
+Let Go of Your Labels with Unsupervised Transfer
+Foundation vision-language models have enabled remarkable zero-shot transferability of the pretrained representations to a wide range of downstream tasks. 
+However, to solve a new task, zeroshot transfer still necessitates human guidance to define visual categories that appear in the data. 
+Here, we show that fully unsupervised transfer emerges when searching for the labeling of a dataset that induces maximal margin classifiers in representation spaces of different foundation models. 
+We present TURTLE, a fully unsupervised method that effectively employs this guiding principle to uncover the underlying labeling of a downstream dataset without any supervision and task-specific representation learning. 
+We evaluate TURTLE on a diverse benchmark suite of 26 datasets and show that it achieves new state-ofthe-art unsupervised performance. 
+Furthermore, TURTLE, although being fully unsupervised, outperforms zero-shot transfer baselines on a wide range of datasets. 
+In particular, TURTLE matches the average performance of CLIP zero-shot on 26 datasets by employing the same representation space, spanning a wide range of architectures and model sizes. 
+By guiding the search for the underlying labeling using the representation spaces of two foundation models, TURTLE surpasses zero-shot transfer and unsupervised prompt tuning baselines, demonstrating the surprising power and effectiveness of unsupervised transfer. 
+1. Introduction
+Transfer learning is a fundamental machine learning paradigm that leverages large-scale pre-training of deep * Equal contribution 1 EPFL, Lausanne, Switzerland. 
+Correspondence to: Maria Brbić <mbrbic@epfl.ch>. 
+Proceedings of the 41 st International Conference on Machine Learning, Vienna, Austria. PMLR 235, 2024. 
+Copyright 2024 by the author(s). 
+neural networks to improve model performance on downstream tasks with limited resources (Pan & Yang, 2009) . 
+Early transfer learning approaches relied on supervised finetuning of the entire model to solve a downstream task of interest (Kolesnikov et al., 2020) . 
+Recent works (He et al., 2022; Li et al., 2022; Zhou et al., 2022; Oquab et al., 2023; Darcet et al., 2024) have shown that fine-tuning an entire model during transfer brings only marginal gains compared to training a linear classifier on top of the frozen pre-trained backbone (i.e., linear probe). 
+Although these approaches eliminated the need for task-specific fine-tuning of representations, they still require at least a few labeled examples per class to achieve human-level performance on downstream tasks. 
+Recently, foundation models (Bommasani et al., 2022) have emerged, approaching human-level intelligence on a variety of tasks in the zero-shot setting. 
+In particular, Radford et al. (2021) proposed CLIP, which trains representations by aligning images and their corresponding captions in the joint embedding space. 
+After pre-training, a zero-shot classifier is constructed by embedding the descriptions of visual categories that appear in the data. 
+Subsequent works have successfully adopted this representation learning principle to enable zero-shot transfer in other domains, such as audio signal processing (Elizalde et al., 2023a; b) , biomedicine (Lin et al., 2023; Robinson et al., 2023) and symbolic regression (Meidani et al., 2024) . 
+Despite the remarkable success of foundation models, zero-shot transfer still requires human instructions to solve a new task. 
+But, can the representations of foundation models be utilized to solve a new task in a fully unsupervised manner? 
+The simplest approach for unsupervised transfer would be to apply off-the-shelf clustering methods (MacQueen, 1967) on top of the pre-trained representations. 
+However, this strategy inevitably leads to a drastic decrease in performance compared to (weakly) supervised and zero-shot transfer (Zhou et al., 2022; Oquab et al., 2023) . 
+Recently, Gadetsky & Brbić (2023) introduced HUME, an unsupervised learning framework for inferring the underlying human labeling of a given dataset from pre-trained representations. 
+While HUME has achieved superior performance compared to unsupervised baselines, it still requires task-specific rep-Figure 1 . Types of downstream transfer differ in the amount of available supervision. 
+Given representation spaces of foundation models, (i) supervised transfer, represented as a linear probe, trains a linear classifier given labeled examples of a downstream dataset; (ii) zero-shot transfer assumes descriptions of the visual categories that appear in a downstream dataset are given, and employs them via text encoder to solve the task; and (iii) unsupervised transfer assumes the least amount of available supervision, i.e., only the number of categories is given, and aims to uncover the underlying human labeling of a dataset. 
+resentation learning and does not close the gap between unsupervised and zero-shot transfer. 
+Here, we present TURTLE, a method that enables unsupervised transfer from foundation models. 
+The key idea behind our approach is to search for the labeling of a downstream dataset that maximizes the margins of linear classifiers in the space of single or multiple foundation models to uncover the underlying human labeling. 
+Compared to zero-shot and supervised transfer, unsupervised transfer with TURTLE does not need the supervision in any form (Figure 1 ). 
+Compared to deep clustering methods (Xie et al., 2016; Chang et al., 2017; Caron et al., 2018; Van Gansbeke et al., 2020; Niu et al., 2022) , TURTLE does not require task-specific representation learning that is expensive for modern foundation models. 
+We study the performance of TURTLE on the extensive evaluation suite spanning 26 datasets and 7 different foundation models. 
+We compare TURTLE to various baselines that differ in the amount of available supervision for the downstream transfer. 
+First, when compared to the recent state-of-the-art unsupervised baselines, TURTLE outperforms these baselines on all the considered datasets, setting the new state-of-the-art unsupervised performance. 
+Compared to zero-shot transfer, TURTLE instantiated with two foundation models surpasses CLIP zero-shot transfer across all studied model sizes, achieving exceptional absolute improvements up to 35% on the studied datasets. 
+Given the same single representation space, TURTLE closely matches the performance of the CLIP zero-shot transfer on 7 out of 8 studied model architectures. 
+In particular, the best TURTLE model, which utilizes the same model size and representation space, outperforms CLIP zero-shot on 13 out of 26 datasets. 
+Finally, when compared to supervised transfer represented by linear probe, TURTLE approaches its performance on 5 out of 26 studied datasets, suggesting that labels may not be needed to infer the underlying human labeling when given sufficiently high-quality representations. 
+2. Background
+In this section, we introduce the problem setting of unsupervised transfer and provide an overview of key concepts that we build upon. 
+Unsupervised transfer. 
+Let X ⊆ R d be an input space and D = {x n } N n=1 , x n ∈ X be a dataset consisting of N samples and C classes, where C is known a priori. 
+Let ϕ(x) : X -→ R q denotes a mapping from an input space X to a q-dimensional representation space of a pre-trained foundation model. 
+The question we aim to answer is how to utilize representations from foundation models to solve a new task in a fully unsupervised manner. 
+Thus, by unsupervised transfer we consider the task of inferring the underlying human labeling 1 of a dataset D without any supervision given representations of foundation models. 
+Generalization-based learning of human labelings. 
+ Gadetsky & Brbić (2023) recently introduced a generalization-based objective that evaluates the generalization ability of linear models on top of representations obtained from pre-trained models. 
+The objective is motivated by a strong generalization ability of linear models in representation spaces of foundation models on many human labeled tasks. 
+Equipped with this insight, the goal is to find such labeling that optimizes generalization ability of a linear model over all possible labelings of a given dataset. 
+The quality of a labeling is measured by the ability of a linear model to generalize on a task defined by the given labeling. 
+In particular, let τ : X -→ {1, . . . 
+, C} denote a labeling function of a dataset. 
+Let f (x) = w T ϕ(x) denote a linear model in the representation space ϕ(x) of a foundation model. 
+Given a train-test split (D tr , D te ), one can train the model on a training split D tr with labeling τ (D tr ) and classification loss function L to obtain f . 
+After training, the generalization ability of the model can be assessed by computing the error of f on D te . 
+Consequently, the generalization-based objective is defined as follows: 
+where minimization is performed over the set of all possible labelings of a dataset D. This leads to a difficult discrete optimization problem. 
+To overcome this limitation, Gadetsky & Brbić (2023) replace minimization w.r.t. a discrete labeling τ with minimization w.r.t. 
+continuous parameters θ of a task encoder τ θ (x) : X -→ ∆ C-1 , where ∆ C-1 denotes (C -1)-dimensional probability simplex. 
+As a result, careful design of τ θ becomes crucial since it defines the search space explored by the generalization-based objective (1). 
+HUME framework. 
+The instantiation of this framework, proposed in HUME (Gadetsky & Brbić, 2023) , models τ θ using a linear model in the representation space ψ(x) obtained via self-supervised pre-training on the target dataset D: 
+where σ : R -→ ∆ C-1 denotes an activation function. 
+This modeling choice corresponds to restricting the search space in (1) to a set of labelings which are linearly separable in the representation space ψ(x). 
+In addition, obtaining ψ(x) requires task-specific representation learning, i.e., running self-supervised learning on the target dataset D. Since reliable self-supervised pre-training necessitates a large amount of data (Wang & Isola, 2020) , this prevents successful unsupervised transfer on downstream tasks with limited resources. 
+Given the task encoder parametrization τ HUME θ , HUME optimizes the following objective to search for the underlying human labeling: 
+where L ce is the cross-entropy loss function and f approx is an approximate solution to f obtained using iterative optimization algorithms. 
+HUME resorts to iterative differentiation (Domke, 2012; Shaban et al., 2019) to solve the resulting bilevel optimization problem, leading to an expensive overall training procedure. 
+3. Analysis of Generalization-Based Objective
+To understand inductive biases of the generalization-based objective proposed in (1), we consider this objective in case of binary labelings τ (x) : X → {-1, +1} with exponential loss function L exp (f (x), τ (x)) = exp(-τ (x)f (x)). 
+To simplify the analysis, we assume that the task encoder τ θ is a linear model in the same representation space ϕ(x), i.e., τ θ (x) = σ(θ T ϕ(x)), where σ : R -→ [-1; 1] is an odd activation function such as tanh. 
+This corresponds to restricting the search space in (1) to a set of labelings which are linearly separable in the representation space ϕ(x). 
+Additionally, we do not distinguish between train and test splits, i.e., D tr = D te = D. We provide a detailed discussion of the aforementioned assumptions in the remarks at the end of this section. 
+To obtain an approximate solution to f , we use iterative optimization algorithms. 
+Specifically, let w m+1 = Ξ(w m , D) denote a one step of an optimization algorithm, i.e., Ξ(w m , D) = w m -η∇ w x∈D L(w T m ϕ(x), τ θ (x)) for the gradient descent with a step size η. 
+Similarly, let w M = Ξ (M ) (w 0 , D) denote M steps of an optimization algorithm starting from w 0 . 
+Eventually, the above specifications result in the following bilevel optimization problem: 
+where we refer to (4) and ( 5 ) as inner and outer objectives respectively. 
+The key observation underlying our main result is that the inner optimization (5) corresponds to the unregularized logistic regression on separable data, allowing us to employ the seminal result by Soudry et al. (2018) . 
+This work shows that gradient descent, when applied to the task of unregularized logistic regression, outputs iterates that are biased towards the direction of the max-margin hyperplane. 
+Evidently, the task encoder τ θ generates labelings of D, which, by definition, are linearly separable in the representation space ϕ(x). 
+Consequently, w M will follow the direction of max-margin hyperplane for a given labeling τ θ . 
+In turn, the last point to observe is that substituting the iterates in (4), the outer objective is minimized when w M has a larger margin τ θ (x)w T M ϕ(x) with respect to τ θ . 
+Equipped with this intuition, we are now ready to state our main result: Proposition 3.1. 
+Given M ≫ 1, θ ̸ = 0 and appropriate step size η which ensures convergence, then 
+where 
+is bounded with lim M →∞ ∥r M (θ)∥ 2 = 0, and w SVM (θ) is the solution of the hard-margin SVM for a given θ: 
+We defer the proof to Appendix A. This result shows that the generalization-based objective upper bounds the norm of hard-margin SVM fitted to a labeling τ θ . 
+Consequently, minimizing L binary M will inevitably lead to minimizing the norm (i.e., maximizing the margin) with respect to a labeling. 
+As a result, the optimization procedure will yield labelings with large margin of the corresponding classifier. 
+Overall, our result unveils that the maximum margin principle (Vapnik, 1995) , widely employed by supervised learning algorithms, emerges as the inductive bias of the generalization-based objective (1). 
+Remark 3.2. 
+(Search space restriction). 
+The result above holds when labelings generated by τ θ are linearly separable in the representation space ϕ(x). 
+This assumption leads to the analysis of the generalization-based objective (1) with the restricted search space. 
+ Ji & Telgarsky (2019) showed that in the case of non-separable labelings, gradient descent mirrors the separable case, following the max-margin direction of a maximal linearly separable subset of the data. 
+Therefore, one could expect that the lower bound of the generalization-based objective (1) optimized over the complete search space inherits these properties, reflecting the separable case. 
+Remark 3.3. 
+(Train-test split assumption). 
+The generalization-based objective (1) assumes different train-test splits (D tr , D te ) on the inner-outer levels respectively to obtain an unbiased estimate of the true risk of a model f . 
+In our analysis, we simplify this assumption and employ D on both levels. 
+Our result shows that minimizing the generalization-based objective in this case leads to maximizing the margin of a linear model with respect to a labeling τ on D. In turn, this will inevitably lead to low error on a held out data given that margin size upper bounds generalization error (Bartlett & Shawe-Taylor, 1999; Gronlund et al., 2020) . 
+Remark 3.4. 
+(Asymptotic analysis) Proposition 3.1 is rather informal since it substitutes the asymptotic behaviour of the gradient descent iterates w M into the outer objective. 
+Although a rigorous analysis of the residual is required to establish exact bounds, these results serve to grasp the inductive bias incorporated in the generalization-based objective designed for the inference of human labelings. 
+In summary, this result shows that optimizing the generalization-based objective (1) yields labelings that induce maximal margin classifiers in the representation space ϕ(x). 
+Our main result is greatly inspired by the seminal works (Soudry et al., 2018; Ji & Telgarsky, 2019 ) that reveal the implicit bias of gradient descent towards max-margin solution. 
+Likewise, we demonstrate that the generalizationbased objective (1) encourages labelings τ such that if one were to subsequently train a max-margin classifier in the representation space ϕ(x) to fit a labeling τ , the margin obtained would be maximal over all possible labelings. 
+4. TURTLE Framework
+These insights serve us as a guiding principle to develop TURTLE, a general framework for efficient fully unsupervised transfer given representations of foundation models. 
+Optimization objective. 
+Proposition 3.1 provides an important insight on the inductive bias incorporated in the generalization-based objective (1). 
+Indeed, one can search for the underlying human labeling by maximizing the margin of a linear model with respect to a labeling. 
+Pushing the limits of this principle, we propose to search for a labeling by maximizing margins of linear models in spaces of multiple foundation models at the same time. 
+Given K foundation models, let ϕ k (x) be a representation space of k-th foundation model. 
+Given labeling defined by a task encoder τ θ , let w k M be k-th linear model trained to fit this labeling in a representation space ϕ k (x). 
+Then, TURTLE's optimization objective is as follows: 
+where, Ξ M (w k 0 , D) denotes an iterative optimization algorithm Ξ run for M steps starting from w k 0 . 
+Intuitively, each of the K terms in the loss function encourages τ θ to maximize margin of k-th linear model in the corresponding representation space ϕ k . 
+As opposed to the HUME's objective (3), which maximizes margin only in the single space ψ(x), TURTLE provides more effective guidance to the search process. 
+Task encoder parametrization. 
+The parametrization of a task encoder τ θ defines the search space of labelings, thus it has a crucial importance on the optimization process. 
+In TURTLE, we employ pre-trained representation spaces of foundation models to define a task encoder τ θ . 
+These representations remain fixed during the overall training procedure, alleviating the need of task-specific representation learning. 
+In particular, given K representation spaces ϕ k (x), we define our task encoder τ θ as follows: 
+where 
+such that θ = {θ 1 , . . . 
+, θ K } denotes all trainable parameters and σ is a softmax activation function. 
+After training, cluster assignments are computed as usual: 
+where τ TURTLE θ (x) c denotes the probability of assigning a sample x to the c-th cluster. 
+Compared to the HUME framework in (2) which searches for the underlying human labeling only over all linearly separable labelings in the self-supervised representation space ψ(x), TURTLE's parametrization greatly expands the search space. 
+Indeed, modeling τ θ as a simple ensemble induces the search space which is at least union of all linearly separable labelings in each of the representation spaces of foundation models ϕ 1 , . . . 
+, ϕ K . 
+One could further suggest employing deeper architectures to model τ θ , however such modeling choice may give rise to tasks that capture spurious correlations in data and do not necessarily reflect human labelings (Atanov et al., 2022) . 
+Therefore, our design choice effectively increases the search space and alleviates the need of task-specific fine-tuning by employing strong representations of foundation models. 
+Regularization. 
+The task encoder can synthesize degenerate labelings, i.e., assign all samples to a single class (Gadetsky & Brbić, 2023) . 
+Although such labelings induce linear classifiers with the largest possible margin in all representation spaces, they are irrelevant. 
+To avoid such trivial solutions, we separately regularize each term of the task encoder: 
+where 
+Final objective function. 
+Putting ( 8 ) and ( 11 ) together, TURTLE finally optimizes the following objective function: 
+where we found γ = 10 is a good default choice for the entropy regularization strength γ. 
+We show robustness to this hyperparameter in Appendix G. 
+Efficient optimization. 
+The new optimization-based objective ( 8 ) is a bilevel optimization problem with the convex inner part. 
+Indeed, given τ θ , computing w k M corresponds to the logistic regression problem on D with labeling τ θ (D) in the k-th representation space ϕ k . 
+Learning parameters θ using gradient-based techniques involves computing a total derivative d dθ L TURTLE M : 
+where 
+∂θ is the Jacobian, which is expensive to compute in practice (Domke, 2012; Shaban et al., 2019) . 
+The key observation is that employing the same set of samples D on both inner and outer levels allows us to discard the second term of the total derivative. 
+Indeed, after training 2020 ) have shown a strong performance of this estimator in practice for bilevel optimization problems similar to ours. 
+The pseudocode of TURTLE is provided in Algorithm B1 with implementation details in Appendix B.3. 
+5. Experiments
+5.1. Experimental setup
+Datasets and evaluation metric. 
+We study the performance of TURTLE on the extensive benchmark of 26 vision datasets (Radford et al., 2021) . 
+The detailed description of each dataset is provided in Appendix B.1. 
+We compare our framework with the baselines using accuracy metric and employ Hungarian algorithm (Kuhn, 1955) to match the labeling found by TURTLE (10) to the ground truth labeling of a corresponding dataset. 
+By default, we train TURTLE on the training split of a corresponding dataset and provide the results on the test split. 
+In Appendix H, we additionally show that mimicking deployment regime, i.e., having only test split available for training, does not lead to performance decrease of TURTLE. 
+Foundation models in TURTLE. 
+We employ CLIP (Radford et al., 2021) representations which span different architectures and model sizes, in particular, 5 different ResNets (R50, R101, R50x4, R50x16 and R50x64) and 3 different Vision Transformers (ViT-B/32, ViT-B/16 and ViT-L/14). 
+We refer to the TURTLE as TURTLE 1-space if it utilizes only a single space CLIP representation (K = 1 in ( 8 ) and ( 9 )). 
+We refer to the TURTLE as TURTLE 2-spaces if it utilizes two different foundation models. 
+Namely, we use DINOv2 ViT-g/14 (Oquab et al., 2023) as the second space while the first space is always represented with one of the CLIP variants. 
+Consequently, to specify the particular CLIP architecture when utilizing two representation spaces, e.g., ViT-L/14, we refer to TURTLE as TURTLE 2-spaces ViT-L/14. 
+We precompute all representations for the entire benchmark and keep these representations fixed during the overall training procedure. 
+The detailed description of the used models and other specifications to prepare representations are provided in Appendix B.2. 
+Baselines. 
+We compare unsupervised transfer using TUR-TLE to baselines that differ in the amount of supervision they use (Figure 1 ). 
+First, we compare TURTLE to HUME (Gadetsky & Brbić, 2023) , a method that has recently shown state-of-the-art unsupervised learning performance and surpassed traditional deep clustering approaches (Van Gansbeke et al., 2020; Niu et al., 2022; Amrani et al., 2022; Feng et al., 2023) . 
+Next, to explore how far can we go with unsupervised transfer, we compare TURTLE in a challenging setting to zero-shot transfer, unsupervised prompt tuning and supervised baselines. 
+All these baselines use some form of supervision compared to TURTLE which is fully unsupervised. 
+We start by comparing TURTLE to the CLIP zero-shot transfer (Radford et al., 2021) that employs descriptions of ground truth classes as a form of supervision. 
+Following (Radford et al., 2021) , we perform prompt engineering and ensembling to construct a zero-shot classifier for each dataset. 
+As even stronger baselines, we compare TURTLE to the state-of-the-art unsupervised prompt tuning methods UPL (Huang et al., 2022) , POUF (Tanwisuth et al., 2023) and GDA (Wang et al., 2024) . 
+These approaches enhance class prototypes defined by the CLIP zero-shot classifier via unsupervised adaptation on the downstream task. 
+Finally, we employ supervised linear probe on top of the CLIP representations to serve as a supervised transfer baseline. 
+Differences between types of transfer are highlighted in Table 1 . 
+ C2 ) and omitted for clarity. 
+Comparison to zero-shot transfer. 
+We compare TUR-TLE to the CLIP zero-shot transfer that uses descriptions of ground truth classes as a form of supervision. 
+Remarkably, without using any supervision, TURTLE 2-spaces outperforms the zero-shot transfer of CLIP by a large margin across 26 benchmark datasets for different ViT backbones (Figure 4 ). 
+ViT-B/32
+ViT In particular, TURTLE 2-spaces outperforms CLIP zeroshot by 9%, 7% and 4% absolute improvement (17%, 12% and 5% relative improvement) with ViT-B/32, ViT-B/16 and ViT-L/14 backbones, respectively. 
+Moreover, even TURTLE 1-space matches the performance of CLIP zero-shot across all studied ViT models. 
+It is important to note that both CLIP zero-shot and TURTLE 1-space are linear models in the same representation space and differ only in the amount of supervision which is available to produce the weights. 
+When comparing performance on individual datasets, TURTLE outperforms CLIP zero-shot transfer on 15 out of 26 datasets with remarkable absolute gains of 35%, 21% and 20% on the EuroSAT, MNIST and Flowers102 datasets, respectively (Figure 5 ). 
+We provide individual scores for all TURTLE and CLIP zero-shot variants in Appendix D. 
+Comparison to unsupervised prompt tuning. 
+Next, we compare TURTLE to unsupervised prompt tuning baselines. 
+We follow previous works and use CLIP ResNet-50 representations for all methods. 
+Although being fully unsupervised, TURTLE consistently outperforms all the considered baselines by a large margin (Table 2 ). 
+Specifically, TUR-TLE achieves 8% absolute improvement (12% relative improvement) in average accuracy over the best unsupervised prompt tuning baseline. 
+On the Flowers102 and EuroSAT datasets, our framework attains outstanding absolute gains of 27% and 41% (37% and 75% relative improvement), respectively. 
+Overall, these results demonstrate the surprising effectiveness of the unsupervised transfer. 
+Comparison to supervised transfer. 
+Finally, we compare TURTLE 1-space ViT-L/14 to supervised linear probe in the same representation space. 
+This means that in this setup both models are linear in the representation space of CLIP ViT-L/14 and differ only in the amount of supervision utilized to produce the weights. 
+Supervised linear probe is trained using all available labels. 
+Consequently, we can assume that it represents the maximal transfer learning performance that can be achieved by the unsupervised transfer. 
+We observe a high positive correlation of 0.87 (p-value < 10 -8 ) between unsupervised transfer performance and its fully supervised counterpart (Figure 6 ). 
+This result indicates that with better supervised linear probe performance, TURTLE's performance may also increase, which we further investigate in the subsequent paragraph. 
+Notably, TURTLE approaches the "optimal" transfer performance on the STL10, CIFAR10, Flowers102, Food101 and Hateful-Memes, demonstrating that labels may not be needed when given sufficiently high-quality representations, as measured by supervised linear probe. 
+We perform similar analysis for TURTLE 2-spaces and observe stronger correlation, leading to reduced gap between TURTLE 2-spaces and supervised linear probe (Figure E2 ). 
+Ablation of different representation spaces on ImageNet.
+Results from the previous paragraph speculate that incorporating stronger representations may lead to the increased performance of unsupervised transfer. 
+To validate this, we run TURTLE with pairs of different representation spaces on the ImageNet-1000 dataset (Deng et al., 2009) . 
+Results in Figure 7 show a positive correlation of 0.74 (p-value < 10 -8 ) between unsupervised transfer performance and the quality of representations measured by supervised linear probe. 
+The obtained result confirms that employing stronger representations for a given dataset leads to the improved performance of TURTLE. 
+Consequently, TURTLE can further improve performance by exploiting continual progress in the development of foundation models. 
+Furthermore, given high positive correlation between TURTLE's accuracy and the generalization-based objective (Figure B1 ), TURTLE can be utilized as the proxy to measure the quality of given representations in the absence of labels for the downstream task. 
+Dashed line y = x denotes the "optimal" unsupervised transfer. 
+The performance of TURTLE and supervised linear probe shows a strong correlation (ρ = 0.87, p = 6.3×10 -9 of two-sided Pearson correlation coefficient). 
+On 5 datasets TURTLE approaches the performance of the "optimal" unsupervised transfer (≤ 3 point difference). 
+6. Related Work
+(Weakly) supervised transfer. 
+(Weakly) supervised transfer approaches require at least some amount of supervision to perform downstream transfer. 
+For instance, BigTransfer (Kolesnikov et al., 2020) showed that supervised fine-tuning of the entire model after large-scale pre-training successfully transfers knowledge in both fully supervised and few-shot regimes. 
+Recent advances in self-supervised learning (He et al., 2022; Li et al., 2022; Zhou et al., 2022; Oquab et al., 2023; Darcet et al., 2024) have demonstrated that a linear probe suffices to achieve competitive performance compared to the fine-tuning the entire model. 
+Despite the strength of these approaches, they necessitate labeled examples to perform downstream transfer. 
+Zero-shot transfer. 
+Foundation models such as CLIP (Radford et al., 2021) have recently enabled zero-shot transfer, which relies only on a set of human instructions such as de- scriptions of visual categories that appear in the data rather than a set of labeled examples. 
+Despite the success of zeroshot transfer in different domains (Elizalde et al., 2023a; b; Lin et al., 2023; Robinson et al., 2023; Meidani et al., 2024) , collecting zero-shot annotations still requires expert domain knowledge which can be hard to get in many real-world applications. 
+In contrast to the zero-shot transfer approaches, TURTLE enables fully unsupervised transfer, effectively alleviating the need of any human guidance. 
+Deep clustering. 
+Deep clustering methods (Xie et al., 2016; Chang et al., 2017; Caron et al., 2018; Van Gansbeke et al., 2020; Niu et al., 2022) aim to jointly perform deep representation learning and clustering on a target dataset. 
+Recent state-of-the-art approaches (Van Gansbeke et al., 2020; Niu et al., 2022) rely on time-consuming three-stage procedures that involve self-supervised representation learning, clustering and fine-tuning via self-labeling respectively. 
+In contrast to the deep clustering approaches, TURTLE alleviates the need for laborious task-specific representation learning by employing representation spaces of pre-trained foundation models. 
+Furthermore, compared to deep clustering methods that heavily depend on image augmentations to induce semantically meaningful clusters, TURTLE builds upon the seminal maximum margin principle that is effortlessly applicable beyond image data modality. 
+Consequently, our approach offers an efficient and effective way to perform fully unsupervised transfer from foundation models. 
+Maximum margin clustering. 
+Our work has revealed that optimizing the generalization-based objective proposed in Gadetsky & Brbić (2023) results in the search for a labeling that maximizes the margin of a maximal margin classifier over all possible labelings of a dataset. 
+The first attempt to employ maximum margin principle to perform clustering dates back to Maximum Margin Clustering (MMC) (Xu et al., 2004) . 
+Later works extended this framework to multi-class clustering (Xu & Schuurmans, 2005; Wang et al., 2010) , multi-view clustering (Zhao et al., 2009) , or focused on improving the scalability (Zhang et al., 2007; Wang et al., 2010) . 
+Compared to TURTLE, which employs efficient first-order gradient optimization techniques, the aforementioned approaches rely on the expensive discrete optimization techniques. 
+Furthermore, each of the approaches adopts maximum margin principle in its own way to enable multi-class or multi-space scenario, while TURTLE provides a unified framework for any number of classes and representation spaces. 
+Implicit bias of optimization algorithms. 
+Understanding the implicit bias of optimization algorithms plays a crucial role in modern machine learning. 
+The seminal work by Soudry et al. (2018) showed that the gradient descent, when applied to the task of unregularized logistic regression on separable data, converges to the direction of the maximal margin hyperplane without explicitly enforcing such margin maximization. 
+Later, Ji & Telgarsky ( 2019 ) extended the analysis and demonstrated a similar behavior of gradient descent in the case of non-separable data. 
+In our work, we employ the aforementioned findings to study the inductive bias of the generalization-based objective. 
+Surprisingly, we reveal that it yields labelings that maximize the margin of a maximal margin classifier with respect to labeling. 
+As a result, this insight allows us to develop TURTLE, a method that enables fully unsupervised transfer given representations of foundation models. 
+7. Conclusion
+In this work, we have shown that the representations of foundation models can be utilized to solve a new task in a fully unsupervised manner. 
+The key insight behind our approach is to search for a labeling that induces maximal margin classifiers in the representation spaces of foundation models. 
+We utilize this insight to develop TURTLE, a general framework for effective unsupervised transfer given representations of different foundation models. 
+Through extensive evaluation, we found that TURTLE, being fully unsupervised, achieves competitive performance compared to zero-shot transfer by employing only a single representation space. 
+Furthermore, utilizing an additional representation space results in remarkable gains over zero-shot transfer. 
+Given the flexibility of our framework, the results also suggest that TURTLE can deliver even better unsupervised transfer performance by taking advantage of new more powerful foundation models that will emerge in the future. 
+Impact Statement
+Although the main goal of our work is to advance the field of Machine Learning, the proposed framework relies on representation spaces of foundation models. 
+These models inherit biases embedded in the data on which they were trained on (Bommasani et al., 2022) . 
+Consequently, the extensive evaluation and alignment is recommended when deploying TURTLE to critical use-cases such as medicine. 
+A. Proof of Proposition 3.1 
+Here, we first provide the simplified version of the main results from Soudry et al. (2018) for completeness and then present the proof of Proposition 3.1. 
+For clarity, we overload notation for x n and consider x n is already represented in a representation space ϕ(x), i.e., x n = ϕ(x n ). 
+Given binary labeling function τ (x) ∈ {-1, +1} of the dataset D = {x n } N n=1 , let L(w) be the exponential loss function: 
+We consider minimizing ( 14 ) using gradient descent with a step size η: 
+Let w SVM denote the primal solution to the hard margin SVM problem: 
+Let α SVM denote the dual solution to the hard margin SVM problem: 
+where primal and dual variables are related as (Vapnik, 1995) . 
+Assumption A.2. (Non-degenerate dataset) Support vectors S = {x n ∈ D|τ (x n )w T SVM x n = 1} span the data, i.e., rank(D S ) = rank(D), where D S is a matrix whose columns are x n ∈ S. Furthermore, for each x n ∈ S, the corresponding dual variables are strictly positive, i.e., (α SVM ) n > 0, and the rest are zero. 
+After above specifications, the simplified version of the seminal result by Soudry et al. (2018) is: Soudry et al. (2018) ) For almost any non-degenerate (Assumption A.2) dataset which is linearly separable (Assumption A.1), any starting point w 0 and step size η < 1/L(w 0 ), the gradient descent iterates (15) will behave as: 
+where w SVM is the max-margin vector ( 16 ), w is a solution to: 
+and the residual r m is bounded with lim m→∞ ∥r m ∥ 2 = 0 
+Equipped with this result, we analyze the generalization-based objective: 
+where τ θ (x) = σ(θ T x) is the task encoder with an odd activation function such as tanh and w M = Ξ (M ) (w 0 , D) denotes M steps of gradient descent with step size η and labeling defined by τ θ . 
+Without loss of generality, we can assume ∥x n ∥ 2 ≤ 1, ∀x n ∈ D. Given the above specifications, we are now ready to state our main result: 
+Proposition A.4. (Lower bound for the generalization-based objective) Following the assumptions of Proposition A.3, given M ≫ 1 and θ ̸ = 0, we have: 
+where g(θ) = (M η exp(∥r M (θ)∥ 2 )) -1 , the residual r M (θ) is bounded with lim M →∞ ∥r M (θ)∥ 2 = 0, and w SVM (θ) is the solution of the hard-margin SVM for a given θ: 
+Proof. 
+The key observation is that the task encoder τ θ (x) generates linearly separable labelings, allowing us to apply Proposition A.3 and substitute the explicit form of iterates w M into the outer objective (20). 
+Indeed, for example, w * = θ satisfies Assumption A.1, i.e., τ θ (x n )θ T x n > 0 for all x n ∈ D and θ ̸ = 0. Thus, substituting the iterates w M into the outer objective leads to: 
+where we explicitly indicate that w SVM (θ), w(θ) and r M (θ) depend on the parameters θ of the task encoder τ θ . 
+Let L n (θ) be n-th term of the sum and S θ be the indices of support vectors, i.e., n ∈ {1, . . . 
+, N } s.t. 
+τ θ (x n )w T SVM x n = 1. 
+Then, due to the non-negativity of exp(•), we have: 
+Considering single term L n (θ), n ∈ S θ and opening the brackets, we obtain: 
+Inspecting ( 26 ) separately for each term L i , we obtain: 
+η by ( 19 ); and (iii) L 3 ≥ exp(-∥r M (θ)∥ 2 ) by Cauchy-Schwarz inequality given that ∥τ θ (x n )x n ∥ 2 ≤ 1. Combining this with (25), finally we obtain: 
+where the last equality comes from the fact that: 
+concluding the proof. 
+B. Experimental Details
+B.1. Datasets
+We evaluate our framework on 26 vision datasets studied in Radford et al. (2021) . 
+These datasets cover a wide range of vision tasks, including general object classification datasets CIFAR10 (Krizhevsky & Hinton, 2009) , CIFAR100 (Krizhevsky & Hinton, 2009) , STL10 (Coates et al., 2011) , ImageNet (Deng et al., 2009 ), Caltech101 (Fei-Fei et al., 2004) ; fine-grained object classification datasets Food101 (Bossard et al., 2014) , Flowers (Nilsback & Zisserman, 2008) , Birdsnap (Berg et al., 2014) , Stanford Cars (Krause et al., 2013) , FGVC Aircraft (Maji et al., 2013) , Oxford Pets (Parkhi et al., 2012) ; handwritten digits classification dataset MNIST (LeCun et al., 1998) ; texture classification dataset DTD (Cimpoi et al., 2014) ; scene classification dataset SUN397 (Xiao et al., 2016) ; the facial emotion recognition dataset FER2013 (Goodfellow et al., 2015) ; the satellite image classification datasets EuroSAT (Helber et al., 2019) , RESISC45 (Cheng et al., 2017) ; the German Traffic Sign Recognition Benchmark (GTSRB) (Stallkamp et al., 2012) ; the KITTI Distance dataset (Geiger et al., 2012) ; the metastatic tissue classification dataset PatchCamelyon (PCam) (Veeling et al., 2018) ; action recognition datasets UCF101 (Soomro et al., 2012) , Kinetics700 (Carreira et al., 2019) ; the CLEVR counting dataset (Johnson et al., 2017) ; the Hateful Memes dataset (Kiela et al., 2020) ; the country classification dataset Country211 (Radford et al., 2021) and the Rendered SST2 dataset (Radford et al., 2021) . 
+For CLEVR, we take 2000 random samples as training split and 500 random samples as test split. 
+For two video datasets UCF101 and Kinetics700, we take the middle frame of each video clip as the input of the pre-trained models. 
+Details of each dataset are provided in Table B1 . 
+We use accuracy as the evaluation metric for all the datasets. 
+Finally, it's worth noting that TURTLE could also be applied to the tasks in various modalities besides vision or even in cross-modalities scenarios, provided that the pre-trained representations are available. 
+Table B1 . 
+Benchmark suite of 26 datasets. 
+We use accuracy as the evaluation metric for all datasets. 
+Dataset Number of Classes Train size Test size Food101 (Bossard et al., 2014) 101 75,750 25,250 CIFAR10 (Krizhevsky & Hinton, 2009) 10 50,000 10,000 CIFAR100 (Krizhevsky & Hinton, 2009) 100 50,000 10,000 Birdsnap (Berg et al., 2014) 500 37,221 2,500 SUN397 (Xiao et al., 2016) 397 19,850 19,850 StanfordCars (Krause et al., 2013) 196 8,144 8,041 FGVC Aircraft (Maji et al., 2013) 100 6,667 3,333 DTD (Cimpoi et al., 2014) 47 3,760 1,880 OxfordPets (Parkhi et al., 2012) 37 3,680 3,669 Caltech101 (Fei-Fei et al., 2004) 102 3,060 6,084 Flowers (Nilsback & Zisserman, 2008) 102 2,040 6,149 MNIST (LeCun et al., 1998) 10 60,000 10,000 FER2013 (Goodfellow et al., 2015) 7 28,709 3,589 STL10 (Coates et al., 2011) 10 5,000 8,000 EuroSAT (Helber et al., 2019) 10 10,000 5,000 RESISC45 (Cheng et al., 2017) 45 25,200 6,300 GTSRB (Stallkamp et al., 2012) 43 26,640 12,630 KITTI Distance (Geiger et al., 2012) 4 5,985 1,496 Country211 (Radford et al., 2021) 211 42,200 21,100 PatchCamelyon (Veeling et al., 2018) 2 294,912 32,768 UCF101 (Soomro et al., 2012) 101 9,537 3,783 Kinetics700 (Carreira et al., 2019) 700 536,485 33,966 CLEVR Counts (Johnson et al., 2017) 8 2,000 500 HatefulMemes (Kiela et al., 2020) 2 8,500 500 The Rendered SST2 (Radford et al., 2021) 2 7,792 1,821 ImageNet (Deng et al., 2009) 1000 1,281,167 50,000 
+B.3. Implementation Details
+Efficient alternating optimization. 
+TURTLE contains a bilevel objective that measures the loss of the task encoder using the training loss of a linear classifier trained on the task produced by the task encoder. 
+The hyper-gradient of the task encoder is ∇ θ L = ∂L ∂θ + ( ∂w ∂θ ) T ∂L ∂w | w=w * , where the Jacobian ∂w ∂θ is generally expensive to obtain. 
+Existing works usually estimate the hyper-gradient via unrolling or approximation based on the implicit function theorem, e.g., see Finn et al. (2017) ; Lorraine et al. (2020) ; Ji et al. (2021) ; Kwon et al. (2023) ; Dagréou et al. (2022) ; Bolte et al. (2023) ; Liu et al. (2022) . 
+However, these methods might be inefficient and suboptimal in practice (Scieur et al., 2022) . 
+Fortunately, in the TURTLE framework, one could avoid the estimation of ( ∂w ∂θ ) T ∂L ∂w given the fact that ∂L ∂w | w=w * ≈ 0. Thus, the gradient of the task encoder is simplified to ∇ θ L = ∂L ∂θ | w=w * . 
+This inspires us to train the task encoder via alternating optimization, which has been shown efficient for the min-min optimization problems (Ablin et al., 2020) . 
+At each iteration, we first fix the task encoder and train the linear classifier for M steps to find its approximate optima. 
+Note that one could choose to re-initialize the linear classifier every time (cold-start), or just start from the values of last iteration (warm-start), which might introduce different implicit bias as noted by Vicol et al. (2022) . 
+After that, we update the task encoder based on the loss of the linear classifier. 
+The training is efficient since no second-order gradient is needed in this process. 
+The pseudo-code of TURTLE is provided in Algorithm B1. 
+Algorithm B1 TURTLE for Unsupervised Transfer 1: Input: Dataset D, number of classes C, number of iterations T , representation spaces ϕ 1 (•), ..., ϕ K (•), task parameters θ = {θ 1 , ..., θ K }, linear classifiers w 1 , ..., w K , learning rate η, optimization operator Ξ(•), number of adaptation steps M , entropy regularization weight γ // Ξ(•) can be any iterative operator, e.g., gradient descent 2: Randomly initialize θ 1 , ..., θ K and w 1 0 , ..., w K 0 3: for t = 1 to T do 4: 
+Sample mini-batch from dataset X ∼ D 
+5:
+Generate task from task encoder 
+if warm-start then update start points ∀k ∈ [K], w k 0 ← w k M // cold-start keeps the initial w k 0 9: end for 10: Output: Task parameters θ = {θ 1 , ..., θ K } Training details. 
+We precompute the feature representations for all datasets before the training. 
+We use Weight Normalization (Salimans & Kingma, 2016) to parameterize the task encoder since we found it helpful for the convergence. 
+ADAM (Kingma & Ba, 2015) optimizer is used for the training of both linear classifier and task encoder. 
+We use 10000 as the default batch-size. 
+For datasets smaller than 10000, we train the model with full-batch at each iteration. 
+Overall, we found TURTLE is robust to the choice of the batch-size. 
+We update the linear classifier for M = 10 steps at each iteration and train the task encoder for T = 6000 iterations in total. 
+If not specifically mentioned, we set the entropy regularization parameter γ = 10 for all experiments. 
+We show robustness of TURTLE to this hyperparameter in Appendix G. 
+For each dataset, we do a grid search over 5 different learning rates for both task encoder and linear classifier with η ∈ {0.01, 0.005, 0.001, 0.0005, 0.0001}, respectively. 
+We combine each pair of learning rates with the choice of warm-start or cold-start, and finally get set of 50 triplets to search over for each dataset. 
+We use cross-validation to select hyper-parameters, as described below. 
+Following Gadetsky & Brbić (2023) ; Van Gansbeke et al. (2020) , we use Hungarian algorithm (Kuhn, 1955) to match the labeling found by TURTLE and the ground truth labeling to compute the clustering accuracy. 
+If not specified, we train our model on the training split and report the clustering accuracy on the test split. 
+In Section H, we also consider the setting of both training and evaluating TURTLE on the test split, mimicking low data regime. 
+Cross-validation for task selection. 
+For each dataset, we obtain 50 tasks after grid search, i.e., each corresponds to the hyperparameter triplet. 
+We use 10-fold cross-validation to select the best task. 
+The cross-validation regards the learned task as "pseudo-labels" and measures the generalization error of a linear classifier trained on these "pseudo-labels". 
+Specifically, we randomly split the dataset into 10 folds. 
+In each round, a linear classifier is trained on 9 folds and tested on the rest fold. 
+The final cross-validation score is the average test accuracy over all rounds. 
+Importantly, this process relies solely on the learned tasks and does not need any information about the ground-truth labels. 
+For TURTLE trained on multiple representations, we do cross-validation on each representation space separately and average the final scores. 
+The task with the highest cross-validation score is selected as the final output of TURTLE. 
+Figure B1 shows the performance of the learned tasks obtained by TURTLE 2-spaces CLIP ViT-L/14 and DINOv2 and their corresponding cross-validation scores over 26 datasets. 
+As indicated by the plot, the cross-validation score is well correlated with the clustering accuracy with an average of ρ = 0.61 two-sided Pearson correlation coefficient over 26 datasets. 
+Moreover, among 20 datasets, cross-validation successfully identifies the best or near-best task (i.e., with less than 1.5 point difference of clustering accuracy). 
+The result of cross-validation also empirically verifies the effectiveness of the generalization-based objective and suggests that the labelings with low generalization error tend to be more aligned with human labeled tasks, confirming the original findings of Gadetsky & Brbić (2023) on the wide suite of datasets. 
+Linear probe. 
+Supervised linear probe is a widely used method to evaluate the quality of representation learning (Radford et al., 2021; Oquab et al., 2023) . 
+It trains a linear classifier on the train split on top of the representations extracted from the pretrained models and then evaluates the performance on the test split. 
+We use the cuML.LogisticRegression (Raschka et al., 2020) for linear probe evaluation in our paper 3 . 
+The linear classifier is trained with L-BFGS optimizer for maximum of 1000 iterations. 
+The cuML library allows for GPU acceleration and, thus, it is much faster than sklearn.linear 
+model.LogisticRegression counterpart, especially on large datasets such as ImageNet. 
+To determine the strength of L2 norm regularization, we randomly take 20% of the training split for validation and search over 96 values in the log-space ranging from 10 -6 to 10 6 . 
+The selection process takes a few minutes on small datasets, and around 8 hours on ImageNet, with a single NVIDIA A100 GPU. 
+After that, we train the model with the best regularization strength on the entire training split and report the classification accuracy on the test split. 
+C. Details on Unsupervised Baselines and Numerical Results
+K-Means clustering. 
+We apply K-Means (MacQueen, 1967) clustering on top of pre-trained features as a simple baseline that does not require task-specific representation learning. 
+Similarly to the linear probe, we also use the implementation from CuML library for the GPU acceleration (i.e., CuML.KMeans). 
+For each dataset and the corresponding representation, we train K-Means with maximum 1000 iterations (max iter=1000) and 10 random initializations (n init=10) on the train split, and report the clustering accuracy on the test split. 
+In the case when multiple representations are used, we first L2 normalize representation from each pre-trained model, and then apply K-Means clustering on top of the concatenation of all L2 normalized features. 
+HUME. 
+HUME (Gadetsky & Brbić, 2023) is the recent state-of-the-art unsupervised learning baseline that introduced the instantiation of the generalization-based objective (3). 
+Specifically, it learns task-specific representations on the target dataset to model the task encoder, and then measures the generalization error of a linear classifier in the representation space of a foundation model. 
+We use the original source code 4 for the implementation of HUME, with modifications to improve the speed and performance. 
+In particular, we replace task-specific representations with a pre-trained foundation model since we empirically found it yields better performance. 
+Besides, we remove the variance reduction used in the original HUME and sample only the single mini-batch at every iteration (i.e., the same as TURTLE), since we found it significantly reduces the computational cost and does not influence the final performance. 
+We update the linear classifier with M = 300 steps at each iteration, and train the task encoder with T = 6000 iterations in total. 
+The default batch-size is set to 10000. 
+Moreover, we follow the same hyperparameter selection procedure of TURTLE to select the inner/outer learning rates and warm-start/cold-start for HUME. 
+Comparison of TURTLE to HUME and K-Means. 
+For a fair comparison, we train TURTLE, HUME and K-Means using the same representation spaces, i.e., CLIP ViT-L/14 and DINOv2 ViT-g/14. 
+Given that HUME's task encoder parametrization uses only the single space, we run HUME with the task encoder modeled using CLIP or DINOv2 (denoted as HUME CLIP and HUME DINOv2 respectively), and measure the generalization error using the rest representation space. 
+For each method, we report the training time in minutes and the clustering accuracy averaged over 3 random seeds. 
+For each random seed, we perform the hyperparameter selection for HUME and TURTLE as described in the corresponding subsection above. 
+Table C1 and Table C2 show the obtained results on 5 datasets. 
+Overall, the results indicate that TURTLE outperforms HUME and K-Means on all the considered datasets, highlighting the effectiveness of design choices made in TURTLE. 
+For instance, combining multiple representation spaces for modeling the task encoder in TURTLE brings substantial gains compared to HUME. 
+Namely, TURTLE achieves remarkable 28% and 23% absolute improvement (40% and 30% relative improvement) over HUME DINOv2 and HUME CLIP respectively on the MNIST dataset. 
+Furthermore, efficient first-order optimization techniques used in TURTLE allow for fast optimization, taking just 5 minutes even on large-scale datasets such as ImageNet. 
+E. Additional Results on 26 Vision Datasets
+We show all experimental results of supervised transfer with linear probe, CLIP zero-shot transfer, and TURTLE unsupervised transfer on 26 vision datasets in Table D1 . 
+The linear probe performance of DINOv2 ViT-g/14 is also included for reference. 
+As indicated in the table, TURTLE achieves strong unsupervised transfer performance across various datasets and models. 
+For example, as illustrated in Figure E1 , TURTLE 1-space CLIP ViT-L/14 surpasses the corresponding CLIP zero-shot transfer on 13 out of 26 datasets. 
+When trained with multiple representations (i.e., using CLIP models and DINOv2 ViT-g/14), TURTLE 2-spaces achieves superior performance on most datasets compared to TURTLE 1-space. 
+Remarkably, on datasets such as MNIST and CIFAR100, the absolute improvement is 31% and 21%, indicating the effectiveness of TURTLE in combining the knowledge of multiple foundation models. 
+Furthermore, as shown in Figure 5 , TURTLE trained with CLIP ViT-L/14 and DINOv2 ViT-g/14 outperforms CLIP zero-shot on 15 out of 26 datasets. 
+In addition, we compare the performance of TURTLE to supervised linear probe using single representation space in Figure 6 . 
+It can be seen that there exists a strong positive correlation between the performance of unsupervised transfer and supervised linear probe. 
+Figure E2 provides the analysis of TURTLE 2-spaces trained using CLIP ViT-L/14 and DINOv2 ViT-g/14, indicating that the performance of TURTLE 2-spaces is also strongly correlated with the average linear probe performance. 
+Overall, these results suggest that TURTLE could potentially benefit from the improved quality of representations, as measured by supervised linear probe. 
+Finally, it's worth noting that TURTLE 2-spaces might underperform TURTLE 1-space on some datasets, as shown in Table D1 . 
+We hypothesize that the discrepancy might stem from the suboptimality of DINOv2 representations for the tasks heavily related to semantic comprehension, such as semantic analysis (Rendered SST, HatefulMemes), traffic sign recognition (GTSRB), geolocation (Country211) and object counting (CLEVR). 
+Since DINOv2 is pre-trained with selfsupervised objective (Oquab et al., 2023) , the learned features might not be directly transferable to these semantic-intensive tasks. 
+Such trend could also be observed by the linear probe performance, where CLIP ViT-L/14 outperforms DINOv2 ViT-g/14 by a large margin on the Rendered SST2, CLEVR, Country211, GTSRB and FER2013. 
+Therefore, incorporating DINOv2 representations might not yield optimal results for these specific datasets. 
+G. Imbalanced Dataset and Entropy Regularization
+Following Xu et al. (2004); Van Gansbeke et al. (2020) ; Gadetsky & Brbić (2023) , we use entropy regularization (11) to prevent the task encoder from producing trivial solutions, i.e., assigning all the samples to a single class. 
+By default we set the regularization strength to γ = 10 for all the experiments. 
+Note that the optimal solution of ( 11 ) is to produce a labeling with the equal number of samples for each class. 
+However, some of the datasets are not class balanced. 
+In this case, a strong entropy regularization might hurt the learning process. 
+To understand the effect of the entropy regularization, we show the average performance of TURTLE with γ ∈ {0, 1, 3, 5, 10} separately on the imbalanced datasets (Birdsnap, FER2013, GTSRB, KITTI, HatefulMemes), and the rest 21 balanced datasets in Figure G1 . 
+The results indicate that the entropy regularization is generally helpful since η = 0 might lead to trivial solutions. 
+Furthermore, for the balanced datasets, TURTLE is robust to the choice of the regularization hyperparameter. 
+While for the imbalanced datasets, a properly chosen regularization parameter could further improve the performance. 
+H. TURTLE Trained and Evaluated on Test Split
+In previous experiments, we train TURTLE on the training split D tr and evaluate the clustering accuracy on the test split D te . 
+In this section, to study the performance of TURTLE in low data regime, we consider the setting when training and evaluating TURTLE directly on the test split. 
+Figure H1 compares the performance of TURTLE trained on D tr and TURTLE trained on D te on the 26 datasets. 
+Both settings are evaluated on the test split. 
+As shown in the plot, TURTLE trained on D te achieves nearly identical performance as TURTLE trained on D tr for 24 out of 26 datasets, except Caltech101 and Flowers102. 
+We found the discrepancy might be attributed to the fact that the Caltech101 and Flowers102 have balanced training split but imbalanced test split. 
+Overall, the results suggest that TURTLE does not require a large amount of data to perform successful unsupervised transfer. 
+Figure 2. TURTLE outperforms unsupervised baselines. 
+Comparison of TURTLE to unsupervised baselines with respect to accuracy. 
+All methods use the CLIP ViT L/14 and DINOv2 representations. 
+Bars represent the average performance with standard deviations computed over three runs. 
+Figure 4. TURTLE enables unsupervised transfer given representation spaces of foundation models. 
+Employing the same CLIP representation space, TURTLE closely matches the performance of the corresponding CLIP zero-shot classifier on average over 26 datasets. 
+With the use of an additional representation space, TURTLE outperforms zero-shot transfer, demonstrating exceptional abilities of unsupervised transfer learning. 
+Figure5. 
+TURTLE outperforms the CLIP zero-shot classifier on 15 out of 26 datasets. 
+TURTLE is trained with CLIP ViT-L/14 and DINOv2 representations. 
+CLIP zero-shot utilizes the same CLIP ViT-L/14 architecture. 
+Furthermore, we observe that even with only a single CLIP representation space TURTLE outperforms CLIP on 13/26 datasets (FigureE1). 
+Figure6. 
+Unsupervised transfer performance of TURTLE is correlated with supervised linear probe performance. 
+Dashed line y = x denotes the "optimal" unsupervised transfer. 
+The performance of TURTLE and supervised linear probe shows a strong correlation (ρ = 0.87, p = 6.3×10 -9 of two-sided Pearson correlation coefficient). 
+On 5 datasets TURTLE approaches the performance of the "optimal" unsupervised transfer (≤ 3 point difference). 
+Figure 7. Top: Supervised linear probe on the ImageNet-1000 dataset for 7 different representation spaces. 
+Bottom: Heat map represents unsupervised performance of TURTLE on ImageNet-1000. 
+Secondary diagonal cells correspond to TURTLE 1-space, while off-diagonal cells refer to TURTLE 2-spaces with the pair of corresponding representation spaces. 
+The performance of TUR-TLE indicates a strong positive correlation with the performance of supervised linear probe (ρ = 0.74, p = 1.4 × 10 -9 of two-sided Pearson correlation coefficient). 
+Figure B1. 
+Task selection via cross-validation. 
+We use TURTLE 2-spaces CLIP ViT-L/14 and DINOv2 to produce the tasks. 
+We show the cross-validation score and corresponding clustering accuracy of the tasks learned by TURTLE with 50 different hyperparameters for each dataset. 
+The cross-validation score is well correlated with the clustering accuracy (ρ = 0.61 of two-sided Pearson correlation coefficient averaged over 26 datasets). 
+Figure E1. 
+Using the same representation space, TURTLE outperforms CLIP zero-shot classifier on 13 out of 26 datasets. 
+TURTLE is trained with CLIP ViT-L/14 and does not require any supervision. 
+CLIP zero-shot utilizes the same architecture, but requires the additional text encoder and description of visual categories. 
+Figure E2. 
+Unsupervised transfer learning performance is correlated with supervised linear probe performance. 
+The performance of TURTLE 2-spaces is strongly correlated with the average performance of linear probe using CLIP ViT-L/14 and DI-NOv2 ViT-g/14 (ρ = 0.88, p = 2.3 × 10 -9 for two-sided Pearson correlation coefficient). 
+Figure G1. 
+Ablation of the entropy regularization. 
+We show the average performance for class imbalanced datasets (Birdsnap, FER2013, GTSRB, KITTI, HatefulMemes) and class balanced datasets (the rest 21 datasets) for the different entropy regularization strength. 
+Figure H1. 
+TURTLE trained on test split achieves similar performance as TURTLE trained on training split for 24 out 26 of datasets. 
+Results are both evaluated on the test split. 
+The discrepancy of Caltech101 and Flowers102 is because that they are balanced on training split but imbalanced on test split. 
+Differences between the considered types of downstream transfer. 
+We refer the reader to Appendix B.3 for the detailed description of our model selection procedures. 
+Code is publicly available at https://github.com/mlbio-epfl/turtle. 
+TURTLE 2-spaces outperforms unsupervised prompt tuning methods.ZS column indicates whether method utilizes zeroshot supervision to make predictions.All methods employ CLIP ResNet-50 representations.TURTLE additionally uses DINOv2 representations as the second representation space.Method ZS Pets Flowers FGVC DTD EuroSAT Cars Food SUN Caltech UCF ImageNet Avg. 
+Accuracy of TURTLE and unsupervised baselines. 
+The results are averaged with standard deviations computed over 3 runs. 
+Training time (in minutes) of TURTLE and unsupervised baselines. 
+The results are averaged with standard deviations computed over 3 runs. 
+The standard deviation for K-Means and TURTLE is negligible. 
