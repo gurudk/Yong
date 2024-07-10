@@ -5,7 +5,7 @@ import re
 
 sounds = []
 
-file_path = "paper/test_wav/Let Go of Your Labels with Unsupervised Transfer_cn"
+file_path = "paper/test_wav/On the Opportunities and Risks of Foundation Models_cn_clean"
 paper_parent = Path(file_path).parent.resolve().parent
 suffix_name = file_path.split("/")[-1]
 out_path = paper_parent.joinpath("test_merge").joinpath(suffix_name + ".mp3")
@@ -21,7 +21,11 @@ for f in onlyfiles:
     sounds.append(AudioSegment.from_wav(f))
 
 playlist = AudioSegment.empty()
-for sound in sounds:
-    playlist += sound
+for i in range(0, len(onlyfiles)):
+    playlist += sounds[i]
+    print("sounds " + str(i) + " added!")
 
+print("===================================================")
+print("merge started!")
 playlist.export(out_path, format="mp3")
+print("merge completed!")
