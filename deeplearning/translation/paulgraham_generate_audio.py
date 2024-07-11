@@ -6,7 +6,7 @@ import re
 
 torch.cuda.empty_cache()
 
-tr_file_path = "paulgraham/essays/apple.txt"
+tr_file_path = "paulgraham/essays/cities.txt"
 
 
 def generate_cn_audio(file_path):

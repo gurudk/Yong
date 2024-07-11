@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-file_path = "paulgraham/apple.html/apple.html"
+file_path = "paulgraham/better.html/better.html"
 
 
 def process_html(file_path):
@@ -39,7 +39,7 @@ def process_html(file_path):
     clean_text = re.sub(r"subject\:", "\nsubject:", clean_text)
     clean_text = re.sub(r"(\d+)\:\n(\d+)", r"\1:\2", clean_text)
     clean_text = re.sub(r"Re\:", "Reply:", clean_text)
-    clean_text = re.sub(r"(\s\w+\s\d{4}\s+)", r"\1\n", clean_text)
+    clean_text = re.sub(r"(\n\s[A-Z]\w+\s\d{4}\s+)", r"\1\n", clean_text)
 
     # recover double colon
     clean_text = re.sub(r"\.\n\"", ".\"\n", clean_text)
@@ -50,6 +50,15 @@ def process_html(file_path):
 
     # recover E.g.
     clean_text = re.sub(r"\n(E\.)\n(g.)\n", r"\nE.g.", clean_text)
+
+    # recover w.w.
+    clean_text = re.sub(r"(\w+)\.\n(\w+)\.\n", r"\1.\2.\n", clean_text)
+
+    # recover ...
+    clean_text = re.sub(r"(\w+)(\.)\n(\.)\n(\.)(\")\n", r"\1\2\3\4\5", clean_text)
+
+    # recover " W --> "\nW
+    clean_text = re.sub(r"(\"\s)([A-Z])", r"\1\n\2", clean_text)
 
     with open(out_file_path, 'w') as fw:
         fw.write(title_match[0] + "\n")

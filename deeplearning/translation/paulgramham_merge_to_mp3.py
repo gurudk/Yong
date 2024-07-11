@@ -5,7 +5,7 @@ import re
 
 sounds = []
 
-file_path = "paulgraham/wav_files/apple"
+file_path = "paulgraham/wav_files/cities"
 paper_parent = Path(file_path).parent.resolve().parent
 suffix_name = file_path.split("/")[-1]
 out_path = paper_parent.joinpath("merged_mp3").joinpath(suffix_name + ".mp3")
