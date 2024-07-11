@@ -1,0 +1,27 @@
+<audio id="myAudio" controls>
+  <source src="charisma_55.wav" type="audio/mpeg">
+</audio>
+
+<a href="javascript:playAudio();">Play audio</a>
+<a href="javascript:pauseAudio();">Pause</a>
+<a href="javascript:getTrack();">Get Track</a>
+ 
+<script>
+  let audio = document.getElementById("myAudio");
+   
+  function playAudio() {
+    audio.currentTime = 0;
+    audio.play();
+  }
+   
+  function pauseAudio() {
+    audio.pause();
+  }
+  
+  function getTrack(){
+  	let vid = document.getElementById("myAudio");
+  	tl = vid.duration
+	alert(tl);
+  }
+
+</script>
