@@ -1,8 +1,8 @@
 from moviepy.editor import VideoFileClip
 
 # Define the input video file and output audio file
-mp4_file = "videos/xueshi_new.mp4"
-mp3_file = "videos/xueshi_new.wav"
+mp4_file = "/home/wolf/datasets/videos/wugou.mp4"
+mp3_file = "/home/wolf/datasets/videos/wugou.mp3"
 
 # Load the video clip
 video_clip = VideoFileClip(mp4_file)
