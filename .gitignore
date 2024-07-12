@@ -9,3 +9,10 @@
 /deeplearning/videoedit/vosk-api/
 /deeplearning/videoedit/voskmodels/
 /deeplearning/videoedit/videos/
+/deeplearning/videoedit/input.json
+/deeplearning/videoedit/input.mp3
+/deeplearning/videoedit/input.srt
+/deeplearning/videoedit/input.tsv
+/deeplearning/videoedit/input.txt
+/deeplearning/videoedit/input.vtt
+/deeplearning/videoedit/input.wav
