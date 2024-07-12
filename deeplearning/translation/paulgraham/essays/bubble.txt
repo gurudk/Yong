@@ -3,8 +3,7 @@ What the Bubble Got Right
 
 September 2004
 
-(This essay is derived from an invited talk at ICFP 2004.)
-
+(This essay is derived from an invited talk at ICFP 2004.) 
 I had a front row seat for the Internet Bubble, because I worked at Yahoo during 1998 and 1999. One day, when the stock was trading around $200, I sat down and calculated what I thought the price should be. The answer I got was $12. I went to the next cubicle and told my friend Trevor. "Twelve!" he said.
 He tried to sound indignant, but he didn't quite manage it. He knew as well as I did that our valuation was crazy.
 
@@ -21,8 +20,7 @@ Notice, though, that even with all the fat trimmed off its market cap, Yahoo was
 
 The fact is, despite all the nonsense we heard during the Bubble about the "new economy," there was a core of truth. You need that to get a really big bubble:
 you need to have something solid at the center, so that even smart people are sucked in.
-(Isaac Newton and Jonathan Swift both lost money in the South Sea Bubble of 1720.)
-
+(Isaac Newton and Jonathan Swift both lost money in the South Sea Bubble of 1720.) 
 Now the pendulum has swung the other way. Now anything that became fashionable during the Bubble is ipso facto unfashionable.
 But that's a mistake - an even bigger mistake than believing what everyone was saying in 1999. Over the long term, what the Bubble got right will be more important than what it got wrong.
 
@@ -45,7 +43,6 @@ And it can of course be disruptive - by distracting the management, or by making
 
 The Internet genuinely is a big deal. That was one reason even smart people were fooled by the Bubble. Obviously it was going to have a huge effect. Enough of an effect to triple the value of Nasdaq companies in two years?
 No, as it turned out. But it was hard to say for certain at the time. 
-
 The same thing happened during the Mississippi and South Sea Bubbles.
 What drove them was the invention of organized public finance (the South Sea Company, despite its name, was really a competitor of the Bank of England). And that did turn out to be a big deal, in the long run.
 
@@ -105,8 +102,7 @@ In fact, horrible far out of proportion to the mere discomfort of wearing such c
 
 And what would be wrong would be that how one presented oneself counted more than the quality of one's ideas. That's the problem with formality. Dressing up is not so much bad in itself. The problem is the receptor it binds 
 to:
-dressing up is inevitably a substitute for good ideas. It is no coincidence that technically inept business types are known as "suits."
-
+dressing up is inevitably a substitute for good ideas. It is no coincidence that technically inept business types are known as "suits." 
 Nerds don't just happen to dress informally. They do it too consistently. Consciously or not, they dress informally as a prophylactic measure against stupidity.
 
 6. Nerds.
@@ -122,8 +118,7 @@ So what's the connection between nerds and technology?
 Roughly that you can't fool mother nature. In technical matters, you have to get the right answers. If your software miscalculates the path of a space probe, you can't finesse your way out of trouble by saying that your code is patriotic, or avant-garde, or any of the other dodges people use in nontechnical fields.
 
 And as technology becomes increasingly important in the economy, nerd culture is rising with it. Nerds are already a lot cooler than they were when I was a kid. When I was in college in the mid-1980s, "nerd" was still an insult. People who majored in computer science generally tried to conceal it.
-Now women ask me where they can meet nerds. (The answer that springs to mind is "Usenix," but that would be like drinking from a firehose.)
-
+Now women ask me where they can meet nerds. (The answer that springs to mind is "Usenix," but that would be like drinking from a firehose.) 
 I have no illusions about why nerd culture is becoming more accepted. It's not because people are realizing that substance is more important than marketing.
 It's because the nerds are getting rich. But that is not going to change.
 
@@ -166,8 +161,7 @@ The Bubble was a California phenomenon. When I showed up in Silicon Valley in 19
 The press, ever eager to exaggerate small trends, now gives one the impression that Silicon Valley is a ghost town.
 Not at all. When I drive down 101 from the airport, I still feel a buzz of energy, as if there were a giant transformer nearby. Real estate is still more expensive than just about anywhere else in the country. The people still look healthy, and the weather is still fabulous.
 The future is there.
-(I say "there" because I moved back to the East Coast after Yahoo. I still wonder if this was a smart idea.)
-
+(I say "there" because I moved back to the East Coast after Yahoo. I still wonder if this was a smart idea.) 
 What makes the Bay Area superior is the attitude of the people. I notice that when I come home to Boston.
 The first thing I see when I walk out of the airline terminal is the fat, grumpy guy in charge of the taxi line. I brace myself for rudeness:
 remember, you're back on the East Coast now.
@@ -189,7 +183,6 @@ One upshot of which is that the companies of the future may be surprisingly smal
 If you tried this experiment, I think you'd be surprised at how far you could get. As Fred Brooks pointed out, small groups are intrinsically more productive, because the internal friction in a group grows as the square of its size.
 
 Till quite recently, running a major company meant managing an army of workers. Our standards about how many employees a company should have are still influenced by old patterns. Startups are perforce small, because they can't afford to hire a lot of people. But I think it's a big mistake for companies to loosen their belts as revenues increase. The question is not whether you can afford the extra salaries. Can you afford the loss in productivity that comes from making the company bigger?
-
 The prospect of technological leverage will of course raise the specter of unemployment. I'm surprised people still worry about this.
 After centuries of supposedly job-killing innovations, the number of jobs is within ten percent of the number of people who want them. This can't be a coincidence. There must be some kind of balancing mechanism.
 
@@ -202,8 +195,7 @@ that in the coming century, good ideas will count for more. That 26 year olds wi
 If so, this is good news indeed.
 Good ideas always tend to win eventually. The problem is, it can take a very long time.
 It took decades for relativity to be accepted, and the greater part of a century to establish that central planning didn't work.
-So even a small increase in the rate at which good ideas win would be a momentous change - big enough, probably, to justify a name like the "new economy."
-
+So even a small increase in the rate at which good ideas win would be a momentous change - big enough, probably, to justify a name like the "new economy." 
 Notes.
 
  Actually it's hard to say now. As Jeremy Siegel points out, if the value of a stock is its future earnings, you can't tell if it was overvalued till you see what the earnings turn out to be. While certain famous Internet stocks were almost certainly overvalued in 1999, it is still hard to say for sure whether, e.g., the Nasdaq index was.
@@ -215,13 +207,8 @@ An Operational Definition." European Financial Management, 9:1, 2003.
 
 Thanks to Chris Anderson, Trevor Blackwell, Sarah Harlin, Jessica Livingston, and Robert Morris for reading drafts of this.
 
-The Long Tail
-
-Russian Translation
-
-Japanese Translation
-
+The Long Tail 
+Russian Translation 
+Japanese Translation 
  
-
  
-

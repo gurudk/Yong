@@ -1,8 +1,7 @@
 import re
 from pathlib import Path
-from fnmatch import fnmatch
-import os
-import shutil
+
+file_path = "paulgraham/cities.html/cities.html"
 
 
 def process_html(file_path):
@@ -62,26 +61,4 @@ def process_html(file_path):
         print(clean_text)
 
 
-def get_html_files_by_dir(html_dir_path):
-    list_file_paths = []
-    for path, subdir, files in os.walk(dir_path):
-        for name in files:
-            if fnmatch(name, pattern):
-                list_file_paths.append(os.path.join(path, name))
-
-    return list_file_paths
-
-
-def move_dirs(source_dir, target_dir):
-    file_names = os.listdir(source_dir)
-    for file_name in file_names:
-        if file_name.endswith(".html"):
-            shutil.move(os.path.join(source_dir, file_name), target_dir)
-
-
-dir_path = "paulgraham/sites"
-pattern = "*.html"
-
-for html_path in get_html_files_by_dir(dir_path):
-    process_html(html_path)
-    print(html_path + " get processed~")
+process_html(file_path)

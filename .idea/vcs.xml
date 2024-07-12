@@ -3,5 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/VIA2COCO" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/opencv" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/vosk-api" vcs="Git" />
   </component>
 </project>
