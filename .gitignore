@@ -17,3 +17,6 @@
 /deeplearning/videoedit/input.vtt
 /deeplearning/videoedit/input.wav
 /deeplearning/videoedit/PaddleSpeech/
+/deeplearning/doc_ocr/tesseract/
+/deeplearning/doc_ocr/tessdata_downloader/
+/deeplearning/doc_ocr/pytesseract/
