@@ -20,3 +20,6 @@
 /deeplearning/doc_ocr/tesseract/
 /deeplearning/doc_ocr/tessdata_downloader/
 /deeplearning/doc_ocr/pytesseract/
+/deeplearning/object_detection/detr/
+/deeplearning/object_detection/detectron2/
+/deeplearning/object_detection/cocoapi/
