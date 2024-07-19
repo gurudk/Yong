@@ -2,10 +2,16 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+<<<<<<< HEAD
     <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/VIA2COCO" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/detr" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/PaddleSpeech" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/opencv" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/vosk-api" vcs="Git" />
+=======
+    <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/cocoapi" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/detectron2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/detr" vcs="Git" />
+>>>>>>> 943eb361fc21a2130855a9b050d94dd07a06d68d
   </component>
 </project>
