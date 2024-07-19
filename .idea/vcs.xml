@@ -2,10 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/doc_ocr/pytesseract_src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/doc_ocr/tessdata_downloader" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/doc_ocr/tesseract" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/VIA2COCO" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/detr" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/PaddleSpeech" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/opencv" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/vosk-api" vcs="Git" />
