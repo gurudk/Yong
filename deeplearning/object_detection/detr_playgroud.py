@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from transformers import DetrImageProcessor, DetrForObjectDetection
 import torch
 from PIL import Image
@@ -7,7 +9,7 @@ import requests
 # image = Image.open(requests.get(url, stream=True).raw)
 
 data_dir = "data/train/images/"
-test_image = data_dir + "231.png"
+test_image = data_dir + "6_360x640.png"
 image = Image.open(test_image)
 
 # you can specify the revision tag if you don't want the timm dependency
@@ -17,7 +19,10 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 inputs = processor(images=image, return_tensors="pt").to(device)
 model = model.to(device)
 
+start_time = datetime.now().timestamp()
 outputs = model(**inputs)
+end_time = datetime.now().timestamp()
+print(end_time - start_time)
 
 # convert outputs (bounding boxes and class logits) to COCO API
 # let's only keep detections with score > 0.9
