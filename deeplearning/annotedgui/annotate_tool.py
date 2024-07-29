@@ -17,6 +17,18 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(label)
         self.resize(pixmap.width(), pixmap.height())
 
+    def mouseMoveEvent(self, event):
+        # print('Mouse coords: ( %d : %d )' % (event.x(), event.y()))
+        return super(MainWindow, self).mouseMoveEvent(event)
+
+    def enterEvent(self, event):
+        print("Mouse entered~")
+        return super(MainWindow, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        print("Mouse left~")
+        return super(MainWindow, self).leaveEvent(event)
+
 
 app = QApplication(sys.argv)
 w = MainWindow()

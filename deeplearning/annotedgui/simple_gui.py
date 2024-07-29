@@ -19,6 +19,9 @@ class MyWidget(QtWidgets.QWidget):
 
         self.button.clicked.connect(self.magic)
 
+    def mouseMoveEvent(self, event):
+        self.text.setText('Mouse coords: ( %d : %d )' % (event.x(), event.y()))
+
     @QtCore.Slot()
     def magic(self):
         self.text.setText(random.choice(self.hello))
