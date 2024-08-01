@@ -2,7 +2,7 @@ import sys
 import sys
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QAction, QIcon
+from PySide6.QtGui import QAction, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
