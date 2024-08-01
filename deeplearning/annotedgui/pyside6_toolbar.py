@@ -58,6 +58,7 @@ class MainWindow(QMainWindow):
 
     def onMyToolBarButtonClick(self, s):
         print("click", s)
+        self.statusBar().showMessage("I'm ready!")
 
 
 app = QApplication(sys.argv)
