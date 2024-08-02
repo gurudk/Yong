@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QAction, QIcon, QPixmap
+from PySide6.QtGui import QAction, QIcon, QPixmap, QMouseEvent
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -20,13 +20,6 @@ class MainWindow(QMainWindow):
         self.title = "My Annotaed Tool"
         self.setWindowTitle(self.title)
 
-        label = QLabel(self)
-        pixmap = QPixmap('96.png')
-        label.setPixmap(pixmap)
-        label.setScaledContents(True)
-        self.setCentralWidget(label)
-        self.resize(pixmap.width(), pixmap.height())
-
         toolbar = QToolBar("My main toolbar")
         toolbar.setIconSize(QSize(16, 16))
         self.addToolBar(toolbar)
@@ -34,7 +27,7 @@ class MainWindow(QMainWindow):
         button_action = QAction(QIcon("arrow-180-medium.png"), "&Last", self)
         button_action.setStatusTip("Last Image")
         button_action.triggered.connect(self.onMyToolBarButtonClick)
-        button_action.setCheckable(True)
+        # button_action.setCheckable(True)
         toolbar.addAction(button_action)
 
         toolbar.addSeparator()
@@ -42,7 +35,7 @@ class MainWindow(QMainWindow):
         button_action2 = QAction(QIcon("arrow-000-medium.png"), "&Next", self)
         button_action2.setStatusTip("Next Image")
         button_action2.triggered.connect(self.onMyToolBarButtonClick)
-        button_action2.setCheckable(True)
+        # button_action2.setCheckable(True)
         toolbar.addAction(button_action2)
 
         # toolbar.addWidget(QLabel("Hello"))
@@ -61,9 +54,19 @@ class MainWindow(QMainWindow):
         # file_submenu = file_menu.addMenu("Submenu")
         # file_submenu.addAction(button_action2)
 
+        self.label = QLabel(self)
+
     def onMyToolBarButtonClick(self, s):
         print("click", s)
         self.statusBar().showMessage("I'm ready!")
+
+    def image_press_event(self, event):
+        print("mouse pressed in image")
+        print(event)
+
+    def image_move_event(self, event):
+        if isinstance(event, QMouseEvent):
+            print(event.x(), event.y())
 
     def open_file_menu_clicked(self, s):
         print("open file clicked")
@@ -73,16 +76,26 @@ class MainWindow(QMainWindow):
         print(self.dir_name)
         print(self.file_name)
 
+        pixmap = QPixmap(self.file_name)
+        print(pixmap.height(), pixmap.width())
+        self.pixmap = pixmap.scaled(1280, 720)
+        self.label.setPixmap(pixmap)
+        self.label.setScaledContents(True)
+        self.label.mousePressEvent = self.image_press_event
+        self.label.mouseMoveEvent = self.image_move_event
+        self.setCentralWidget(self.label)
+        # self.resize(pixmap.width(), pixmap.height())
+
     def mouseMoveEvent(self, event):
         # print('Mouse coords: ( %d : %d )' % (event.x(), event.y()))
         return super(MainWindow, self).mouseMoveEvent(event)
 
     def enterEvent(self, event):
-        print("Mouse entered~")
+        # print("Mouse entered~")
         return super(MainWindow, self).enterEvent(event)
 
     def leaveEvent(self, event):
-        print("Mouse left~")
+        # print("Mouse left~")
         return super(MainWindow, self).leaveEvent(event)
 
 
