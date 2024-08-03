@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction, QIcon, QPixmap, QMouseEvent
@@ -9,7 +10,9 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QStatusBar,
     QToolBar,
-    QFileDialog
+    QFileDialog,
+    QVBoxLayout,
+    QWidget
 )
 
 
@@ -19,6 +22,7 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.title = "My Annotaed Tool"
         self.setWindowTitle(self.title)
+        self.resize(1280, 720)
 
         toolbar = QToolBar("My main toolbar")
         toolbar.setIconSize(QSize(16, 16))
@@ -26,7 +30,7 @@ class MainWindow(QMainWindow):
 
         button_action = QAction(QIcon("arrow-180-medium.png"), "&Last", self)
         button_action.setStatusTip("Last Image")
-        button_action.triggered.connect(self.onMyToolBarButtonClick)
+        button_action.triggered.connect(self.onMyToolBarLastImageClick)
         # button_action.setCheckable(True)
         toolbar.addAction(button_action)
 
@@ -34,7 +38,7 @@ class MainWindow(QMainWindow):
 
         button_action2 = QAction(QIcon("arrow-000-medium.png"), "&Next", self)
         button_action2.setStatusTip("Next Image")
-        button_action2.triggered.connect(self.onMyToolBarButtonClick)
+        button_action2.triggered.connect(self.onMyToolBarNextImageClick)
         # button_action2.setCheckable(True)
         toolbar.addAction(button_action2)
 
@@ -53,12 +57,24 @@ class MainWindow(QMainWindow):
 
         # file_submenu = file_menu.addMenu("Submenu")
         # file_submenu.addAction(button_action2)
+        self.layout = QVBoxLayout()
+        self.image_label = QLabel()
+        self.log_label = QLabel()
+        widget = QWidget()
+        self.layout.addWidget(self.image_label)
+        self.layout.addWidget(self.log_label)
+        widget.setLayout(self.layout)
+        self.setCentralWidget(widget)
 
-        self.label = QLabel(self)
+        self.imagefiles = []
 
-    def onMyToolBarButtonClick(self, s):
-        print("click", s)
-        self.statusBar().showMessage("I'm ready!")
+    def onMyToolBarLastImageClick(self, s):
+        print("last image!")
+        self.statusBar().showMessage("I'm last!")
+
+    def onMyToolBarNextImageClick(self, s):
+        print("next image!")
+        self.statusBar().showMessage("I'm next!")
 
     def image_press_event(self, event):
         print("mouse pressed in image")
@@ -78,13 +94,22 @@ class MainWindow(QMainWindow):
 
         pixmap = QPixmap(self.file_name)
         print(pixmap.height(), pixmap.width())
-        self.pixmap = pixmap.scaled(1280, 720)
-        self.label.setPixmap(pixmap)
-        self.label.setScaledContents(True)
-        self.label.mousePressEvent = self.image_press_event
-        self.label.mouseMoveEvent = self.image_move_event
-        self.setCentralWidget(self.label)
-        # self.resize(pixmap.width(), pixmap.height())
+        self.pixmap = pixmap.scaled(1280, int(1280 * (pixmap.height() / pixmap.width())))
+        self.image_label.setPixmap(self.pixmap)
+        self.image_label.setScaledContents(True)
+        self.image_label.mousePressEvent = self.image_press_event
+        self.image_label.mouseMoveEvent = self.image_move_event
+        self.resize(self.pixmap.width(), self.pixmap.height())
+        self.setWindowTitle(self.file_name)
+
+        for root, dirs, files in os.walk(self.dir_name):
+            for file_name in files:
+                self.imagefiles.append(file_name)
+
+        self.imagefiles = sorted(self.imagefiles, key=lambda s: (s, len(s)))
+
+        for filename in self.imagefiles:
+            print(filename)
 
     def mouseMoveEvent(self, event):
         # print('Mouse coords: ( %d : %d )' % (event.x(), event.y()))
