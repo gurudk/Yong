@@ -1,5 +1,7 @@
+import datetime
 import sys
 import os
+import json
 from functools import cmp_to_key
 from pathlib import Path
 from PySide6.QtCore import QSize, Qt
@@ -89,6 +91,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
         self.imagefiles = []
+        self.annotated_json = {}
+        nowtime = datetime.datetime.now()
+        self.annotated_local_file = "./annotated/annotated.json." + nowtime.strftime("%Y%m%d%H%M%S")
+        Path(self.annotated_local_file).touch()
 
     def onMyToolBarLastImageClick(self, s):
         print("last image!")
@@ -141,12 +147,40 @@ class MainWindow(QMainWindow):
         self.log_label.setText(self.file_name)
 
     def image_press_event(self, event):
-        print("mouse pressed in image")
-        print(event)
+        if isinstance(event, QMouseEvent):
+            self.x1 = event.x()
+            self.y1 = event.y()
+            self.is_drawing = True
 
     def image_move_event(self, event):
         if isinstance(event, QMouseEvent):
-            print(event.x(), event.y())
+            pixmap = QPixmap(self.file_name)
+            self.pixmap = pixmap.scaled(1280, int(1280 * (pixmap.height() / pixmap.width())))
+            self.image_label.setPixmap(self.pixmap)
+
+            self.x2 = event.x()
+            self.y2 = event.y()
+
+            pm = self.image_label.pixmap()
+            painter = QPainter(pm)
+
+            pen = QtGui.QPen()
+            pen.setWidth(4)
+            pen.setColor(QtGui.QColor('red'))
+            painter.setPen(pen)
+
+            painter.drawRect(self.x1, self.y1, self.x2 - self.x1, self.y2 - self.y1)
+            painter.end()
+            self.image_label.setPixmap(pm)
+
+    def image_release_event(self, event):
+        if isinstance(event, QMouseEvent):
+            self.annotated_json[self.file_name] = str(self.x1) + "," + str(self.y1) + "," + str(self.x2) + "," + str(
+                self.y2)
+            self.is_drawing = False
+            print(self.annotated_json)
+            with open(self.annotated_local_file, 'w') as f:
+                f.write(json.dumps(self.annotated_json))
 
     def open_file_menu_clicked(self, s):
         print("open file clicked")
@@ -160,6 +194,7 @@ class MainWindow(QMainWindow):
         self.image_label.setScaledContents(True)
         self.image_label.mousePressEvent = self.image_press_event
         self.image_label.mouseMoveEvent = self.image_move_event
+        self.image_label.mouseReleaseEvent = self.image_release_event
         self.resize(self.pixmap.width(), self.pixmap.height())
         self.setWindowTitle(self.file_name)
 
@@ -174,21 +209,6 @@ class MainWindow(QMainWindow):
         if not anno_path.is_file():
             anno_path.touch()
 
-        for filename in self.imagefiles:
-            print(filename)
-
-        pm = self.image_label.pixmap()
-        painter = QPainter(pm)
-
-        pen = QtGui.QPen()
-        pen.setWidth(4)
-        pen.setColor(QtGui.QColor('red'))
-        painter.setPen(pen)
-
-        painter.drawLine(10, 10, 300, 200)
-        painter.end()
-        self.image_label.setPixmap(pm)
-
     def mouseMoveEvent(self, event):
         # print('Mouse coords: ( %d : %d )' % (event.x(), event.y()))
         return super(MainWindow, self).mouseMoveEvent(event)
@@ -200,6 +220,13 @@ class MainWindow(QMainWindow):
     def leaveEvent(self, event):
         # print("Mouse left~")
         return super(MainWindow, self).leaveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        return super(MainWindow, self).mouseReleaseEvent(event)
+
+    def closeEvent(self, event):
+        print("App quit~")
+        return super(MainWindow, self).closeEvent(event)
 
 
 app = QApplication(sys.argv)
