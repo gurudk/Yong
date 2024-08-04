@@ -3,7 +3,7 @@ import os
 from functools import cmp_to_key
 from pathlib import Path
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QAction, QIcon, QPixmap, QMouseEvent
+from PySide6.QtGui import QAction, QIcon, QPixmap, QMouseEvent, QPainter
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -13,8 +13,10 @@ from PySide6.QtWidgets import (
     QToolBar,
     QFileDialog,
     QVBoxLayout,
-    QWidget
+    QWidget,
+
 )
+from PySide6 import QtGui
 
 ANNOTATED_FILE = "annotations.txt"
 
@@ -174,6 +176,18 @@ class MainWindow(QMainWindow):
 
         for filename in self.imagefiles:
             print(filename)
+
+        pm = self.image_label.pixmap()
+        painter = QPainter(pm)
+
+        pen = QtGui.QPen()
+        pen.setWidth(4)
+        pen.setColor(QtGui.QColor('red'))
+        painter.setPen(pen)
+
+        painter.drawLine(10, 10, 300, 200)
+        painter.end()
+        self.image_label.setPixmap(pm)
 
     def mouseMoveEvent(self, event):
         # print('Mouse coords: ( %d : %d )' % (event.x(), event.y()))
