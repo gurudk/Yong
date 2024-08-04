@@ -1,5 +1,6 @@
 import sys
 import os
+from functools import cmp_to_key
 from pathlib import Path
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction, QIcon, QPixmap, QMouseEvent
@@ -14,6 +15,25 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget
 )
+
+ANNOTATED_FILE = "annotations.txt"
+
+
+def compare_function(s1, s2):
+    if s1[0].isdigit() and not s2[0].isdigit():
+        return -1
+    elif not s1[0].isdigit() and s2[0].isdigit():
+        return 1
+    else:
+        if len(s1) < len(s2):
+            return -1
+        elif len(s1) > len(s2):
+            return 1
+        else:
+            if s1 < s2:
+                return -1
+            else:
+                return 1
 
 
 class MainWindow(QMainWindow):
@@ -72,9 +92,51 @@ class MainWindow(QMainWindow):
         print("last image!")
         self.statusBar().showMessage("I'm last!")
 
+        curr_index = self.imagefiles.index(Path(self.file_name).name)
+        next_filename = self.imagefiles[curr_index - 1]
+        while next_filename.endswith(".txt"):
+            curr_index = curr_index - 1
+            next_filename = self.imagefiles[curr_index]
+
+        print(curr_index, next_filename)
+        self.file_name = self.dir_name + "/" + next_filename
+        pixmap = QPixmap(self.file_name)
+        self.pixmap = pixmap.scaled(1280, int(1280 * (pixmap.height() / pixmap.width())))
+        self.image_label.setPixmap(self.pixmap)
+        self.image_label.setScaledContents(True)
+        self.image_label.mousePressEvent = self.image_press_event
+        self.image_label.mouseMoveEvent = self.image_move_event
+        # self.image_label.repaint()
+        self.resize(self.pixmap.width(), self.pixmap.height())
+        self.setWindowTitle(self.file_name)
+        self.log_label.setText(self.file_name)
+
     def onMyToolBarNextImageClick(self, s):
         print("next image!")
         self.statusBar().showMessage("I'm next!")
+        curr_index = self.imagefiles.index(Path(self.file_name).name)
+        next_filename = self.imagefiles[curr_index + 1] if curr_index < (len(self.imagefiles) - 1) else self.imagefiles[
+            0]
+
+        while next_filename.endswith(".txt"):
+            curr_index = curr_index + 1
+            if curr_index < (len(self.imagefiles) - 1):
+                next_filename = self.imagefiles[curr_index]
+            else:
+                next_filename = self.imagefiles[0]
+
+        print(curr_index, next_filename)
+        self.file_name = self.dir_name + "/" + next_filename
+        pixmap = QPixmap(self.file_name)
+        self.pixmap = pixmap.scaled(1280, int(1280 * (pixmap.height() / pixmap.width())))
+        self.image_label.setPixmap(self.pixmap)
+        self.image_label.setScaledContents(True)
+        self.image_label.mousePressEvent = self.image_press_event
+        self.image_label.mouseMoveEvent = self.image_move_event
+        # self.image_label.repaint()
+        self.resize(self.pixmap.width(), self.pixmap.height())
+        self.setWindowTitle(self.file_name)
+        self.log_label.setText(self.file_name)
 
     def image_press_event(self, event):
         print("mouse pressed in image")
@@ -88,12 +150,9 @@ class MainWindow(QMainWindow):
         print("open file clicked")
         self.file_name = QFileDialog.getOpenFileName(self, self.tr("Open File"), "/home",
                                                      self.tr("Images (*.png *.xpm *.jpg)"))[0]
-        self.dir_name = Path(self.file_name).parent
-        print(self.dir_name)
-        print(self.file_name)
+        self.dir_name = Path(self.file_name).parent.absolute().as_posix()
 
         pixmap = QPixmap(self.file_name)
-        print(pixmap.height(), pixmap.width())
         self.pixmap = pixmap.scaled(1280, int(1280 * (pixmap.height() / pixmap.width())))
         self.image_label.setPixmap(self.pixmap)
         self.image_label.setScaledContents(True)
@@ -106,7 +165,12 @@ class MainWindow(QMainWindow):
             for file_name in files:
                 self.imagefiles.append(file_name)
 
-        self.imagefiles = sorted(self.imagefiles, key=lambda s: (s, len(s)))
+        self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
+
+        self.annotation_file = self.dir_name + "/" + ANNOTATED_FILE
+        anno_path = Path(self.annotation_file)
+        if not anno_path.is_file():
+            anno_path.touch()
 
         for filename in self.imagefiles:
             print(filename)
