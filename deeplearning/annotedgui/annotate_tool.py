@@ -226,6 +226,11 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         print("App quit~")
+        end_time = datetime.datetime.now()
+        session_file_name = self.annotated_local_file + "." + end_time.strftime("%Y%m%d%H%M%S")
+        with open(session_file_name, 'w') as sfile:
+            sfile.write(json.dumps(self.annotated_json))
+
         return super(MainWindow, self).closeEvent(event)
 
 

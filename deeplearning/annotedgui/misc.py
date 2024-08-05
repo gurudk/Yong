@@ -1,6 +1,8 @@
 import datetime
+import re
 
-print("6.png".split('.')[0])
+print("/home/6.png".split(r'[/\.]'))
+print(re.split(r"[/\.]", "/home/6.png"))
 
 x = datetime.datetime.now()
 
