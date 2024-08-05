@@ -2,10 +2,12 @@ import datetime
 import sys
 import os
 import json
+import glob
+
 from functools import cmp_to_key
 from pathlib import Path
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QAction, QIcon, QPixmap, QMouseEvent, QPainter
+from PySide6.QtGui import QAction, QIcon, QPixmap, QMouseEvent, QPainter, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -63,6 +65,7 @@ class MainWindow(QMainWindow):
         button_action2 = QAction(QIcon("arrow-000-medium.png"), "&Next", self)
         button_action2.setStatusTip("Next Image")
         button_action2.triggered.connect(self.onMyToolBarNextImageClick)
+        button_action2.setShortcut(QKeySequence("n"))
         # button_action2.setCheckable(True)
         toolbar.addAction(button_action2)
 
@@ -95,6 +98,39 @@ class MainWindow(QMainWindow):
         nowtime = datetime.datetime.now()
         self.annotated_local_file = "./annotated/annotated.json." + nowtime.strftime("%Y%m%d%H%M%S")
         Path(self.annotated_local_file).touch()
+
+        # Use the glob module to find all files in the current directory with a ".txt" extension.
+        files = glob.glob("./annotated/*.*.*.*")
+
+        # Sort the list of file names based on the modification time (getmtime) of each file.
+        files.sort(key=os.path.getmtime)
+
+        # Load latest image
+        with open(files[-1], 'r') as f:
+            obj = json.loads(f.read())
+            self.file_name = list(obj.keys())[-1]
+            self.dir_name = Path(self.file_name).parent.absolute().as_posix()
+
+            pixmap = QPixmap(self.file_name)
+            self.pixmap = pixmap.scaled(1280, int(1280 * (pixmap.height() / pixmap.width())))
+            self.image_label.setPixmap(self.pixmap)
+            self.image_label.setScaledContents(True)
+            self.image_label.mousePressEvent = self.image_press_event
+            self.image_label.mouseMoveEvent = self.image_move_event
+            self.image_label.mouseReleaseEvent = self.image_release_event
+            self.resize(self.pixmap.width(), self.pixmap.height())
+            self.setWindowTitle(self.file_name)
+
+            for root, dirs, files in os.walk(self.dir_name):
+                for file_name in files:
+                    self.imagefiles.append(file_name)
+
+            self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
+
+            self.annotation_file = self.dir_name + "/" + ANNOTATED_FILE
+            anno_path = Path(self.annotation_file)
+            if not anno_path.is_file():
+                anno_path.touch()
 
     def onMyToolBarLastImageClick(self, s):
         print("last image!")
