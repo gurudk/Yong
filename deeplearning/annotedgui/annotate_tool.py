@@ -25,6 +25,22 @@ from PySide6 import QtGui
 ANNOTATED_FILE = "annotations.txt"
 
 
+def count_annotated():
+    # Use the glob module to find all files in the current directory with a ".txt" extension.
+    files = glob.glob("./annotated/*.*.*.*")
+
+    # Sort the list of file names based on the modification time (getmtime) of each file.
+    files.sort(key=os.path.getmtime)
+    all_images = {}
+    for file_name in files:
+        with open(file_name, 'r') as fi:
+            dic = json.loads(fi.read())
+            for key in dic:
+                all_images[key] = dic[key]
+
+    return len(all_images)
+
+
 def compare_function(s1, s2):
     if s1[0].isdigit() and not s2[0].isdigit():
         return -1
@@ -93,6 +109,8 @@ class MainWindow(QMainWindow):
         widget.setLayout(self.layout)
         self.setCentralWidget(widget)
 
+        self.log_label.setWordWrap(True)
+
         self.imagefiles = []
         self.annotated_json = {}
         nowtime = datetime.datetime.now()
@@ -123,7 +141,8 @@ class MainWindow(QMainWindow):
 
             for root, dirs, files in os.walk(self.dir_name):
                 for file_name in files:
-                    self.imagefiles.append(file_name)
+                    if file_name.lower().endswith("png") or file_name.lower().endswith("jpg"):
+                        self.imagefiles.append(file_name)
 
             self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
 
@@ -153,7 +172,7 @@ class MainWindow(QMainWindow):
         # self.image_label.repaint()
         self.resize(self.pixmap.width(), self.pixmap.height())
         self.setWindowTitle(self.file_name)
-        self.log_label.setText(self.file_name)
+        # self.log_label.setText(self.file_name)
 
     def onMyToolBarNextImageClick(self, s):
         print("next image!")
@@ -180,7 +199,7 @@ class MainWindow(QMainWindow):
         # self.image_label.repaint()
         self.resize(self.pixmap.width(), self.pixmap.height())
         self.setWindowTitle(self.file_name)
-        self.log_label.setText(self.file_name)
+        # self.log_label.setText(self.file_name)
 
     def image_press_event(self, event):
         if isinstance(event, QMouseEvent):
@@ -217,6 +236,11 @@ class MainWindow(QMainWindow):
             print(self.annotated_json)
             with open(self.annotated_local_file, 'w') as f:
                 f.write(json.dumps(self.annotated_json))
+            log_str = str(list(self.annotated_json.items())[-1]) + "\n"
+            log_str += str(count_annotated() + len(self.annotated_json)) + " images have been annotated," + str(
+                len(self.imagefiles) - count_annotated() - len(
+                    self.annotated_json)) + " images left~ \n"
+            self.log_label.setText(log_str)
 
     def open_file_menu_clicked(self, s):
         print("open file clicked")
@@ -236,7 +260,8 @@ class MainWindow(QMainWindow):
 
         for root, dirs, files in os.walk(self.dir_name):
             for file_name in files:
-                self.imagefiles.append(file_name)
+                if file_name.lower().endswith("png") or file_name.lower().endswith("jpg"):
+                    self.imagefiles.append(file_name)
 
         self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
 
