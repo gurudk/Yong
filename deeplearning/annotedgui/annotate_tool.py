@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
         files = glob.glob("./annotated/*.*.*.*")
 
         # Sort the list of file names based on the modification time (getmtime) of each file.
-        files.sort(key=os.path.getmtime)
+        files.sort()
 
         # Load latest image
         with open(files[-1], 'r') as f:
