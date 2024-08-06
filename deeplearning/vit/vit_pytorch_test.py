@@ -3,8 +3,8 @@ from vit_pytorch import ViT
 import time
 
 v = ViT(
-    image_size=256,
-    patch_size=16,
+    image_size=320,
+    patch_size=20,
     num_classes=4,
     dim=512,
     depth=6,
@@ -17,7 +17,7 @@ v = ViT(
 start = time.time()
 
 for i in range(100):
-    img = torch.randn(1, 3, 256, 144)
+    img = torch.randn(1, 3, 320, 180)
 
     preds = v(img)  # (1, 1000)
 
