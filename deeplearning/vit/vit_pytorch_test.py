@@ -6,10 +6,10 @@ v = ViT(
     image_size=320,
     patch_size=20,
     num_classes=4,
-    dim=512,
+    dim=256,
     depth=6,
     heads=8,
-    mlp_dim=1024,
+    mlp_dim=512,
     dropout=0.1,
     emb_dropout=0.1
 )
