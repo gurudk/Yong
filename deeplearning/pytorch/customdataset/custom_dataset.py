@@ -11,6 +11,9 @@ from torchvision import transforms, utils
 import warnings
 
 warnings.filterwarnings("ignore")
+import matplotlib
+
+print(matplotlib.get_backend())
 
 plt.ion()  # interactive mode
 

@@ -2,7 +2,7 @@ import pathlib
 import tkinter
 import matplotlib
 
-matplotlib.use('tkagg')
+matplotlib.use('QtAgg')
 
 import torch
 import torch.utils.data
@@ -15,6 +15,9 @@ import torch
 from torchvision.utils import draw_bounding_boxes, draw_segmentation_masks
 from torchvision import tv_tensors
 from torchvision.transforms.v2 import functional as F
+import matplotlib
+
+print(matplotlib.get_backend())
 
 torch.manual_seed(0)
 plt.ion()
