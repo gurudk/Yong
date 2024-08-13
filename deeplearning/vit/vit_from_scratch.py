@@ -214,7 +214,7 @@ criterion = nn.CrossEntropyLoss()
 import datetime
 
 print("Train start time:", datetime.datetime.now())
-for epoch in range(300):
+for epoch in range(20):
     start = datetime.datetime.now().timestamp()
     epoch_losses = []
     model.train()
@@ -245,7 +245,7 @@ print("Train end time:", datetime.datetime.now())
 inputs, labels = next(iter(test_dataloader))
 inputs, labels = inputs.to(device), labels.to(device)
 outputs = model(inputs)
-torch.save(model, "epoch_100.pth")
+torch.save(model, "epoch_20.pth")
 
 print("Predicted classes", outputs.argmax(-1))
 print("Actual classes", labels)
