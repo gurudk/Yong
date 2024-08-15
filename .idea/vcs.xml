@@ -5,7 +5,7 @@
     <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/VIA2COCO" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/detr" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/translation/MeloTTS" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/vit/kalman_filter_1d" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/vit/kalman_filter_2d" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/vit/kalman_filter/kalman_filter_1d" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/vit/kalman_filter/kalman_filter_2d" vcs="Git" />
   </component>
 </project>
