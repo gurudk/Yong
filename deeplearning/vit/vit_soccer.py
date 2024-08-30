@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.nn import CrossEntropyLoss
 from torch.optim import Adam
 from torch.utils.data import DataLoader
@@ -30,6 +31,21 @@ def patchify(images, n_patches):
                         ]
                 patches[idx, i * n_patches + j] = patch.flatten()
     return patches
+
+
+class MLP(nn.Module):
+    """ Very simple multi-layer perceptron (also called FFN)"""
+
+    def __init__(self, input_dim, hidden_dim, output_dim, num_layers):
+        super().__init__()
+        self.num_layers = num_layers
+        h = [hidden_dim] * (num_layers - 1)
+        self.layers = nn.ModuleList(nn.Linear(n, k) for n, k in zip([input_dim] + h, h + [output_dim]))
+
+    def forward(self, x):
+        for i, layer in enumerate(self.layers):
+            x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
+        return x
 
 
 class MyMSA(nn.Module):
@@ -98,7 +114,7 @@ class MyViTBlock(nn.Module):
 class SoccerViT(nn.Module):
     def __init__(self, chw, n_patches=7, n_blocks=2, hidden_d=8, n_heads=2, out_d=10):
         # Super constructor
-        super(MyViT, self).__init__()
+        super(SoccerViT, self).__init__()
 
         # Attributes
         self.chw = chw  # ( C , H , W )
