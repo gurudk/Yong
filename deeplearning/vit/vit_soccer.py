@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -7,7 +9,9 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.datasets.mnist import MNIST
 from torchvision.transforms import ToTensor
+from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm, trange
+from PIL import Image
 
 np.random.seed(0)
 torch.manual_seed(0)
@@ -31,6 +35,29 @@ def patchify(images, n_patches):
                         ]
                 patches[idx, i * n_patches + j] = patch.flatten()
     return patches
+
+
+class SoccerDataset(Dataset):
+    def __init__(self, json_file, transform=None):
+        self.annotations = json.loads(json_file)
+        self.dataarray = np.array(list(self.annotations.items))
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.annotations)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img_name = self.dataarray[idx, 0]
+        image = Image.open(img_name)
+        sample = {'image': image, 'ground_truth': self.dataarray[idx, 1]}
+
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
 
 
 class MLP(nn.Module):
