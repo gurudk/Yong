@@ -12,9 +12,57 @@ from torchvision.transforms import ToTensor
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm, trange
 from PIL import Image
+from torchvision.transforms import v2
+from einops import rearrange, repeat
+from einops.layers.torch import Rearrange
+from torchvision.ops.boxes import box_area
 
 np.random.seed(0)
 torch.manual_seed(0)
+
+
+def box_iou(boxes1, boxes2):
+    area1 = box_area(boxes1)
+    area2 = box_area(boxes2)
+
+    lt = torch.max(boxes1[:, None, :2], boxes2[:, :2])  # [N,M,2]
+    rb = torch.min(boxes1[:, None, 2:], boxes2[:, 2:])  # [N,M,2]
+
+    wh = (rb - lt).clamp(min=0)  # [N,M,2]
+    inter = wh[:, :, 0] * wh[:, :, 1]  # [N,M]
+
+    union = area1[:, None] + area2 - inter
+
+    iou = inter / union
+    return iou, union
+
+
+def generalized_box_iou(boxes1, boxes2):
+    """
+    Generalized IoU from https://giou.stanford.edu/
+
+    The boxes should be in [x0, y0, x1, y1] format
+
+    Returns a [N, M] pairwise matrix, where N = len(boxes1)
+    and M = len(boxes2)
+    """
+    # degenerate boxes gives inf / nan results
+    # so do an early check
+    assert (boxes1[:, 2:] >= boxes1[:, :2]).all()
+    assert (boxes2[:, 2:] >= boxes2[:, :2]).all()
+    iou, union = box_iou(boxes1, boxes2)
+
+    lt = torch.min(boxes1[:, None, :2], boxes2[:, :2])
+    rb = torch.max(boxes1[:, None, 2:], boxes2[:, 2:])
+
+    wh = (rb - lt).clamp(min=0)  # [N,M,2]
+    area = wh[:, :, 0] * wh[:, :, 1]
+
+    return iou - (area - union) / area
+
+
+def loss_func(src_box, target_box):
+    return 1 - generalized_box_iou(src_box, target_box)
 
 
 def patchify(images, n_patches):
@@ -39,8 +87,9 @@ def patchify(images, n_patches):
 
 class SoccerDataset(Dataset):
     def __init__(self, json_file, transform=None):
-        self.annotations = json.loads(json_file)
-        self.dataarray = np.array(list(self.annotations.items))
+        with open(json_file, 'r') as f:
+            self.annotations = json.loads(f.read())
+            self.dataarray = [(key, value) for key, value in self.annotations.items()]
         self.transform = transform
 
     def __len__(self):
@@ -50,9 +99,10 @@ class SoccerDataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img_name = self.dataarray[idx, 0]
+        img_name = self.dataarray[idx][0]
         image = Image.open(img_name)
-        sample = {'image': image, 'ground_truth': self.dataarray[idx, 1]}
+        truth_tensor = torch.tensor(self.dataarray[idx][1]).reshape(-1, 4)
+        sample = {'image': image, 'ground_truth': truth_tensor}
 
         if self.transform:
             sample = self.transform(sample)
@@ -139,7 +189,7 @@ class MyViTBlock(nn.Module):
 
 
 class SoccerViT(nn.Module):
-    def __init__(self, chw, n_patches=7, n_blocks=2, hidden_d=8, n_heads=2, out_d=10):
+    def __init__(self, chw, n_patches=20, n_blocks=6, hidden_d=512, n_heads=8, out_d=4):
         # Super constructor
         super(SoccerViT, self).__init__()
 
@@ -163,6 +213,17 @@ class SoccerViT(nn.Module):
         self.input_d = int(chw[0] * self.patch_size[0] * self.patch_size[1])
         self.linear_mapper = nn.Linear(self.input_d, self.hidden_d)
 
+        patch_height = self.chw[1] // n_patches
+        patch_width = self.chw[2] // n_patches
+        patch_dim = self.chw[0] * patch_height * patch_width
+
+        self.to_patch_embedding = nn.Sequential(
+            Rearrange('b c (p1 h) (p2 w) -> b (h w) (p1 p2 c)', p1=patch_height, p2=patch_width),
+            nn.LayerNorm(patch_dim),
+            nn.Linear(patch_dim, hidden_d),
+            nn.LayerNorm(hidden_d),
+        )
+
         # 2) Learnable classification token
         self.class_token = nn.Parameter(torch.rand(1, self.hidden_d))
 
@@ -179,16 +240,19 @@ class SoccerViT(nn.Module):
         )
 
         # 5) Classification MLPk
-        self.mlp = nn.Sequential(nn.Linear(self.hidden_d, out_d), nn.Softmax(dim=-1))
+        # self.mlp = nn.Sequential(nn.Linear(self.hidden_d, out_d), nn.Softmax(dim=-1))
+
+        self.mlp = MLP(self.hidden_d, self.hidden_d, out_d, 3)
 
     def forward(self, images):
         # Dividing images into patches
         n, c, h, w = images.shape
-        patches = patchify(images, self.n_patches).to(self.positional_embeddings.device)
+        # patches = patchify(images, self.n_patches).to(self.positional_embeddings.device)
 
         # Running linear layer tokenization
         # Map the vector corresponding to each patch to the hidden size dimension
-        tokens = self.linear_mapper(patches)
+        # tokens = self.linear_mapper(patches)
+        tokens = self.to_patch_embedding(images)
 
         # Adding classification token to the tokens
         tokens = torch.cat((self.class_token.expand(n, 1, -1), tokens), dim=1)
@@ -220,17 +284,20 @@ def get_positional_embeddings(sequence_length, d):
 
 def main():
     # Loading data
-    transform = ToTensor()
+    json_file = "./annotation/annotation_normalized.txt"
 
-    train_set = MNIST(
-        root="./../datasets", train=True, download=True, transform=transform
-    )
-    test_set = MNIST(
-        root="./../datasets", train=False, download=True, transform=transform
-    )
+    transform = v2.Compose([
+        # you can add other transformations in this list
+        v2.Resize((360, 640)),
+        v2.ToTensor()
+    ])
+    train_set = SoccerDataset(json_file, transform)
+    # test_set = MNIST(
+    #     root="./../datasets", train=False, download=True, transform=transform
+    # )
 
-    train_loader = DataLoader(train_set, shuffle=True, batch_size=128)
-    test_loader = DataLoader(test_set, shuffle=False, batch_size=128)
+    train_loader = DataLoader(train_set, shuffle=True, batch_size=4)
+    # test_loader = DataLoader(test_set, shuffle=False, batch_size=128)
 
     # Defining model and training options
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -239,9 +306,14 @@ def main():
         device,
         f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "",
     )
+    # model = SoccerViT(
+    #     (1, 28, 28), n_patches=7, n_blocks=2, hidden_d=16, n_heads=2, out_d=10
+    # ).to(device)
+
     model = SoccerViT(
-        (1, 28, 28), n_patches=7, n_blocks=2, hidden_d=16, n_heads=2, out_d=10
+        (3, 360, 640), n_patches=20, n_blocks=6, hidden_d=512, n_heads=8, out_d=4
     ).to(device)
+
     N_EPOCHS = 50
     LR = 0.001
 
@@ -253,10 +325,12 @@ def main():
         for batch in tqdm(
                 train_loader, desc=f"Epoch {epoch + 1} in training", leave=False
         ):
-            x, y = batch
+            x = batch['image']
+            y = batch['ground_truth']
+
             x, y = x.to(device), y.to(device)
             y_hat = model(x)
-            loss = criterion(y_hat, y)
+            loss = loss_func(y_hat, y)
 
             train_loss += loss.detach().cpu().item() / len(train_loader)
 
@@ -267,20 +341,20 @@ def main():
         print(f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.2f}")
 
     # Test loop
-    with torch.no_grad():
-        correct, total = 0, 0
-        test_loss = 0.0
-        for batch in tqdm(test_loader, desc="Testing"):
-            x, y = batch
-            x, y = x.to(device), y.to(device)
-            y_hat = model(x)
-            loss = criterion(y_hat, y)
-            test_loss += loss.detach().cpu().item() / len(test_loader)
-
-            correct += torch.sum(torch.argmax(y_hat, dim=1) == y).detach().cpu().item()
-            total += len(x)
-        print(f"Test loss: {test_loss:.2f}")
-        print(f"Test accuracy: {correct / total * 100:.2f}%")
+    # with torch.no_grad():
+    #     correct, total = 0, 0
+    #     test_loss = 0.0
+    #     for batch in tqdm(test_loader, desc="Testing"):
+    #         x, y = batch
+    #         x, y = x.to(device), y.to(device)
+    #         y_hat = model(x)
+    #         loss = criterion(y_hat, y)
+    #         test_loss += loss.detach().cpu().item() / len(test_loader)
+    #
+    #         correct += torch.sum(torch.argmax(y_hat, dim=1) == y).detach().cpu().item()
+    #         total += len(x)
+    #     print(f"Test loss: {test_loss:.2f}")
+    #     print(f"Test accuracy: {correct / total * 100:.2f}%")
 
 
 if __name__ == "__main__":

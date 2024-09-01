@@ -23,7 +23,8 @@ class SoccerDataset(Dataset):
 
         img_name = self.dataarray[idx][0]
         image = Image.open(img_name)
-        sample = {'image': image, 'ground_truth': self.dataarray[idx][1]}
+        truth_tensor = torch.tensor(self.dataarray[idx][1]).reshape(-1, 4)
+        sample = {'image': image, 'ground_truth': truth_tensor}
 
         if self.transform:
             sample = self.transform(sample)
@@ -36,7 +37,7 @@ json_file = "./annotation/annotation_normalized.txt"
 transform = v2.Compose([
     # you can add other transformations in this list
     v2.Resize((360, 640)),
-    v2.PILToTensor()
+    v2.ToTensor()
 ])
 
 dataset = SoccerDataset(json_file, transform)
@@ -45,5 +46,5 @@ dataloader = DataLoader(dataset, batch_size=4, shuffle=True)
 
 for sample in dataloader:
     print(sample['image'].shape)
-    print(sample['ground_truth'][0])
+    print(sample['ground_truth'])
     break
