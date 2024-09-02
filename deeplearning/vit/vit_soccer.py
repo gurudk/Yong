@@ -1,9 +1,11 @@
 import json
+import time
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from torch.nn import CrossEntropyLoss
 from torch.optim import Adam
 from torch.utils.data import DataLoader
@@ -16,9 +18,24 @@ from torchvision.transforms import v2
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 from torchvision.ops.boxes import box_area
+from torchvision.ops import generalized_box_iou, generalized_box_iou_loss
 
 np.random.seed(0)
 torch.manual_seed(0)
+
+
+def box_cxcywh_to_xyxy(x):
+    x_c, y_c, w, h = x.unbind(-1)
+    b = [(x_c - 0.5 * w), (y_c - 0.5 * h),
+         (x_c + 0.5 * w), (y_c + 0.5 * h)]
+    return torch.stack(b, dim=-1)
+
+
+def box_xyxy_to_cxcywh(x):
+    x0, y0, x1, y1 = x.unbind(-1)
+    b = [(x0 + x1) / 2, (y0 + y1) / 2,
+         (x1 - x0), (y1 - y0)]
+    return torch.stack(b, dim=-1)
 
 
 def box_iou(boxes1, boxes2):
@@ -61,28 +78,8 @@ def generalized_box_iou(boxes1, boxes2):
     return iou - (area - union) / area
 
 
-def loss_func(src_box, target_box):
+def loss_func(src_box: object, target_box: object) -> object:
     return 1 - generalized_box_iou(src_box, target_box)
-
-
-def patchify(images, n_patches):
-    n, c, h, w = images.shape
-
-    assert h == w, "Patchify method is implemented for square images only"
-
-    patches = torch.zeros(n, n_patches ** 2, h * w * c // n_patches ** 2)
-    patch_size = h // n_patches
-
-    for idx, image in enumerate(images):
-        for i in range(n_patches):
-            for j in range(n_patches):
-                patch = image[
-                        :,
-                        i * patch_size: (i + 1) * patch_size,
-                        j * patch_size: (j + 1) * patch_size,
-                        ]
-                patches[idx, i * n_patches + j] = patch.flatten()
-    return patches
 
 
 class SoccerDataset(Dataset):
@@ -101,7 +98,8 @@ class SoccerDataset(Dataset):
 
         img_name = self.dataarray[idx][0]
         image = Image.open(img_name)
-        truth_tensor = torch.tensor(self.dataarray[idx][1]).reshape(-1, 4)
+        # truth_tensor = torch.tensor(self.dataarray[idx][1]).reshape(-1, 4)
+        truth_tensor = torch.tensor(self.dataarray[idx][1])
         sample = {'image': image, 'ground_truth': truth_tensor}
 
         if self.transform:
@@ -189,7 +187,7 @@ class MyViTBlock(nn.Module):
 
 
 class SoccerViT(nn.Module):
-    def __init__(self, chw, n_patches=20, n_blocks=6, hidden_d=512, n_heads=8, out_d=4):
+    def __init__(self, chw, n_patches=40, n_blocks=6, hidden_d=256, n_heads=8, out_d=4):
         # Super constructor
         super(SoccerViT, self).__init__()
 
@@ -266,8 +264,8 @@ class SoccerViT(nn.Module):
 
         # Getting the classification token only
         out = out[:, 0]
-
-        return self.mlp(out)  # Map to output dimension, output category distribution
+        outputs_coord = self.mlp(out).sigmoid()
+        return outputs_coord
 
 
 def get_positional_embeddings(sequence_length, d):
@@ -296,7 +294,7 @@ def main():
     #     root="./../datasets", train=False, download=True, transform=transform
     # )
 
-    train_loader = DataLoader(train_set, shuffle=True, batch_size=4)
+    train_loader = DataLoader(train_set, shuffle=True, batch_size=16)
     # test_loader = DataLoader(test_set, shuffle=False, batch_size=128)
 
     # Defining model and training options
@@ -311,17 +309,18 @@ def main():
     # ).to(device)
 
     model = SoccerViT(
-        (3, 360, 640), n_patches=20, n_blocks=6, hidden_d=512, n_heads=8, out_d=4
+        (3, 360, 640), n_patches=40, n_blocks=6, hidden_d=256, n_heads=8, out_d=4
     ).to(device)
 
-    N_EPOCHS = 50
+    N_EPOCHS = 1000
     LR = 0.001
 
     # Training loop
     optimizer = Adam(model.parameters(), lr=LR)
-    criterion = CrossEntropyLoss()
     for epoch in trange(N_EPOCHS, desc="Training"):
         train_loss = 0.0
+        start = time.time()
+
         for batch in tqdm(
                 train_loader, desc=f"Epoch {epoch + 1} in training", leave=False
         ):
@@ -329,16 +328,18 @@ def main():
             y = batch['ground_truth']
 
             x, y = x.to(device), y.to(device)
-            y_hat = model(x)
-            loss = loss_func(y_hat, y)
+            pre_cord = model(x)
+            y_hat = box_cxcywh_to_xyxy(pre_cord)
+            loss = generalized_box_iou_loss(y_hat, y)
+            loss = loss.sum()
 
             train_loss += loss.detach().cpu().item() / len(train_loader)
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-
-        print(f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.2f}")
+        duration = time.time() - start
+        print(f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.2f} duration:{duration:.2f}")
 
     # Test loop
     # with torch.no_grad():
@@ -355,6 +356,7 @@ def main():
     #         total += len(x)
     #     print(f"Test loss: {test_loss:.2f}")
     #     print(f"Test accuracy: {correct / total * 100:.2f}%")
+    torch.save(model, 'soccer_vit_1000.pth')
 
 
 if __name__ == "__main__":
