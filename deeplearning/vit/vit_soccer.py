@@ -305,7 +305,7 @@ def main():
     #         total += len(x)
     #     print(f"Test loss: {test_loss:.2f}")
     #     print(f"Test accuracy: {correct / total * 100:.2f}%")
-    torch.save(model, 'soccer_vit_1000.pth')
+    torch.save(model, 'soccer_vit_1000_dropout.pth')
 
 
 if __name__ == "__main__":
