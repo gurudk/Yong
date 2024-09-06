@@ -39,6 +39,18 @@ def box_cxcywh_to_xyxy(x):
     return torch.stack(b, dim=-1)
 
 
+def get_positional_embeddings(sequence_length, d):
+    result = torch.ones(sequence_length, d)
+    for i in range(sequence_length):
+        for j in range(d):
+            result[i][j] = (
+                np.sin(i / (10000 ** (j / d)))
+                if j % 2 == 0
+                else np.cos(i / (10000 ** ((j - 1) / d)))
+            )
+    return result
+
+
 class SoccerDataset(Dataset):
     def __init__(self, json_file, transform=None):
         with open(json_file, 'r') as f:
@@ -175,7 +187,14 @@ class SoccerViT(nn.Module):
             nn.LayerNorm(dim),
         )
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
+        # self.pos_embedding = nn.Parameter(torch.randn(1, num_patches + 1, dim))
+
+        self.register_buffer(
+            "positional_embeddings",
+            get_positional_embeddings(num_patches + 1, dim),
+            persistent=False,
+        )
+
         self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
         self.dropout = nn.Dropout(emb_dropout)
 
@@ -192,7 +211,9 @@ class SoccerViT(nn.Module):
 
         cls_tokens = repeat(self.cls_token, '1 1 d -> b 1 d', b=b)
         x = torch.cat((cls_tokens, x), dim=1)
-        x += self.pos_embedding[:, :(n + 1)]
+        # x += self.pos_embedding[:, :(n + 1)]
+        x += self.positional_embeddings.repeat(b, 1, 1)
+
         x = self.dropout(x)
 
         x = self.transformer(x)
