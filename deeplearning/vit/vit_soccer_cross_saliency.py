@@ -49,7 +49,7 @@ class SoccerDataset(Dataset):
         image = Image.open(img_name)
         # truth_tensor = torch.tensor(self.dataarray[idx][1]).reshape(-1, 4)
         truth_tensor = torch.tensor(self.dataarray[idx][1])
-        sample = {'image': image, 'ground_truth': truth_tensor}
+        sample = {'image': image, 'ground_truth': truth_tensor, 'image_name': img_name.split("/")[-1]}
 
         if self.transform:
             sample = self.transform(sample)
@@ -136,7 +136,7 @@ class MyViTBlock(nn.Module):
 
 
 class SoccerViT(nn.Module):
-    def __init__(self, chw, n_patches=40, n_blocks=6, hidden_d=256, n_heads=8, out_d=4):
+    def __init__(self, chw, n_patches=40, n_blocks=6, hidden_d=256, n_heads=8, out_d=16):
         # Super constructor
         super(SoccerViT, self).__init__()
 
@@ -189,7 +189,7 @@ class SoccerViT(nn.Module):
         # 5) Classification MLPk
         # self.mlp = nn.Sequential(nn.Linear(self.hidden_d, out_d), nn.Softmax(dim=-1))
 
-        self.mlp = MLP(self.hidden_d, self.hidden_d, out_d, 3)
+        self.mlp = MLP(self.hidden_d, self.hidden_d, out_d, 1)
 
     def forward(self, images):
         # Dividing images into patches
@@ -207,19 +207,20 @@ class SoccerViT(nn.Module):
         # Adding positional embedding
         out = tokens + self.positional_embeddings.repeat(n, 1, 1)
 
+        # if torch.isnan(out).any():
+        #     print('NaN detected!')
+        #     print(out)
+        #
+        # if torch.isinf(out).any():
+        #     print('Inf detected!')
+
         # Transformer Blocks
         for block in self.blocks:
             out = block(out)
 
         # Getting the classification token only
         out = out[:, 0]
-        outputs_coord = self.mlp(out).sigmoid()
-
-        if torch.isnan(out).any():
-            print('NaN detected!')
-
-        if torch.isinf(out).any():
-            print('Inf detected!')
+        outputs_coord = self.mlp(out)
 
         return outputs_coord
 
@@ -238,7 +239,7 @@ def get_positional_embeddings(sequence_length, d):
 
 def main():
     # Loading data
-    json_file = "./annotation/annotation_normalized.txt"
+    json_file = "./annotation/annotation_probability.txt"
 
     transform = v2.Compose([
         # you can add other transformations in this list
@@ -265,14 +266,15 @@ def main():
     # ).to(device)
 
     model = SoccerViT(
-        (3, 360, 640), n_patches=40, n_blocks=6, hidden_d=256, n_heads=8, out_d=4
+        (3, 360, 640), n_patches=40, n_blocks=6, hidden_d=256, n_heads=8, out_d=16
     ).to(device)
 
     N_EPOCHS = 1000
-    LR = 0.001
+    LR = 0.0001
 
     # Training loop
     optimizer = Adam(model.parameters(), lr=LR)
+    criterion = CrossEntropyLoss()
     for epoch in trange(N_EPOCHS, desc="Training"):
         train_loss = 0.0
         start = time.time()
@@ -282,17 +284,20 @@ def main():
         ):
             x = batch['image']
             y = batch['ground_truth']
+            z = batch['image_name']
+
+            if torch.isnan(x).any() or torch.isinf(x).any():
+                print('invalid input detected at iteration ', z)
 
             x, y = x.to(device), y.to(device)
-            pre_cord = model(x)
-            y_hat = box_cxcywh_to_xyxy(pre_cord)
-            loss = generalized_box_iou_loss(y_hat, y)
-            loss = loss.sum()
+            y_hat = model(x)
+            loss = criterion(y_hat, y)
 
-            train_loss += loss.detach().cpu().item() / len(train_loader)
+            train_loss += loss.detach().cpu().item() / 209
 
             optimizer.zero_grad()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 10)
             optimizer.step()
         duration = time.time() - start
         print(f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.2f} duration:{duration:.2f}")
