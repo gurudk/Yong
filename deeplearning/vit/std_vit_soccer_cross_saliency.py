@@ -265,7 +265,7 @@ def main():
     ).to(device)
 
     N_EPOCHS = 1000
-    LR = 0.001
+    LR = 0.0001
 
     # Training loop
     optimizer = Adam(model.parameters(), lr=LR)
@@ -310,7 +310,7 @@ def main():
     #         total += len(x)
     #     print(f"Test loss: {test_loss:.2f}")
     #     print(f"Test accuracy: {correct / total * 100:.2f}%")
-    torch.save(model, 'std_vit_1000_cross.pth')
+    torch.save(model, 'std_vit_150_cross_1e4.pth')
 
 
 if __name__ == "__main__":
