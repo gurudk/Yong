@@ -310,7 +310,7 @@ def main():
         duration = time.time() - start
         print("\n")
         train_log = f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}"
-        send_mail(train_log, train_log)
+        send_mail(train_log, 'ATT..............................')
         print(train_log)
 
     # Test loop
