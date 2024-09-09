@@ -1,5 +1,8 @@
 import json
 import time
+import os
+import smtplib
+from email.message import EmailMessage
 
 import numpy as np
 import torch
@@ -17,6 +20,19 @@ from torch.nn import CrossEntropyLoss
 
 np.random.seed(0)
 torch.manual_seed(0)
+
+
+def send_mail(SUBJECT, TEXT):
+    msg = EmailMessage()
+    msg.set_content(TEXT)
+    msg['Subject'] = SUBJECT
+    msg['From'] = "soccervit@126.com"
+    msg['To'] = "soccervit@126.com"
+
+    s = smtplib.SMTP('smtp.126.com')
+    s.login('soccervit@126.com', os.environ["auth_code"])
+    s.send_message(msg)
+    s.quit()
 
 
 # helpers
@@ -293,7 +309,9 @@ def main():
             optimizer.step()
         duration = time.time() - start
         print("\n")
-        print(f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}")
+        train_log = f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}"
+        send_mail(train_log, train_log)
+        print(train_log)
 
     # Test loop
     # with torch.no_grad():
