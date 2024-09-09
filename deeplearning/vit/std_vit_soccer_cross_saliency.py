@@ -280,7 +280,7 @@ def main():
         emb_dropout=0.1
     ).to(device)
 
-    N_EPOCHS = 1000
+    N_EPOCHS = 500
     LR = 0.0001
 
     # Training loop
@@ -328,7 +328,7 @@ def main():
     #         total += len(x)
     #     print(f"Test loss: {test_loss:.2f}")
     #     print(f"Test accuracy: {correct / total * 100:.2f}%")
-    torch.save(model, 'std_vit_150_cross_1e4.pth')
+    torch.save(model, 'std_vit_500_cross_1e4.pth')
 
 
 if __name__ == "__main__":
