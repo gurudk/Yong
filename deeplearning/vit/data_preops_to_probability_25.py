@@ -17,19 +17,20 @@ def box_inter_percent(boxes1, boxes2):
     return inter / area2
 
 
-spans = np.linspace(0, 1, num=5)
-interval = 0.25
+clazz_num = 5
+spans = np.linspace(0, 1, num=clazz_num + 1)
+interval = 0.2
 data = []
 box = []
-for i in range(4):
-    for j in range(4):
+for i in range(clazz_num):
+    for j in range(clazz_num):
         box = [spans[j], spans[i], spans[j + 1], spans[i + 1]]
         data.append(box)
 
 data_t = torch.tensor(data)
 
 normalized_annotation_file = "./annotation/annotation_normalized_20240910160828.txt"
-probability_annotation_file = "./annotation/annotation_probability_20240910160828.txt"
+probability_annotation_file = "./annotation/annotation_probability_20240910160828_25.txt"
 prob_dict = {}
 with open(probability_annotation_file, 'w') as wf:
     with open(normalized_annotation_file, 'r') as f:
