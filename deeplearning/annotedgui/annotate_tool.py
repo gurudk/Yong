@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
         button_action2 = QAction(QIcon("arrow-000-medium.png"), "&Next", self)
         button_action2.setStatusTip("Next Image")
         button_action2.triggered.connect(self.onMyToolBarNextImageClick)
-        button_action2.setShortcut(QKeySequence("n"))
+        button_action2.setShortcut(QKeySequence("Space"))
         # button_action2.setCheckable(True)
         toolbar.addAction(button_action2)
 

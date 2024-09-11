@@ -20,9 +20,9 @@ def draw_grid(img, grid_shape, color=(0, 255, 0), thickness=1):
     return img
 
 
-img = cv2.imread('6.png')
+img = cv2.imread('6_1280.png')
 
-draw_grid(img, (40, 40))
+draw_grid(img, (80, 80))
 
 cv2.imshow("foo", img)
 cv2.waitKey()

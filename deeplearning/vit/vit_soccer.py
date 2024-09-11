@@ -238,7 +238,7 @@ def get_positional_embeddings(sequence_length, d):
 
 def main():
     # Loading data
-    json_file = "./annotation/annotation_normalized.txt"
+    json_file = "./annotation/annotation_normalized_20240910160828.txt"
 
     transform = v2.Compose([
         # you can add other transformations in this list
@@ -269,7 +269,7 @@ def main():
     ).to(device)
 
     N_EPOCHS = 1000
-    LR = 0.001
+    LR = 0.0001
 
     # Training loop
     optimizer = Adam(model.parameters(), lr=LR)
@@ -312,7 +312,7 @@ def main():
     #         total += len(x)
     #     print(f"Test loss: {test_loss:.2f}")
     #     print(f"Test accuracy: {correct / total * 100:.2f}%")
-    torch.save(model, 'soccer_vit_1000_dropout.pth')
+    torch.save(model, 'soccer_vit_1000_alldata.pth')
 
 
 if __name__ == "__main__":

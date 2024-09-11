@@ -1,5 +1,10 @@
 import json
 import time
+import datetime
+import os
+import smtplib
+import traceback
+from email.message import EmailMessage
 
 import numpy as np
 import torch
@@ -17,6 +22,19 @@ from torch.nn import CrossEntropyLoss
 
 np.random.seed(0)
 torch.manual_seed(0)
+
+
+def send_mail(SUBJECT, TEXT):
+    msg = EmailMessage()
+    msg.set_content(TEXT)
+    msg['Subject'] = SUBJECT
+    msg['From'] = "soccervit@126.com"
+    msg['To'] = "soccervit@126.com"
+
+    s = smtplib.SMTP('smtp.126.com')
+    s.login('soccervit@126.com', os.environ["auth_code"])
+    s.send_message(msg)
+    s.quit()
 
 
 # helpers
@@ -226,7 +244,7 @@ class SoccerViT(nn.Module):
 
 def main():
     # Loading data
-    json_file = "./annotation/annotation_probability.txt"
+    json_file = "./annotation/annotation_probability_20240910160828_25.txt"
 
     transform = v2.Compose([
         # you can add other transformations in this list
@@ -259,13 +277,13 @@ def main():
         depth=6,
         heads=8,
         mlp_dim=1024,
-        out_dim=16,
+        out_dim=25,
         dropout=0.1,
         emb_dropout=0.1
     ).to(device)
 
-    N_EPOCHS = 1000
-    LR = 0.001
+    N_EPOCHS = 500
+    LR = 0.0001
 
     # Training loop
     optimizer = Adam(model.parameters(), lr=LR)
@@ -293,7 +311,16 @@ def main():
             optimizer.step()
         duration = time.time() - start
         print("\n")
-        print(f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}")
+        train_log = f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}"
+
+        nowtime = datetime.datetime.now()
+        try:
+            send_mail("[" + nowtime.strftime("%Y%m%d") + "]-" + train_log, 'ATT..............................')
+        except Exception:
+            print("Sending email failed!")
+            print(traceback.format_exc())
+
+        print(train_log)
 
     # Test loop
     # with torch.no_grad():
@@ -310,7 +337,7 @@ def main():
     #         total += len(x)
     #     print(f"Test loss: {test_loss:.2f}")
     #     print(f"Test accuracy: {correct / total * 100:.2f}%")
-    torch.save(model, 'std_vit_1000_cross.pth')
+    torch.save(model, 'std_vit_alldata_500_cross_1e4.pth')
 
 
 if __name__ == "__main__":

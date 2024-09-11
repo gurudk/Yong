@@ -1,5 +1,11 @@
+import os
 import json
 import time
+import smtplib
+import datetime
+import traceback
+
+from email.message import EmailMessage
 
 import numpy as np
 import torch
@@ -17,6 +23,19 @@ from torchvision.ops import generalized_box_iou_loss
 
 np.random.seed(0)
 torch.manual_seed(0)
+
+
+def send_mail(SUBJECT, TEXT):
+    msg = EmailMessage()
+    msg.set_content(TEXT)
+    msg['Subject'] = SUBJECT
+    msg['From'] = "soccervit@126.com"
+    msg['To'] = "soccervit@126.com"
+
+    s = smtplib.SMTP('smtp.126.com')
+    s.login('soccervit@126.com', os.environ["auth_code"])
+    s.send_message(msg)
+    s.quit()
 
 
 # helpers
@@ -226,7 +245,7 @@ class SoccerViT(nn.Module):
 
 def main():
     # Loading data
-    json_file = "./annotation/annotation_normalized.txt"
+    json_file = "./annotation/annotation_normalized_20240910160828.txt"
 
     transform = v2.Compose([
         # you can add other transformations in this list
@@ -263,8 +282,8 @@ def main():
         emb_dropout=0.1
     ).to(device)
 
-    N_EPOCHS = 150
-    LR = 0.001
+    N_EPOCHS = 1000
+    LR = 0.0001
 
     # Training loop
     optimizer = Adam(model.parameters(), lr=LR)
@@ -281,8 +300,7 @@ def main():
             x, y = x.to(device), y.to(device)
             pre_cord = model(x)
             y_hat = box_cxcywh_to_xyxy(pre_cord)
-            loss = generalized_box_iou_loss(y_hat, y)
-            loss = loss.sum()
+            loss = generalized_box_iou_loss(y_hat, y, reduction="sum")
 
             train_loss += loss.detach().cpu().item() / len(train_loader)
 
@@ -291,7 +309,20 @@ def main():
             optimizer.step()
         duration = time.time() - start
         print("\n")
+
+        train_log = f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}"
+
+        nowtime = datetime.datetime.now()
+        try:
+            send_mail("[" + nowtime.strftime("%Y%m%d") + "]-" + train_log, 'ATT..............................')
+        except Exception:
+            print("Sending email failed!")
+            print(traceback.format_exc())
+
         print(f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}")
+
+        if epoch % 100 == 0:
+            torch.save(model, "./model/std_vit_alldata_giou_" + str(epoch) + ".pth")
 
     # Test loop
     # with torch.no_grad():
@@ -308,7 +339,7 @@ def main():
     #         total += len(x)
     #     print(f"Test loss: {test_loss:.2f}")
     #     print(f"Test accuracy: {correct / total * 100:.2f}%")
-    torch.save(model, 'std_vit_150.pth')
+    # torch.save(model, 'std_vit_1000.pth')
 
 
 if __name__ == "__main__":

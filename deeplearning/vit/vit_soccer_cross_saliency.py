@@ -269,8 +269,8 @@ def main():
         (3, 360, 640), n_patches=40, n_blocks=6, hidden_d=256, n_heads=8, out_d=16
     ).to(device)
 
-    N_EPOCHS = 1000
-    LR = 0.0001
+    N_EPOCHS = 150
+    LR = 0.00001
 
     # Training loop
     optimizer = Adam(model.parameters(), lr=LR)
@@ -317,7 +317,7 @@ def main():
     #         total += len(x)
     #     print(f"Test loss: {test_loss:.2f}")
     #     print(f"Test accuracy: {correct / total * 100:.2f}%")
-    torch.save(model, 'soccer_vit_1000_dropout.pth')
+    torch.save(model, 'soccer_vit_150_lr1e5.pth')
 
 
 if __name__ == "__main__":
