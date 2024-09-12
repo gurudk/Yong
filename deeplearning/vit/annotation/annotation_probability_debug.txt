@@ -1,1 +1,0 @@
-{"/home/wolf/datasets/final_dataset_evo_v3/train/images/7195.png": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
