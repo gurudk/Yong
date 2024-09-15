@@ -1,9 +1,10 @@
+import os
 import json
 import time
-import datetime
-import os
 import smtplib
+import datetime
 import traceback
+
 from email.message import EmailMessage
 
 import numpy as np
@@ -18,7 +19,7 @@ from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm, trange
 from torchvision.transforms import v2
 from einops.layers.torch import Rearrange
-from torch.nn import CrossEntropyLoss
+from torchvision.ops import generalized_box_iou_loss
 
 np.random.seed(0)
 torch.manual_seed(0)
@@ -187,7 +188,7 @@ class Transformer(nn.Module):
 
 class SoccerViT(nn.Module):
     def __init__(self, *, image_size, patch_size, dim, depth, heads, mlp_dim, pool='cls', channels=3,
-                 dim_head=64, out_dim=16, dropout=0., emb_dropout=0.):
+                 dim_head=64, out_dim=4, dropout=0., emb_dropout=0.):
         super().__init__()
         image_height, image_width = pair(image_size)
         patch_height, patch_width = pair(patch_size)
@@ -239,25 +240,24 @@ class SoccerViT(nn.Module):
         x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
 
         x = self.to_latent(x)
-        return self.mlp(x)
+        return self.mlp(x).sigmoid()
 
 
 def main():
     # Loading data
-    json_file = "./annotation/annotation_probability_20240912113708_25.txt"
+    # json_file = "./annotation/annotation_normalized_20240912113708.txt"
+    test_file = "./annotation/validated_normalized_20240915173518.txt"
 
     transform = v2.Compose([
         # you can add other transformations in this list
         v2.Resize((360, 640)),
         v2.ToTensor()
     ])
-    train_set = SoccerDataset(json_file, transform)
-    # test_set = MNIST(
-    #     root="./../datasets", train=False, download=True, transform=transform
-    # )
+    # train_set = SoccerDataset(json_file, transform)
+    test_set = SoccerDataset(test_file, transform)
 
-    train_loader = DataLoader(train_set, shuffle=True, batch_size=8)
-    # test_loader = DataLoader(test_set, shuffle=False, batch_size=128)
+    # train_loader = DataLoader(train_set, shuffle=True, batch_size=8)
+    test_loader = DataLoader(test_set, shuffle=False, batch_size=32)
 
     # Defining model and training options
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -266,63 +266,29 @@ def main():
         device,
         f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "",
     )
-    # model = SoccerViT(
-    #     (1, 28, 28), n_patches=7, n_blocks=2, hidden_d=16, n_heads=2, out_d=10
-    # ).to(device)
 
-    model = SoccerViT(
-        image_size=(360, 640),
-        patch_size=(9, 16),
-        dim=256,
-        depth=6,
-        heads=8,
-        mlp_dim=1024,
-        out_dim=25,
-        dropout=0.1,
-        emb_dropout=0.1
-    ).to(device)
-
-    N_EPOCHS = 2001
-    LR = 0.0001
-
-    # Training loop
-    optimizer = Adam(model.parameters(), lr=LR)
-    criterion = CrossEntropyLoss()
-
-    for epoch in trange(N_EPOCHS, desc="Training"):
-        train_loss = 0.0
+    for model_epochs in range(200, 2000, 100):
+        model_name = "std_vit_alldata_giou_" + str(model_epochs) + ".pth"
+        print("Testing model name:", model_name)
+        model = torch.load("./model/" + model_name)
         start = time.time()
+        # Test loop
+        with torch.no_grad():
+            test_loss = 0.0
+            for batch in tqdm(test_loader, desc="Testing"):
+                x = batch['image']
+                y = batch['ground_truth']
 
-        for batch in tqdm(
-                train_loader, desc=f"Epoch {epoch + 1} in training", leave=False
-        ):
-            x = batch['image']
-            y = batch['ground_truth']
+                x, y = x.to(device), y.to(device)
+                pre_cord = model(x)
+                y_hat = box_cxcywh_to_xyxy(pre_cord)
+                loss = generalized_box_iou_loss(y_hat, y, reduction="sum")
 
-            x, y = x.to(device), y.to(device)
-            y = torch.argmax(y, dim=1)
-            y_hat = model(x)
-            loss = criterion(y_hat, y)
+                test_loss += loss.detach().cpu().item() / len(test_loader)
 
-            train_loss += loss.detach().cpu().item() / len(train_loader)
-
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
         duration = time.time() - start
+        print(f"Test loss for {model_name} : {test_loss:.5f}, duration:{duration}")
         print("\n")
-        train_log = f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}"
-
-        nowtime = datetime.datetime.now()
-        try:
-            send_mail("[" + nowtime.strftime("%Y%m%d") + "]-" + train_log, 'ATT..............................')
-        except Exception:
-            print("Sending email failed!")
-            print(traceback.format_exc())
-
-        print(train_log)
-        if epoch % 100 == 0:
-            torch.save(model, "./model/std_vit_cross_25_" + str(epoch) + ".pth")
 
 
 if __name__ == "__main__":
