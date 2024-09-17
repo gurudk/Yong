@@ -258,12 +258,13 @@ class MainWindow(QMainWindow):
         self.resize(self.pixmap.width(), self.pixmap.height())
         self.setWindowTitle(self.file_name)
 
-        for root, dirs, files in os.walk(self.dir_name):
-            for file_name in files:
-                if file_name.lower().endswith("png") or file_name.lower().endswith("jpg"):
-                    self.imagefiles.append(file_name)
+        if len(self.imagefiles) == 0:
+            for root, dirs, files in os.walk(self.dir_name):
+                for file_name in files:
+                    if file_name.lower().endswith("png") or file_name.lower().endswith("jpg"):
+                        self.imagefiles.append(file_name)
 
-        self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
+            self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
 
         self.annotation_file = self.dir_name + "/" + ANNOTATED_FILE
         anno_path = Path(self.annotation_file)

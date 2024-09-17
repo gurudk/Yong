@@ -2,8 +2,8 @@ import json
 from PIL import Image
 import numpy as np
 
-annotated_file = './annotation/annotated.release.20240910160828.txt'
-normalized_annotation_file = "./annotation/annotation_normalized_20240910160828.txt"
+annotated_file = './annotation/annotated.release.20240912113708.txt'
+normalized_annotation_file = "./annotation/annotation_normalized_20240912113708.txt"
 normalized_dict = {}
 with open(normalized_annotation_file, 'w') as wf:
     with open(annotated_file, 'r') as f:

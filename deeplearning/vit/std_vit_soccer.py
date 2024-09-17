@@ -245,7 +245,7 @@ class SoccerViT(nn.Module):
 
 def main():
     # Loading data
-    json_file = "./annotation/annotation_normalized_20240910160828.txt"
+    json_file = "./annotation/annotation_normalized_20240912113708.txt"
 
     transform = v2.Compose([
         # you can add other transformations in this list
@@ -282,7 +282,7 @@ def main():
         emb_dropout=0.1
     ).to(device)
 
-    N_EPOCHS = 1000
+    N_EPOCHS = 2000
     LR = 0.0001
 
     # Training loop

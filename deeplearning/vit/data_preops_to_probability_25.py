@@ -29,8 +29,8 @@ for i in range(clazz_num):
 
 data_t = torch.tensor(data)
 
-normalized_annotation_file = "./annotation/annotation_normalized_20240910160828.txt"
-probability_annotation_file = "./annotation/annotation_probability_20240910160828_25.txt"
+normalized_annotation_file = "./annotation/annotation_normalized_20240912113708.txt"
+probability_annotation_file = "./annotation/annotation_probability_20240912113708_25.txt"
 prob_dict = {}
 with open(probability_annotation_file, 'w') as wf:
     with open(normalized_annotation_file, 'r') as f:

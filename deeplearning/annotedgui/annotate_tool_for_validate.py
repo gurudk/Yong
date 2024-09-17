@@ -124,32 +124,33 @@ class MainWindow(QMainWindow):
         files.sort()
 
         # Load latest image
-        with open(files[-1], 'r') as f:
-            obj = json.loads(f.read())
-            self.file_name = list(obj.keys())[-1]
-            self.dir_name = Path(self.file_name).parent.absolute().as_posix()
+        if len(files) > 0:
+            with open(files[-1], 'r') as f:
+                obj = json.loads(f.read())
+                self.file_name = list(obj.keys())[-1]
+                self.dir_name = Path(self.file_name).parent.absolute().as_posix()
 
-            pixmap = QPixmap(self.file_name)
-            self.pixmap = pixmap.scaled(1280, int(1280 * (pixmap.height() / pixmap.width())))
-            self.image_label.setPixmap(self.pixmap)
-            self.image_label.setScaledContents(True)
-            self.image_label.mousePressEvent = self.image_press_event
-            self.image_label.mouseMoveEvent = self.image_move_event
-            self.image_label.mouseReleaseEvent = self.image_release_event
-            self.resize(self.pixmap.width(), self.pixmap.height())
-            self.setWindowTitle(self.file_name)
+                pixmap = QPixmap(self.file_name)
+                self.pixmap = pixmap.scaled(1280, int(1280 * (pixmap.height() / pixmap.width())))
+                self.image_label.setPixmap(self.pixmap)
+                self.image_label.setScaledContents(True)
+                self.image_label.mousePressEvent = self.image_press_event
+                self.image_label.mouseMoveEvent = self.image_move_event
+                self.image_label.mouseReleaseEvent = self.image_release_event
+                self.resize(self.pixmap.width(), self.pixmap.height())
+                self.setWindowTitle(self.file_name)
 
-            for root, dirs, files in os.walk(self.dir_name):
-                for file_name in files:
-                    if file_name.lower().endswith("png") or file_name.lower().endswith("jpg"):
-                        self.imagefiles.append(file_name)
+                for root, dirs, files in os.walk(self.dir_name):
+                    for file_name in files:
+                        if file_name.lower().endswith("png") or file_name.lower().endswith("jpg"):
+                            self.imagefiles.append(file_name)
 
-            self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
+                self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
 
-            self.annotation_file = self.dir_name + "/" + ANNOTATED_FILE
-            anno_path = Path(self.annotation_file)
-            if not anno_path.is_file():
-                anno_path.touch()
+                self.annotation_file = self.dir_name + "/" + ANNOTATED_FILE
+                anno_path = Path(self.annotation_file)
+                if not anno_path.is_file():
+                    anno_path.touch()
 
     def onMyToolBarLastImageClick(self, s):
         print("last image!")
@@ -258,12 +259,13 @@ class MainWindow(QMainWindow):
         self.resize(self.pixmap.width(), self.pixmap.height())
         self.setWindowTitle(self.file_name)
 
-        for root, dirs, files in os.walk(self.dir_name):
-            for file_name in files:
-                if file_name.lower().endswith("png") or file_name.lower().endswith("jpg"):
-                    self.imagefiles.append(file_name)
+        if len(self.imagefiles) == 0:
+            for root, dirs, files in os.walk(self.dir_name):
+                for file_name in files:
+                    if file_name.lower().endswith("png") or file_name.lower().endswith("jpg"):
+                        self.imagefiles.append(file_name)
 
-        self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
+            self.imagefiles = sorted(self.imagefiles, key=cmp_to_key(compare_function))
 
         self.annotation_file = self.dir_name + "/" + ANNOTATED_FILE
         anno_path = Path(self.annotation_file)

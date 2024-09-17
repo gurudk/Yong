@@ -244,7 +244,7 @@ class SoccerViT(nn.Module):
 
 def main():
     # Loading data
-    json_file = "./annotation/annotation_probability_20240910160828_25.txt"
+    json_file = "./annotation/annotation_probability_20240912113708_25.txt"
 
     transform = v2.Compose([
         # you can add other transformations in this list
@@ -282,7 +282,7 @@ def main():
         emb_dropout=0.1
     ).to(device)
 
-    N_EPOCHS = 500
+    N_EPOCHS = 2001
     LR = 0.0001
 
     # Training loop
@@ -321,23 +321,8 @@ def main():
             print(traceback.format_exc())
 
         print(train_log)
-
-    # Test loop
-    # with torch.no_grad():
-    #     correct, total = 0, 0
-    #     test_loss = 0.0
-    #     for batch in tqdm(test_loader, desc="Testing"):
-    #         x, y = batch
-    #         x, y = x.to(device), y.to(device)
-    #         y_hat = model(x)
-    #         loss = criterion(y_hat, y)
-    #         test_loss += loss.detach().cpu().item() / len(test_loader)
-    #
-    #         correct += torch.sum(torch.argmax(y_hat, dim=1) == y).detach().cpu().item()
-    #         total += len(x)
-    #     print(f"Test loss: {test_loss:.2f}")
-    #     print(f"Test accuracy: {correct / total * 100:.2f}%")
-    torch.save(model, 'std_vit_alldata_500_cross_1e4.pth')
+        if epoch % 100 == 0:
+            torch.save(model, "./model/std_vit_cross_25_" + str(epoch) + ".pth")
 
 
 if __name__ == "__main__":
