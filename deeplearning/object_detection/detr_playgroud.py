@@ -5,16 +5,24 @@ import torch
 from PIL import Image
 import requests
 
+import os
+
+os.environ['CURL_CA_BUNDLE'] = ''
+
 # url = "http://images.cocodataset.org/val2017/000000039769.jpg"
 # image = Image.open(requests.get(url, stream=True).raw)
+
+access_token = "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"
 
 data_dir = "data/train/images/"
 test_image = data_dir + "6_360x640.png"
 image = Image.open(test_image)
 
+# model_path = "detr/checkpoints/detr-r50-e632da11.pth"
+
 # you can specify the revision tag if you don't want the timm dependency
-processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
-model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
+processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm", token=access_token)
+model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm", token=access_token)
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 inputs = processor(images=image, return_tensors="pt").to(device)
 model = model.to(device)
