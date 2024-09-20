@@ -75,7 +75,7 @@ def plot_results(pil_img, prob, boxes):
     plt.show()
 
 
-img_file_name = "./B1606b0e6_1 (21)_17.png"
+img_file_name = "./B1606b0e6_1 (21)_142.png"
 
 im = Image.open(img_file_name)
 
