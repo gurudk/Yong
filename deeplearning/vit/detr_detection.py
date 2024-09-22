@@ -3,6 +3,7 @@ import math
 from PIL import Image
 import requests
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 import ipywidgets as widgets
 from IPython.display import display, clear_output
@@ -65,17 +66,24 @@ def plot_results(pil_img, prob, boxes):
     ax = plt.gca()
     colors = COLORS * 100
     for p, (xmin, ymin, xmax, ymax), c in zip(prob, boxes.tolist(), colors):
-        ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
-                                   fill=False, color=c, linewidth=1))
+
         cl = p.argmax()
-        text = f'{CLASSES[cl]}: {p[cl]:0.2f}'
-        ax.text(xmin, ymin, text, fontsize=15,
-                bbox=dict(facecolor='yellow', alpha=0.5))
+        clz = CLASSES[cl]
+
+        if clz in {"person", "sports ball"}:
+            ax.add_patch(plt.Rectangle((xmin, ymin), xmax - xmin, ymax - ymin,
+                                       fill=False, color=c, linewidth=1))
+
+            text = f'{CLASSES[cl]}: {p[cl]:0.2f}'
+            # ax.text(xmin, ymin, text, fontsize=8,
+            #         bbox=dict(facecolor='yellow', alpha=0.5))
     plt.axis('off')
     plt.show()
 
 
-img_file_name = "./B1606b0e6_1 (21)_142.png"
+PLAYER_TRAIN_DIR = "/home/wolf/datasets/DFL/player/"
+
+img_file_name = "images/B1606b0e6_1 (21)_15.png"
 
 im = Image.open(img_file_name)
 
@@ -90,9 +98,30 @@ outputs = model(img)
 
 # keep only predictions with 0.7+ confidence
 probas = outputs['pred_logits'].softmax(-1)[0, :, :-1]
-keep = probas.max(-1).values > 0.9
+keep = probas.max(-1).values > 0.7
 
 # convert boxes from [0; 1] to image scales
 bboxes_scaled = rescale_bboxes(outputs['pred_boxes'][0, keep], im.size)
+
+print(len(CLASSES))
+img_path = Path(img_file_name).resolve()
+
+player_annotated_dir = Path(PLAYER_TRAIN_DIR).joinpath(img_path.resolve().stem)
+player_annotated_dir.mkdir(parents=True, exist_ok=True)
+
+print(player_annotated_dir)
+
+idx = 0
+delta = 5
+for p, (xmin, ymin, xmax, ymax) in zip(probas[keep], bboxes_scaled.tolist()):
+    cl = p.argmax()
+    clazz = CLASSES[cl]
+    print(clazz, xmin - delta, ymin - delta, xmax + delta, ymax + delta)
+    if clazz in {"person", "sports ball"}:
+        crop = im.crop((xmin - delta, ymin - delta, xmax + delta, ymax + delta))
+        crop_path = player_annotated_dir.joinpath(clazz + "_" + str(idx) + ".png")
+        crop.save(str(crop_path))
+
+        idx += 1
 
 plot_results(im, probas[keep], bboxes_scaled)
