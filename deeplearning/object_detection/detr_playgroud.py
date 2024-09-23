@@ -30,7 +30,7 @@ model = model.to(device)
 start_time = datetime.now().timestamp()
 outputs = model(**inputs)
 end_time = datetime.now().timestamp()
-print(end_time - start_time)
+print("model execution time:", end_time - start_time)
 
 # convert outputs (bounding boxes and class logits) to COCO API
 # let's only keep detections with score > 0.9

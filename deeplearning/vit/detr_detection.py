@@ -4,6 +4,7 @@ from PIL import Image
 import requests
 import matplotlib.pyplot as plt
 from pathlib import Path
+from datetime import datetime
 
 import ipywidgets as widgets
 from IPython.display import display, clear_output
@@ -83,7 +84,7 @@ def plot_results(pil_img, prob, boxes):
 
 PLAYER_TRAIN_DIR = "/home/wolf/datasets/DFL/player/"
 
-img_file_name = "images/B1606b0e6_1 (21)_15.png"
+img_file_name = "images/c493.png"
 
 im = Image.open(img_file_name)
 
@@ -94,7 +95,10 @@ model.eval()
 img = transform(im).unsqueeze(0)
 
 # propagate through the model
+start_time = datetime.now().timestamp()
 outputs = model(img)
+end_time = datetime.now().timestamp()
+print("model execution time:", end_time - start_time)
 
 # keep only predictions with 0.7+ confidence
 probas = outputs['pred_logits'].softmax(-1)[0, :, :-1]
@@ -116,8 +120,9 @@ delta = 5
 for p, (xmin, ymin, xmax, ymax) in zip(probas[keep], bboxes_scaled.tolist()):
     cl = p.argmax()
     clazz = CLASSES[cl]
-    print(clazz, xmin - delta, ymin - delta, xmax + delta, ymax + delta)
+
     if clazz in {"person", "sports ball"}:
+        print(clazz, xmin - delta, ymin - delta, xmax + delta, ymax + delta)
         crop = im.crop((xmin - delta, ymin - delta, xmax + delta, ymax + delta))
         crop_path = player_annotated_dir.joinpath(clazz + "_" + str(idx) + ".png")
         crop.save(str(crop_path))
