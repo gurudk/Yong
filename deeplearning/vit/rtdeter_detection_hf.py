@@ -59,7 +59,7 @@ with torch.no_grad():
     print("model execution time:", end_time - start_time)
 
 results = image_processor.post_process_object_detection(outputs, target_sizes=torch.tensor([image.size[::-1]]),
-                                                        threshold=0.3)
+                                                        threshold=0.6)
 
 # for result in results:
 #     for score, label_id, box in zip(result["scores"], result["labels"], result["boxes"]):
