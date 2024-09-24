@@ -15,7 +15,7 @@ os.environ['CURL_CA_BUNDLE'] = ''
 # image = Image.open(requests.get(url, stream=True).raw)
 
 data_dir = "data/train/images/"
-image = Image.open("images/c491.png")
+image = Image.open("images/8056.png")
 
 # colors for visualization
 COLORS = [[0.000, 0.447, 0.741], [0.850, 0.325, 0.098], [0.929, 0.694, 0.125],
@@ -72,14 +72,14 @@ print("model execution time:", end_time - start_time)
 target_sizes = torch.tensor([image.size[::-1]])
 results = processor.post_process_object_detection(outputs, target_sizes=target_sizes, threshold=0.7)[0]
 
-for score, label, box in zip(results["scores"], results["labels"], results["boxes"]):
-    clazz = model.config.id2label[label.item()]
-    if clazz in {"person", "sports ball"}:
-        box = [round(i, 2) for i in box.tolist()]
-        print(
-            f"Detected {model.config.id2label[label.item()]} with confidence "
-            f"{round(score.item(), 3)} at location {box}"
-        )
+# for score, label, box in zip(results["scores"], results["labels"], results["boxes"]):
+#     clazz = model.config.id2label[label.item()]
+#     if clazz in {"person", "sports ball"}:
+#         box = [round(i, 2) for i in box.tolist()]
+#         print(
+#             f"Detected {model.config.id2label[label.item()]} with confidence "
+#             f"{round(score.item(), 3)} at location {box}"
+#         )
 
 # processor.save_pretrained("./fb-resnet50")
 # model.save_pretrained("./fb-resnet50")

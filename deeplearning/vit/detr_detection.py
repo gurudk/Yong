@@ -84,7 +84,7 @@ def plot_results(pil_img, prob, boxes):
 
 PLAYER_TRAIN_DIR = "/home/wolf/datasets/DFL/player/"
 
-img_file_name = "images/c493.png"
+img_file_name = "images/7268.png"
 
 im = Image.open(img_file_name)
 
@@ -102,7 +102,7 @@ print("model execution time:", end_time - start_time)
 
 # keep only predictions with 0.7+ confidence
 probas = outputs['pred_logits'].softmax(-1)[0, :, :-1]
-keep = probas.max(-1).values > 0.7
+keep = probas.max(-1).values > 0.9
 
 # convert boxes from [0; 1] to image scales
 bboxes_scaled = rescale_bboxes(outputs['pred_boxes'][0, keep], im.size)
