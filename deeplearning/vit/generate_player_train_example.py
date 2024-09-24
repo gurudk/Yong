@@ -56,7 +56,7 @@ for idx, key in enumerate(json_dict.keys()):
     file_ids[idx] = key
 
 delta = 5
-for key in tqdm(json_dict.keys()):
+for file_idx, key in tqdm(enumerate(json_dict.keys())):
     target_idx = 0
     focus_point = get_center_point(json_dict[key])
     img = Image.open(key)
@@ -79,7 +79,7 @@ for key in tqdm(json_dict.keys()):
                 crop_path = crop_dir.joinpath(clazz + "_" + str(target_idx) + ".png")
 
                 target_key = str(crop_path)
-                # target_properties["from_image"] = key
+                target_properties["from_image"] = file_idx
                 target_properties["focus_point"] = focus_point
                 target_properties["target_point"] = target_point
 
