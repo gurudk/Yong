@@ -51,12 +51,15 @@ with open(annotated_file, 'r') as f:
     json_dict = json.loads(f.read())
 
 file_ids = {}
-for idx, key in enumerate(json_dict.keys()):
+file_idx = 0
+for key in json_dict.keys():
     # print(idx, key)
-    file_ids[idx] = key
+    file_ids[file_idx] = key
+    file_idx += 1
 
 delta = 5
-for file_idx, key in tqdm(enumerate(json_dict.keys())):
+file_idx = 0
+for key in tqdm(json_dict.keys()):
     target_idx = 0
     focus_point = get_center_point(json_dict[key])
     img = Image.open(key)
@@ -103,7 +106,7 @@ for file_idx, key in tqdm(enumerate(json_dict.keys())):
                 #     f"Detected {model.config.id2label[label.item()]} with confidence "
                 #     f"{round(score.item(), 3)} at location {box}"
                 # )
-
+    file_idx += 1
     # break
 
 all_dict = {}
