@@ -37,7 +37,7 @@ def get_target_point(target_box):
 
 
 LOCAL_MODEL_DIR = "./rtdetr_r50vd"
-PLAYER_TRAIN_DIR = "/home/wolf/datasets/DFL/player_final_train/"
+PLAYER_TRAIN_DIR = "/home/wolf/datasets/DFL/player_final_train_06/"
 PLAYTER_TRAIN_PATH = Path(PLAYER_TRAIN_DIR)
 annotated_file = "./annotation/annotated.release.20240912113708.txt"
 processor = RTDetrImageProcessor.from_pretrained(LOCAL_MODEL_DIR)
@@ -45,7 +45,7 @@ model = RTDetrForObjectDetection.from_pretrained(LOCAL_MODEL_DIR)
 player_detections = {}
 
 nowtime = datetime.now()
-player_annotated_file = "./player_annotation/player_annotated.json." + nowtime.strftime("%Y%m%d%H%M%S")
+player_annotated_file = "./player_annotation/player_annotated_06.json." + nowtime.strftime("%Y%m%d%H%M%S")
 
 with open(annotated_file, 'r') as f:
     json_dict = json.loads(f.read())
@@ -64,7 +64,7 @@ for key in tqdm(json_dict.keys()):
     focus_point = get_center_point(json_dict[key])
     img = Image.open(key)
     img = img.resize((1280, 720))
-    results = get_detection_results(img, model, processor, threshold=0.7)
+    results = get_detection_results(img, model, processor, threshold=0.6)
     # print(key)
     path_key = Path(key)
     img_stem_name = path_key.stem

@@ -1,0 +1,19 @@
+import json
+from PIL import Image
+
+train_file = "./player_annotation/player_annotated.json.20240924174013"
+
+total_width = 0.0
+total_height = 0.0
+
+with open(train_file, 'r') as rf:
+    json_dict = json.loads(rf.read())
+    print(len(json_dict["player_detections"]))
+
+    count = len(json_dict["player_detections"])
+    for key in json_dict["player_detections"]:
+        img = Image.open(key)
+        total_height += img.height
+        total_width += img.width
+
+    print(total_width / count, total_height / count)

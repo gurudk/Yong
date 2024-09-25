@@ -66,7 +66,7 @@ def plot_results(pil_img, results):
 processor = RTDetrImageProcessor.from_pretrained(LOCAL_MODEL_DIR)
 model = RTDetrForObjectDetection.from_pretrained(LOCAL_MODEL_DIR)
 
-image = Image.open("images/7941.png")
+image = Image.open("images/1070.png")
 results = get_detection_results(image, model, processor, threshold=0.6)
 
 # for result in results:
