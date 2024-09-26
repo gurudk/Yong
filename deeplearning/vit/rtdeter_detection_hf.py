@@ -27,11 +27,9 @@ COLORS = [[0.000, 0.447, 0.741], [0.850, 0.325, 0.098], [0.929, 0.694, 0.125],
           [0.494, 0.184, 0.556], [0.466, 0.674, 0.188], [0.301, 0.745, 0.933]]
 
 
-# model_path = "detr/checkpoints/detr-r50-e632da11.pth"
+# processor = RTDetrImageProcessor.from_pretrained("PekingU/rtdetr_r50vd")
+# model = RTDetrForObjectDetection.from_pretrained("PekingU/rtdetr_r50vd")
 
-# you can specify the revision tag if you don't want the timm dependency
-# processor = DetrImageProcessor.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
-# model = DetrForObjectDetection.from_pretrained("facebook/detr-resnet-50", revision="no_timm")
 
 def plot_results(pil_img, results):
     plt.figure(figsize=(16, 10))
@@ -77,5 +75,5 @@ results = get_detection_results(image, model, processor, threshold=0.6)
 
 plot_results(image, results)
 
-# image_processor.save_pretrained("./rtdetr_r50vd")
+# processor.save_pretrained("./rtdetr_r50vd")
 # model.save_pretrained("./rtdetr_r50vd")
