@@ -77,7 +77,7 @@ for key in tqdm(json_dict.keys()):
     focus_point = get_center_point(json_dict[key])
     img = Image.open(key)
     img = img.resize((1280, 720))
-    results = get_detection_results(img, model, processor, threshold=0.6)
+    results = get_detection_results(img, model, processor, threshold=0.7)
     # print(key)
     path_key = Path(key)
     img_stem_name = path_key.stem
