@@ -53,8 +53,8 @@ class PlayerDataset(Dataset):
         img_name = self.player_detections_items[idx][0]
         image = Image.open(img_name)
         angle = self.player_detections_items[idx][1]
-        gt_x = torch.cos(torch.tensor(angle))
-        gt_y = torch.sin(torch.tensor(angle))
+        gt_x = torch.cos(torch.tensor(angle * np.pi * 2))
+        gt_y = torch.sin(torch.tensor(angle * np.pi * 2))
 
         truth_tensor = torch.tensor([gt_x, gt_y]).squeeze()
 
@@ -88,8 +88,8 @@ LR = 1e-5
 TOTAL_EPOCHS = 1000
 BATCH_SIZE = 64
 AVG_BATCH_SIZE = 50
-train_json_file = "./player_annotation/clean_body_orientation_07.json.20240927162227"
-val_json_file = "./player_annotation/clean_body_orientation_val_07.json.20240927164328"
+train_json_file = "./player_annotation/clean_body_orientation_07.json.20240927181751"
+val_json_file = "./player_annotation/clean_body_orientation_val_07.json.20240927192431"
 
 transform = v2.Compose([
     # you can add other transformations in this list
@@ -159,7 +159,7 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
     avgloss = AverageLoss.mean()
 
     if epoch % 20 == 0:  # Save model
-        print("Saving Model" + str(epoch) + ".torch", "last lr:", scheduler.get_last_lr())  # Save model weight
+        print("Saving Model" + str(epoch) + ".torch")  # Save model weight
         torch.save(model.state_dict(), "./zoo/player_resnet18_" + str(epoch) + ".torch")
 
     # ------------------------------------valiadate step----------------------------------------
@@ -186,7 +186,7 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
 
     print("\n")
     print("\n")
-    summary = f"[{epoch}/{TOTAL_EPOCHS}],train loss: {train_loss:.4f}, val loss: {val_loss:.4f}, lr:{scheduler.get_last_lr()}"
+    summary = f"[{epoch}/{TOTAL_EPOCHS}],train loss: {train_loss:.4f}, val loss: {val_loss:.4f}"
     print(summary)
     nowtime = datetime.datetime.now()
     try:

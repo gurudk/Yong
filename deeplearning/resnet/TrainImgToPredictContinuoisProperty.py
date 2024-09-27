@@ -6,15 +6,15 @@ import torchvision.transforms as tf
 from torch.optim.lr_scheduler import StepLR
 
 Learning_Rate = 1e-4
-width = height = 900  # image width and height
+width = height = 48  # image width and height
 batchSize = 1
 
 
 # ---------------------Create training image ---------------------------------------------------------
 def ReadRandomImage():
     FillLevel = np.random.random()  # Set random fill level
-    Img = np.zeros([900, 900, 3], np.uint8)  # Create black image
-    Img[0:int(FillLevel * 900), :] = 255  # Fill the image with white up to FillLevel
+    Img = np.zeros([48, 48, 3], np.uint8)  # Create black image
+    Img[0:int(FillLevel * 48), :] = 255  # Fill the image with white up to FillLevel
 
     transformImg = tf.Compose([tf.ToPILImage(), tf.Resize((height, width)), tf.ToTensor(),
                                tf.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
@@ -34,7 +34,7 @@ def LoadBatch():  # Load batch of images
 # --------------Load and set net and optimizer-------------------------------------
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
     'cpu')  # Set device GPU or CPU where the training will take place
-Net = torchvision.models.resnet34(pretrained=True)  # Load net
+Net = torchvision.models.resnet18(pretrained=True)  # Load net
 Net.fc = torch.nn.Linear(in_features=512, out_features=1, bias=True)  # Change final layer to predict one value
 Net = Net.to(device)
 optimizer = torch.optim.Adam(params=Net.parameters(), lr=Learning_Rate)  # Create adam optimizer
