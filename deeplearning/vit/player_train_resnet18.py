@@ -88,8 +88,8 @@ LR = 1e-5
 TOTAL_EPOCHS = 1000
 BATCH_SIZE = 64
 AVG_BATCH_SIZE = 50
-train_json_file = "./player_annotation/onlyperson.json.20240924174013"
-val_json_file = "./player_annotation/onlyperson_val_07.json.20240925120326"
+train_json_file = "./player_annotation/clean_body_orientation_07.json.20240927162227"
+val_json_file = "./player_annotation/clean_body_orientation_val_07.json.20240927164328"
 
 transform = v2.Compose([
     # you can add other transformations in this list
@@ -158,7 +158,7 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
 
     avgloss = AverageLoss.mean()
 
-    if epoch % 50 == 0:  # Save model
+    if epoch % 20 == 0:  # Save model
         print("Saving Model" + str(epoch) + ".torch", "last lr:", scheduler.get_last_lr())  # Save model weight
         torch.save(model.state_dict(), "./zoo/player_resnet18_" + str(epoch) + ".torch")
 
