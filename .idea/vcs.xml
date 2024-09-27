@@ -2,11 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/cocoapi" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/detectron2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/VIA2COCO" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/detr" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/stablediffusion/generative-models" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/translation/MeloTTS" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/translation/OpenVoice" vcs="Git" />
   </component>
 </project>
