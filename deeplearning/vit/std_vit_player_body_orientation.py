@@ -287,7 +287,7 @@ class PlayerBodyOrientationViT(nn.Module):
         x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
 
         x = self.to_latent(x)
-        return self.mlp(x).sigmoid()
+        return self.mlp(x)
 
 
 LR = 1e-5
