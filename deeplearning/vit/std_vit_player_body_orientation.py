@@ -1,3 +1,6 @@
+import torchvision
+from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
+
 import os
 import json
 import time
@@ -14,12 +17,11 @@ import torch.nn.functional as F
 from PIL import Image
 from torch import nn
 from einops import rearrange, repeat
-from torch.optim import Adam
+
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm, trange
 from torchvision.transforms import v2
 from einops.layers.torch import Rearrange
-from torchvision.ops import generalized_box_iou_loss
 
 np.random.seed(0)
 torch.manual_seed(0)
@@ -38,7 +40,78 @@ def send_mail(SUBJECT, TEXT):
     s.quit()
 
 
-# helpers
+class PlayerDataset(Dataset):
+    def __init__(self, json_file, transform=None):
+        with open(json_file, 'r') as f:
+            self.annotations = json.loads(f.read())
+            self.file_ids = self.annotations["file_ids"]
+            self.player_detections_items = [(key, value["target_angle"]) for key, value in
+                                            self.annotations["player_detections"].items()]
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.player_detections_items)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img_name = self.player_detections_items[idx][0]
+        image = Image.open(img_name)
+        angle = self.player_detections_items[idx][1]
+        gt_x = torch.cos(torch.tensor(angle))
+        gt_y = torch.sin(torch.tensor(angle))
+
+        truth_tensor = torch.tensor([gt_x, gt_y]).squeeze()
+
+        sample = {'image': image, 'ground_truth': truth_tensor, 'image_name': img_name}
+
+        if self.transform:
+            sample = self.transform(sample)
+
+        return sample
+
+
+def cos_similiar(y_pred, y):
+    return 2 - 2 * torch.cos(y_pred - y)
+
+
+def loss_func(y_pred, y):
+    # angle loss
+    x0_pred = y_pred[:, 0]
+    y0_pred = y_pred[:, 1]
+    theta_ypred = torch.arctan2(y0_pred, x0_pred)
+    theta_ygt = torch.arctan2(y[:, 1], y[:, 0])
+    theta_loss = 2 - 2 * torch.cos(theta_ypred - theta_ygt)
+
+    distance_loss = torch.abs(torch.sqrt(x0_pred ** 2 + y0_pred ** 2) - 1)
+
+    return theta_loss + distance_loss
+
+
+def theta_loss(y_pred, y):
+    x0_pred = y_pred[:, 0]
+    y0_pred = y_pred[:, 1]
+    theta_ypred = torch.arctan2(y0_pred, x0_pred)
+    theta_ygt = torch.arctan2(y[:, 1], y[:, 0])
+    theta_loss = 2 - 2 * torch.cos(theta_ypred - theta_ygt)
+
+    return theta_loss
+
+
+def distance_loss(y_pred, y):
+    # angle loss
+    x0_pred = y_pred[:, 0]
+    y0_pred = y_pred[:, 1]
+    distance_loss = torch.abs(torch.sqrt(x0_pred ** 2 + y0_pred ** 2) - 1)
+
+    return distance_loss
+
+
+def get_nowtime_str():
+    now = datetime.datetime.now()
+    return now.strftime("%Y%m%d%H%M%S")
+
 
 def pair(t):
     return t if isinstance(t, tuple) else (t, t)
@@ -70,56 +143,6 @@ def get_positional_embeddings(sequence_length, d):
     return result
 
 
-class PlayerDataset(Dataset):
-    def __init__(self, json_file, transform=None):
-        with open(json_file, 'r') as f:
-            self.annotations = json.loads(f.read())
-            self.file_ids = self.annotations["file_ids"]
-            self.player_detections_items = [(key, value["target_angle"] * np.pi * 2) for key, value in
-                                            self.annotations["player_detections"].items()]
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.player_detections_items)
-
-    def __getitem__(self, idx):
-        if torch.is_tensor(idx):
-            idx = idx.tolist()
-
-        img_name = self.player_detections_items[idx][0]
-        image = Image.open(img_name)
-        angle = self.player_detections_items[idx][1]
-        gt_x = torch.cos(torch.tensor(angle * np.pi * 2))
-        gt_y = torch.sin(torch.tensor(angle * np.pi * 2))
-
-        truth_tensor = torch.tensor([gt_x, gt_y]).squeeze()
-
-        sample = {'image': image, 'ground_truth': truth_tensor, 'image_name': img_name}
-
-        if self.transform:
-            sample = self.transform(sample)
-
-        return sample
-
-
-def cos_similiar(y_pred, y):
-    return 2 - 2 * torch.cos(y_pred - y)
-
-
-def loss_func(y_pred, y):
-    # angle loss
-    x0_pred = y_pred[:, 0]
-    y0_pred = y_pred[:, 1]
-    theta_ypred = torch.arctan2(y0_pred, x0_pred)
-    theta_ygt = torch.arctan2(y[:, 1], y[:, 0])
-    theta_loss = 2 - 2 * torch.cos(theta_ypred - theta_ygt)
-
-    # MSE loss
-    distance_loss = torch.abs(torch.sqrt(x0_pred ** 2 + y0_pred ** 2) - 1)
-
-    return theta_loss + distance_loss
-
-
 class MLP(nn.Module):
     """ Very simple multi-layer perceptron (also called FFN)"""
 
@@ -131,7 +154,7 @@ class MLP(nn.Module):
 
     def forward(self, x):
         for i, layer in enumerate(self.layers):
-            x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
+            x = F.leaky_relu(layer(x)) if i < self.num_layers - 1 else layer(x)
         return x
 
 
@@ -210,9 +233,9 @@ class Transformer(nn.Module):
         return self.norm(x)
 
 
-class SoccerViT(nn.Module):
+class PlayerBodyOrientationViT(nn.Module):
     def __init__(self, *, image_size, patch_size, dim, depth, heads, mlp_dim, pool='cls', channels=3,
-                 dim_head=64, out_dim=4, dropout=0., emb_dropout=0.):
+                 dim_head=64, out_dim=2, dropout=0., emb_dropout=0.):
         super().__init__()
         image_height, image_width = pair(image_size)
         patch_height, patch_width = pair(patch_size)
@@ -267,104 +290,150 @@ class SoccerViT(nn.Module):
         return self.mlp(x).sigmoid()
 
 
-def main():
-    # Loading data
-    json_file = "./annotation/annotation_normalized_20240912113708.txt"
+LR = 1e-5
+TOTAL_EPOCHS = 2000
+BATCH_SIZE = 64
+AVG_BATCH_SIZE = 50
+full_dataset_file = "./player_annotation/clean_body_orientation_atan2_mergeall_07.json.20240928093915"
 
-    transform = v2.Compose([
-        # you can add other transformations in this list
-        v2.Resize((360, 640)),
-        v2.ToTensor()
-    ])
-    train_set = SoccerDataset(json_file, transform)
-    # test_set = MNIST(
-    #     root="./../datasets", train=False, download=True, transform=transform
-    # )
+LOG_FILE = "./log/train.log." + get_nowtime_str()
+validation_rate = .1
+shuffle_dataset = True
+random_seed = 0
 
-    train_loader = DataLoader(train_set, shuffle=True, batch_size=8)
-    # test_loader = DataLoader(test_set, shuffle=False, batch_size=128)
+transform = v2.Compose([
+    # you can add other transformations in this list
+    v2.Resize((48, 96)),
+    v2.ToTensor(),
+    v2.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+])
 
-    # Defining model and training options
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(
-        "Using device: ",
-        device,
-        f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "",
-    )
-    # model = SoccerViT(
-    #     (1, 28, 28), n_patches=7, n_blocks=2, hidden_d=16, n_heads=2, out_d=10
-    # ).to(device)
+full_dataset = PlayerDataset(full_dataset_file, transform)
+full_size = len(full_dataset)
+indices = list(range(full_size))
+split = int(np.floor(validation_rate * full_size))
+if shuffle_dataset:
+    np.random.seed(random_seed)
+    np.random.shuffle(indices)
 
-    model = SoccerViT(
-        image_size=(360, 640),
-        patch_size=(9, 16),
-        dim=256,
-        depth=6,
-        heads=8,
-        mlp_dim=1024,
-        dropout=0.1,
-        emb_dropout=0.1
-    ).to(device)
+train_indices, val_indices = indices[split:], indices[:split]
 
-    N_EPOCHS = 2000
-    LR = 0.0001
+train_sampler = SubsetRandomSampler(train_indices)
+val_sampler = SubsetRandomSampler(val_indices)
 
-    # Training loop
-    optimizer = Adam(model.parameters(), lr=LR)
-    for epoch in trange(N_EPOCHS, desc="Training"):
-        train_loss = 0.0
-        start = time.time()
+# print("train samples:", len(train_dataset), "val samples:", len(val_dataset))
 
-        for batch in tqdm(
-                train_loader, desc=f"Epoch {epoch + 1} in training", leave=False
-        ):
+train_loader = DataLoader(full_dataset, batch_size=BATCH_SIZE, sampler=train_sampler)
+val_loader = DataLoader(full_dataset, batch_size=BATCH_SIZE, sampler=val_sampler)
+
+# --------------Load and set net and optimizer-------------------------------------
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
+    'cpu')  # Set device GPU or CPU where the training will take place
+
+# -------------------------Create model -------------------------------------------
+
+model = PlayerBodyOrientationViT(
+    image_size=(48, 96),
+    patch_size=(6, 12),
+    dim=256,
+    depth=6,
+    heads=8,
+    mlp_dim=1024,
+    dropout=0.1,
+    emb_dropout=0.1
+)
+
+model = model.to(device)
+# -------------------------Create model -------------------------------------------
+
+
+optimizer = torch.optim.Adam(params=model.parameters(), lr=LR)  # Create adam optimizer
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer,
+    'min',
+    factor=0.5,
+    patience=50,
+    verbose=True,
+    min_lr=1e-8,
+)
+
+# ----------------Train--------------------------------------------------------------------------
+
+for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
+    train_loss = 0.0
+    train_theta_loss = 0
+    train_distance_loss = 0
+    start = time.time()
+
+    model.train()
+
+    for batch in tqdm(
+            train_loader, desc=f"Epoch {epoch + 1} in training", leave=False
+    ):
+        x = batch['image']
+        y = batch['ground_truth']
+
+        x, y = x.to(device), y.to(device)
+        y_pred = model(x)
+
+        train_th_loss = theta_loss(y_pred, y).sum()
+        train_dis_loss = distance_loss(y_pred, y).sum()
+
+        loss = train_th_loss
+
+        train_loss += loss.detach().cpu().item() / len(train_indices)
+        train_theta_loss += train_th_loss.detach().cpu().item() / len(train_indices)
+        train_distance_loss += train_dis_loss.detach().cpu().item() / len(train_indices)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    if epoch % 20 == 0:  # Save model
+        print("Saving Model" + str(epoch) + ".torch")  # Save model weight
+        torch.save(model.state_dict(), "./zoo/player_resnet18_" + str(epoch) + ".torch")
+
+    # ------------------------------------valiadate step----------------------------------------
+    print("-----------------------------validate step--------------------------")
+
+    val_loss = 0
+    val_theta_loss = 0
+    val_distance_loss = 0
+
+    model.eval()
+
+    with torch.no_grad():
+        idx = 0
+        for batch in val_loader:
             x = batch['image']
             y = batch['ground_truth']
 
             x, y = x.to(device), y.to(device)
-            pre_cord = model(x)
-            y_hat = box_cxcywh_to_xyxy(pre_cord)
-            loss = generalized_box_iou_loss(y_hat, y, reduction="sum")
+            y_pred = model(x)
 
-            train_loss += loss.detach().cpu().item() / len(train_loader)
+            val_th_loss = theta_loss(y_pred, y).sum()
+            val_dis_loss = distance_loss(y_pred, y).sum()
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-        duration = time.time() - start
-        print("\n")
+            loss = val_th_loss
 
-        train_log = f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}"
+            val_loss += loss.detach().cpu().item() / len(val_indices)
+            val_theta_loss += val_th_loss.detach().cpu().item() / len(val_indices)
+            val_distance_loss += val_dis_loss.detach().cpu().item() / len(val_indices)
 
+            idx += 1
+
+    duration = time.time() - start
+    # summary = f"[{epoch}/{TOTAL_EPOCHS}],train loss: {train_loss:.4f} theta train loss is {train_theta_loss:.4f} and distance train loss is {train_distance_loss:.4f}, val loss: {val_loss:.4f} theta val loss is {val_theta_loss:.4f} and distance val loss is {val_distance_loss:.4f},"
+    summary = f"[{epoch}/{TOTAL_EPOCHS}] train loss: {train_loss:.4f} , val loss: {val_loss:.4f} , duration:{duration:.2f}, lr:{scheduler.get_last_lr()}"
+    with open(LOG_FILE, 'a') as log:
+        log.write(summary + '\n')
+    print(summary)
+    if epoch % 5 == 0:
         nowtime = datetime.datetime.now()
         try:
-            send_mail("[" + nowtime.strftime("%Y%m%d") + "]-" + train_log, 'ATT..............................')
+            send_mail("[" + nowtime.strftime("%Y%m%d") + "]-" + summary, 'ATT..............................')
         except Exception:
             print("Sending email failed!")
             print(traceback.format_exc())
 
-        print(f"Epoch {epoch + 1}/{N_EPOCHS} loss: {train_loss:.5f} duration:{duration:.2f}")
-
-        if epoch % 100 == 0:
-            torch.save(model, "./model/std_vit_alldata_giou_" + str(epoch) + ".pth")
-
-    # Test loop
-    # with torch.no_grad():
-    #     correct, total = 0, 0
-    #     test_loss = 0.0
-    #     for batch in tqdm(test_loader, desc="Testing"):
-    #         x, y = batch
-    #         x, y = x.to(device), y.to(device)
-    #         y_hat = model(x)
-    #         loss = criterion(y_hat, y)
-    #         test_loss += loss.detach().cpu().item() / len(test_loader)
-    #
-    #         correct += torch.sum(torch.argmax(y_hat, dim=1) == y).detach().cpu().item()
-    #         total += len(x)
-    #     print(f"Test loss: {test_loss:.2f}")
-    #     print(f"Test accuracy: {correct / total * 100:.2f}%")
-    # torch.save(model, 'std_vit_1000.pth')
-
-
-if __name__ == "__main__":
-    main()
+    scheduler.step(val_loss)

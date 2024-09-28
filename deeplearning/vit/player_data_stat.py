@@ -1,7 +1,7 @@
 import json
 from PIL import Image
 
-train_file = "./player_annotation/clean_body_orientation_val_07.json.20240927164328"
+train_file = "./player_annotation/clean_body_orientation_atan2_val_07.json.20240928100332"
 
 total_width = 0.0
 total_height = 0.0

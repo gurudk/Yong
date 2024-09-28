@@ -50,7 +50,7 @@ def get_target_point(target_box):
 
 
 LOCAL_MODEL_DIR = "./rtdetr_r50vd"
-PLAYER_TRAIN_DIR = "/home/wolf/datasets/DFL/clean_body_orientation_07/"
+PLAYER_TRAIN_DIR = "/home/wolf/datasets/DFL/clean_body_orientation_atan2_07/"
 PLAYTER_TRAIN_PATH = Path(PLAYER_TRAIN_DIR)
 annotated_file = "./annotation/annotated.release.20240912113708.txt"
 processor = RTDetrImageProcessor.from_pretrained(LOCAL_MODEL_DIR)
@@ -58,7 +58,7 @@ model = RTDetrForObjectDetection.from_pretrained(LOCAL_MODEL_DIR)
 player_detections = {}
 
 nowtime = datetime.now()
-player_annotated_file = "./player_annotation/clean_body_orientation_07.json." + nowtime.strftime("%Y%m%d%H%M%S")
+player_annotated_file = "./player_annotation/clean_body_orientation_atan2_07.json." + nowtime.strftime("%Y%m%d%H%M%S")
 
 with open(annotated_file, 'r') as f:
     json_dict = json.loads(f.read())
@@ -110,11 +110,7 @@ for key in tqdm(json_dict.keys()):
 
                 angle_tan = np.arctan2(angle_y, angle_x)
 
-                target_angle = angle_tan if angle_tan >= 0 else np.pi * 2 + angle_tan
-
-                normalized_angle = target_angle / (np.pi * 2)
-
-                target_properties["target_angle"] = round(normalized_angle, 4)
+                target_properties["target_angle"] = round(angle_tan, 4)
 
                 player_detections[target_key] = target_properties
 
