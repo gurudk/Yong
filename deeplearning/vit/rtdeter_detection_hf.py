@@ -41,12 +41,13 @@ def plot_results(pil_img, results):
             clazz = model.config.id2label[label.item()]
             if clazz in {"person", "sports ball"}:
                 box = [round(i, 2) for i in box.tolist()]
+                xmin, ymin, xmax, ymax = box
                 ax.add_patch(plt.Rectangle((box[0], box[1]), box[2] - box[0], box[3] - box[1],
                                            fill=False, color=c, linewidth=1))
 
                 text = f'{clazz}: {score:0.2f}'
-                # ax.text(xmin, ymin, text, fontsize=8,
-                #         bbox=dict(facecolor='yellow', alpha=0.5))
+                ax.text(xmin, ymin, text, fontsize=8,
+                        bbox=dict(facecolor='yellow', alpha=0.5))
 
                 print(
                     f"Detected {model.config.id2label[label.item()]} with confidence "
@@ -64,7 +65,7 @@ def plot_results(pil_img, results):
 processor = RTDetrImageProcessor.from_pretrained(LOCAL_MODEL_DIR)
 model = RTDetrForObjectDetection.from_pretrained(LOCAL_MODEL_DIR)
 
-image = Image.open("images/1070.png")
+image = Image.open("videos/frames/B1606b0e6_1 (34)/B1606b0e6_1 (34)_150.png")
 results = get_detection_results(image, model, processor, threshold=0.6)
 
 # for result in results:

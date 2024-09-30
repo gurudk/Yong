@@ -39,7 +39,7 @@ class PlayerDataset(Dataset):
         with open(json_file, 'r') as f:
             self.annotations = json.loads(f.read())
             self.file_ids = self.annotations["file_ids"]
-            self.player_detections_items = [(key, value["target_angle"] * np.pi * 2) for key, value in
+            self.player_detections_items = [(key, value["target_angle"]) for key, value in
                                             self.annotations["player_detections"].items()]
         self.transform = transform
 
@@ -53,8 +53,8 @@ class PlayerDataset(Dataset):
         img_name = self.player_detections_items[idx][0]
         image = Image.open(img_name)
         angle = self.player_detections_items[idx][1]
-        gt_x = torch.cos(torch.tensor(angle * np.pi * 2))
-        gt_y = torch.sin(torch.tensor(angle * np.pi * 2))
+        gt_x = torch.cos(torch.tensor(angle))
+        gt_y = torch.sin(torch.tensor(angle))
 
         truth_tensor = torch.tensor([gt_x, gt_y]).squeeze()
 
@@ -78,22 +78,46 @@ def loss_func(y_pred, y):
     theta_ygt = torch.arctan2(y[:, 1], y[:, 0])
     theta_loss = 2 - 2 * torch.cos(theta_ypred - theta_ygt)
 
-    # MSE loss
     distance_loss = torch.abs(torch.sqrt(x0_pred ** 2 + y0_pred ** 2) - 1)
 
     return theta_loss + distance_loss
+
+
+def theta_loss(y_pred, y):
+    x0_pred = y_pred[:, 0]
+    y0_pred = y_pred[:, 1]
+    theta_ypred = torch.arctan2(y0_pred, x0_pred)
+    theta_ygt = torch.arctan2(y[:, 1], y[:, 0])
+    theta_loss = 2 - 2 * torch.cos(theta_ypred - theta_ygt)
+
+    return theta_loss
+
+
+def distance_loss(y_pred, y):
+    # angle loss
+    x0_pred = y_pred[:, 0]
+    y0_pred = y_pred[:, 1]
+    distance_loss = torch.abs(torch.sqrt(x0_pred ** 2 + y0_pred ** 2) - 1)
+
+    return distance_loss
+
+
+def get_nowtime_str():
+    now = datetime.datetime.now()
+    return now.strftime("%Y%m%d%H%M%S")
 
 
 LR = 1e-5
 TOTAL_EPOCHS = 1000
 BATCH_SIZE = 64
 AVG_BATCH_SIZE = 50
-train_json_file = "./player_annotation/clean_body_orientation_07.json.20240927181751"
-val_json_file = "./player_annotation/clean_body_orientation_val_07.json.20240927192431"
+train_json_file = "./player_annotation/clean_body_orientation_atan2_07.json.20240928093915"
+val_json_file = "./player_annotation/clean_body_orientation_atan2_val_07.json.20240928100332"
+LOG_FILE = "./log/train.log." + get_nowtime_str()
 
 transform = v2.Compose([
     # you can add other transformations in this list
-    v2.Resize((112, 112)),
+    v2.Resize((224, 224)),
     v2.ToTensor(),
     v2.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
@@ -108,14 +132,12 @@ val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=True)
 device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
     'cpu')  # Set device GPU or CPU where the training will take place
 model = torchvision.models.resnet18(pretrained=True)  # Load net
-# model.fc = torch.nn.Linear(in_features=512, out_features=1, bias=True)  # Change final layer to predict one value
 fc = nn.Sequential(
-    nn.Linear(512, 512),
-    nn.LeakyReLU(),
-    nn.Dropout(p=0.3),
+    # nn.Linear(512, 512),
+    # nn.LeakyReLU(),
+    # nn.Dropout(p=0.5),
     nn.Linear(512, 2),
-    # nn.Hardtanh(min_val=0, max_val=np.pi * 2)
-    # nn.Sigmoid()
+
 )
 
 model.fc = fc
@@ -132,10 +154,14 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
 )
 
 # ----------------Train--------------------------------------------------------------------------
-AverageLoss = np.ones([50])  # Save average loss for display
+
 for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
     train_loss = 0.0
+    train_theta_loss = 0
+    train_distance_loss = 0
     start = time.time()
+
+    model.train()
 
     for batch in tqdm(
             train_loader, desc=f"Epoch {epoch + 1} in training", leave=False
@@ -146,55 +172,62 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
         x, y = x.to(device), y.to(device)
         y_pred = model(x)
 
-        loss = loss_func(y_pred, y).sum()
+        train_th_loss = theta_loss(y_pred, y).sum()
+        train_dis_loss = distance_loss(y_pred, y).sum()
+
+        loss = train_th_loss
 
         train_loss += loss.detach().cpu().item() / len(train_dataset)
+        train_theta_loss += train_th_loss.detach().cpu().item() / len(train_dataset)
+        train_distance_loss += train_dis_loss.detach().cpu().item() / len(train_dataset)
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        AverageLoss[epoch % AVG_BATCH_SIZE] = loss.data.cpu().numpy() / BATCH_SIZE  # Save loss average
     duration = time.time() - start
-
-    avgloss = AverageLoss.mean()
 
     if epoch % 20 == 0:  # Save model
         print("Saving Model" + str(epoch) + ".torch")  # Save model weight
         torch.save(model.state_dict(), "./zoo/player_resnet18_" + str(epoch) + ".torch")
 
     # ------------------------------------valiadate step----------------------------------------
-    print("\n")
-    print("\n")
-    print("\n")
     print("----------------------------------validate step--------------------------")
-    AverageValLoss = np.ones([AVG_BATCH_SIZE])  # Save average loss for display
+
     val_loss = 0
-    idx = 0
-    for batch in val_loader:
-        x = batch['image']
-        y = batch['ground_truth']
+    val_theta_loss = 0
+    val_distance_loss = 0
 
-        x, y = x.to(device), y.to(device)
-        y_pred = model(x)
+    model.eval()
 
-        loss = loss_func(y_pred, y).sum()
-        val_loss += loss.detach().cpu().item() / len(val_dataset)
-        AverageValLoss[idx % AVG_BATCH_SIZE] = loss.data.cpu().numpy() / BATCH_SIZE
+    with torch.no_grad():
+        idx = 0
+        for batch in val_loader:
+            x = batch['image']
+            y = batch['ground_truth']
 
-        idx += 1
-        print("Last ", AVG_BATCH_SIZE, " loss:", AverageLoss.mean())
+            x, y = x.to(device), y.to(device)
+            y_pred = model(x)
 
-    print("\n")
-    print("\n")
-    summary = f"[{epoch}/{TOTAL_EPOCHS}],train loss: {train_loss:.4f}, val loss: {val_loss:.4f}"
+            val_th_loss = theta_loss(y_pred, y).sum()
+            val_dis_loss = distance_loss(y_pred, y).sum()
+
+            loss = val_th_loss
+
+            val_loss += loss.detach().cpu().item() / len(val_dataset)
+            val_theta_loss += val_th_loss.detach().cpu().item() / len(val_dataset)
+            val_distance_loss += val_dis_loss.detach().cpu().item() / len(val_dataset)
+
+            idx += 1
+
+    summary = f"[{epoch}/{TOTAL_EPOCHS}],train loss: {train_loss:.4f} theta train loss is {train_theta_loss:.4f} and distance train loss is {train_distance_loss:.4f}, val loss: {val_loss:.4f} theta val loss is {val_theta_loss:.4f} and distance val loss is {val_distance_loss:.4f},"
+    with open(LOG_FILE, 'a') as log:
+        log.write(summary + '\n')
     print(summary)
-    nowtime = datetime.datetime.now()
-    try:
-        send_mail("[" + nowtime.strftime("%Y%m%d") + "]-" + summary, 'ATT..............................')
-    except Exception:
-        print("Sending email failed!")
-        print(traceback.format_exc())
-    print("\n")
-    print("\n")
+    # nowtime = datetime.datetime.now()
+    # try:
+    #     send_mail("[" + nowtime.strftime("%Y%m%d") + "]-" + summary, 'ATT..............................')
+    # except Exception:
+    #     print("Sending email failed!")
+    #     print(traceback.format_exc())
 
     scheduler.step(val_loss)
