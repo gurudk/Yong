@@ -434,7 +434,7 @@ def get_view_range_polygons(base_point, angle, delta_angle, height=720, width=12
     return np.int32(polygons)
 
 
-def draw_view_range_polygon(img, base_point, angle, delta_angle, height, width, alpha=0.1):
+def draw_view_range_polygon(img, base_point, angle, delta_angle, height, width, alpha=0.2):
     # Create a blank image (black background)
     # img = np.zeros((512, 512, 3), np.uint8)
     # img = cv2.imread("videos/frames/B1606b0e6_1 (34)/B1606b0e6_1 (34)_23.png")
@@ -455,9 +455,42 @@ def draw_view_range_polygon(img, base_point, angle, delta_angle, height, width, 
     cv2.fillPoly(overlay, [pts], (0, 0, 255))  # Green color
 
     # Apply the overlay to the original image using the mask
-    result = cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0, img)
+    result = cv2.addWeighted(overlay, alpha, img, 1, 0, img)
 
     return result
+
+
+def process_image_frame(cv2image):
+    color_coverted = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB)
+    image = Image.fromarray(color_coverted)
+    img_height, img_width, channel = cv2image.shape
+    results = get_detection_results(image, detr_model, detr_processor, threshold=0.7)
+
+    player_idx = 0
+    for result in results:
+        for score, label, box in zip(result["scores"], result["labels"], result["boxes"]):
+            clazz = detr_model.config.id2label[label.item()]
+            target_point = get_target_point(box)
+
+            if clazz in {"person"}:
+                (xmin, ymin, xmax, ymax) = box.tolist()
+
+                crop = image.crop((xmin - delta, ymin - delta, xmax + delta, ymax + delta))
+                player_tensor = transform(crop).unsqueeze(0)
+                player_tensor = player_tensor.to(device)
+                angle_pred = player_orientation_model(player_tensor)
+
+                theta = get_plain_value(get_angle_from_xy(angle_pred))
+
+                cv2image = draw_view_range_polygon(cv2image, target_point, theta, delta_angle, img_height, img_width,
+                                                   alpha=0.1)
+
+                print("person ", player_idx, "'s angle:", theta)
+
+                player_idx += 1
+                if player_idx == 8:
+                    break
+    return cv2image
 
 
 # ------------------------constans define------------------------------------
@@ -471,7 +504,7 @@ TOTAL_EPOCHS = 2000
 BATCH_SIZE = 1
 AVG_BATCH_SIZE = 50
 full_dataset_file = "./player_annotation/clean_body_orientation_loss255555_mergeall_val_07.json.20240928093915"
-test_model_file = "./zoo/cleandata_loss15_16x16_160.torch"
+test_model_file = "./model/cleandata_loss15_16x16_160.torch"
 LOG_FILE = "./log/train.log." + get_nowtime_str()
 player_body_orientation_data_explored_file = "./explored/loss2555555_val_data_explored_file_140pth_angle.txt." + get_nowtime_str()
 validation_rate = 0
@@ -517,48 +550,54 @@ transform = v2.Compose([
     v2.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-test_file_name = "videos/frames/B1606b0e6_1 (34)/B1606b0e6_1 (34)_281.png"
+test_file_name = "videos/frames/C35bd9041_0 (19)/C35bd9041_0 (19)_228.png"
 # test_file_name = "./images/5403.png"
-delta_angle = np.pi / 10
+delta_angle = np.pi / 12
+my_video = "./videos/A1606b0e6_0 (63).mp4"
 
-image = Image.open(test_file_name)
-cv2image = cv2.imread(test_file_name)
-img_height, img_width, channel = cv2image.shape
-results = get_detection_results(image, detr_model, detr_processor, threshold=0.3)
+cap = cv2.VideoCapture(my_video)
 
-img_tensor = transform(image)
+# Check if the video opened successfully
+if not cap.isOpened():
+    print("Error opening video file")
+    exit()
 
-player_idx = 0
-for result in results:
-    for score, label, box in zip(result["scores"], result["labels"], result["boxes"]):
-        clazz = detr_model.config.id2label[label.item()]
-        target_point = get_target_point(box)
+# Get video properties
+fps = cap.get(cv2.CAP_PROP_FPS)
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        if clazz in {"person"}:
-            target_properties = {}
-            (xmin, ymin, xmax, ymax) = box.tolist()
+# Define the codec and create VideoWriter object
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Use 'XVID' for .avi
+out = cv2.VideoWriter('./videos/A1606b0e6_0 (63)_processed.mp4', fourcc, fps, (width, height))
 
-            target_tensor_box = torch.tensor([xmin, ymin, xmax, ymax]).unsqueeze(0)
+frame_index = 0
+# Read and write frames
+while cap.isOpened():
+    ret, frame = cap.read()
 
-            crop = image.crop((xmin - delta, ymin - delta, xmax + delta, ymax + delta))
-            player_tensor = transform(crop).unsqueeze(0)
-            player_tensor = player_tensor.to(device)
-            angle_pred = player_orientation_model(player_tensor)
+    if not ret:
+        break
+    print(frame_index)
+    # Process the frame (optional)
 
-            theta = get_plain_value(get_angle_from_xy(angle_pred))
+    frame = process_image_frame(frame)
 
-            # polygons = get_view_range_polygons(target_point, theta, delta_angle, height, width)
+    # Write the frame to the output video
+    out.write(frame)
 
-            cv2image = draw_view_range_polygon(cv2image, target_point, theta, delta_angle, img_height, img_width,
-                                               alpha=0.1)
+    # Display the frame (optional)
+    # cv2.imshow('frame', frame)
+    if cv2.waitKey(1) == ord('q'):
+        break
+    frame_index += 1
 
-            # print("person ", player_idx, "'s view range:", polygons)
+# Release the video capture and writer objects
+cap.release()
+out.release()
+cv2.destroyAllWindows()
 
-            print("person ", player_idx, "'s angle:", theta)
-
-            player_idx += 1
-            if player_idx == 10:
-                break
-
-cv2.imwrite("test_poly.jpg", cv2image)
+# cv2image = cv2.imread(test_file_name)
+# cv2image = process_image_frame(cv2image)
+# cv2.imwrite("test_poly.jpg", cv2image)
 # plot_results(image, results, detr_model)
