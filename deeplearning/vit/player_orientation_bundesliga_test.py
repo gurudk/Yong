@@ -553,7 +553,7 @@ transform = v2.Compose([
 test_file_name = "videos/frames/C35bd9041_0 (19)/C35bd9041_0 (19)_228.png"
 # test_file_name = "./images/5403.png"
 delta_angle = np.pi / 12
-my_video = "./videos/A1606b0e6_0 (63).mp4"
+my_video = "./videos/D35bd9041_1 (27).mp4"
 
 cap = cv2.VideoCapture(my_video)
 
@@ -569,7 +569,7 @@ height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Use 'XVID' for .avi
-out = cv2.VideoWriter('./videos/A1606b0e6_0 (63)_processed.mp4', fourcc, fps, (width, height))
+out = cv2.VideoWriter('./videos/D35bd9041_1 (27)_processed.mp4', fourcc, fps, (width, height))
 
 frame_index = 0
 # Read and write frames
