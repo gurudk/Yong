@@ -111,13 +111,13 @@ LR = 1e-5
 TOTAL_EPOCHS = 1000
 BATCH_SIZE = 64
 AVG_BATCH_SIZE = 50
-train_json_file = "./player_annotation/clean_body_orientation_atan2_07.json.20240928093915"
-val_json_file = "./player_annotation/clean_body_orientation_atan2_val_07.json.20240928100332"
-LOG_FILE = "./log/train.log." + get_nowtime_str()
+train_json_file = "./player_annotation/clean_body_orientation_loss25_mergeall_07.json.20240928093915"
+val_json_file = "./player_annotation/clean_body_orientation_loss15_2nd_mergeall_val_07.json.20240928093915"
+LOG_FILE = "./log/resnet18_train.log." + get_nowtime_str()
 
 transform = v2.Compose([
     # you can add other transformations in this list
-    v2.Resize((224, 224)),
+    v2.Resize((112, 112)),
     v2.ToTensor(),
     v2.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
@@ -133,9 +133,9 @@ device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
     'cpu')  # Set device GPU or CPU where the training will take place
 model = torchvision.models.resnet18(pretrained=True)  # Load net
 fc = nn.Sequential(
-    # nn.Linear(512, 512),
-    # nn.LeakyReLU(),
-    # nn.Dropout(p=0.5),
+    nn.Linear(512, 512),
+    nn.LeakyReLU(),
+    nn.Dropout(p=0.5),
     nn.Linear(512, 2),
 
 )
@@ -148,7 +148,7 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
     optimizer,
     'min',
     factor=0.3,
-    patience=20,
+    patience=50,
     verbose=True,
     min_lr=1e-8,
 )
@@ -184,11 +184,10 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-    duration = time.time() - start
 
     if epoch % 20 == 0:  # Save model
         print("Saving Model" + str(epoch) + ".torch")  # Save model weight
-        torch.save(model.state_dict(), "./zoo/player_resnet18_" + str(epoch) + ".torch")
+        torch.save(model.state_dict(), "./zoo/player_resnet18_clean15_" + str(epoch) + ".torch")
 
     # ------------------------------------valiadate step----------------------------------------
     print("----------------------------------validate step--------------------------")
@@ -219,7 +218,9 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
 
             idx += 1
 
-    summary = f"[{epoch}/{TOTAL_EPOCHS}],train loss: {train_loss:.4f} theta train loss is {train_theta_loss:.4f} and distance train loss is {train_distance_loss:.4f}, val loss: {val_loss:.4f} theta val loss is {val_theta_loss:.4f} and distance val loss is {val_distance_loss:.4f},"
+    duration = time.time() - start
+
+    summary = f"[{epoch}/{TOTAL_EPOCHS}] train loss: {train_loss:.4f}, val loss: {val_loss:.4f}, duration:{duration:.2f}"
     with open(LOG_FILE, 'a') as log:
         log.write(summary + '\n')
     print(summary)

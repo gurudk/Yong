@@ -36,7 +36,7 @@ def generate_frames(video_file_path, out_dir_path):
     cam.release()
 
 
-TEST_VIDEO_PATH = "./videos/C35bd9041_0 (19).mp4"
+TEST_VIDEO_PATH = "./videos/20241002_2/D35bd9041_1 (40).mp4"
 GEN_DIR = "./videos/frames"
 
 # for root, dirs, files in os.walk(DFL_DIR):

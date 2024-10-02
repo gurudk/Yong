@@ -1,3 +1,5 @@
+import glob
+
 import torch
 import matplotlib.pyplot as plt
 
@@ -9,7 +11,7 @@ from transformers import RTDetrForObjectDetection, RTDetrImageProcessor
 
 import torchvision
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
-
+from pathlib import Path
 import os
 import json
 import time
@@ -41,7 +43,7 @@ def get_nowtime_str():
     return now.strftime("%Y%m%d%H%M%S")
 
 
-def get_detection_results(image, model, processor, threshold=0.5):
+def get_detection_results(image, model, processor, threshold=0.5, topk=0):
     inputs = processor(images=image, return_tensors="pt")
     with torch.no_grad():
         start_time = datetime.datetime.now().timestamp()
@@ -51,6 +53,9 @@ def get_detection_results(image, model, processor, threshold=0.5):
 
     results = processor.post_process_object_detection(outputs, target_sizes=torch.tensor([image.size[::-1]]),
                                                       threshold=threshold)
+
+    if topk > 0:
+        results = filter_detection_results(results, topk)
     return results
 
 
@@ -460,11 +465,19 @@ def draw_view_range_polygon(img, base_point, angle, delta_angle, height, width, 
     return result
 
 
-def process_image_frame(cv2image):
+def get_results_from_cv2image(cv2image, detr_model, detr_processor, threshold=0.7):
+    color_coverted = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB)
+    image = Image.fromarray(color_coverted)
+    results = get_detection_results(image, detr_model, detr_processor, threshold=threshold)
+
+    return results
+
+
+def process_image_frame(cv2image, max_detection_player_num=20, delta_angle=np.pi / 8, threshold=0.7, topk=3):
     color_coverted = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB)
     image = Image.fromarray(color_coverted)
     img_height, img_width, channel = cv2image.shape
-    results = get_detection_results(image, detr_model, detr_processor, threshold=0.7)
+    results = get_detection_results(image, detr_model, detr_processor, threshold=threshold, topk=topk)
 
     player_idx = 0
     for result in results:
@@ -488,9 +501,98 @@ def process_image_frame(cv2image):
                 print("person ", player_idx, "'s angle:", theta)
 
                 player_idx += 1
-                if player_idx == 8:
+                if player_idx == max_detection_player_num:
                     break
     return cv2image
+
+
+def filter_detection_results(results, topk=3):
+    ret_results = []
+    for result in results:
+        # get the outermost players
+        boxes = result["boxes"]
+        _, min_indices = torch.topk(boxes, k=topk, dim=0, largest=False)
+        mins = min_indices[:, 0:2].flatten()
+        _, max_indices = torch.topk(boxes, k=topk, dim=0, largest=True)
+        maxs = max_indices[:, 2:4].flatten()
+        selected_indices = torch.cat((mins, maxs)).unique()
+        filetered_scores = torch.index_select(result["scores"], 0, selected_indices)
+        filetered_labels = torch.index_select(result["labels"], 0, selected_indices)
+        filetered_boxes = torch.index_select(boxes, 0, selected_indices)
+
+        result["scores"] = filetered_scores
+        result["labels"] = filetered_labels
+        result["boxes"] = filetered_boxes
+        ret_results.append(result)
+
+    return ret_results
+
+
+def process_videos(input_dir, output_dir):
+    input_dir_path = Path(input_dir)
+    output_dir_path = Path(output_dir)
+    file_pattern = str(input_dir_path.joinpath("*.mp4"))
+    input_files = glob.glob(file_pattern)
+    for input_file in input_files:
+        input_file_stem = Path(input_file).stem
+        output_file = output_dir_path.joinpath(input_file_stem + "_processed.mp4")
+
+        cap = cv2.VideoCapture(input_file)
+
+        # Check if the video opened successfully
+        if not cap.isOpened():
+            print("Error opening video file")
+            exit()
+
+        # Get video properties
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        # Define the codec and create VideoWriter object
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Use 'XVID' for .avi
+        out = cv2.VideoWriter(str(output_file), fourcc, fps, (width, height))
+
+        frame_index = 0
+        # Read and write frames
+        while cap.isOpened():
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+            print(frame_index)
+            # Process the frame (optional)
+
+            frame = process_image_frame(frame)
+
+            # Write the frame to the output video
+            out.write(frame)
+
+            # Display the frame (optional)
+            # cv2.imshow('frame', frame)
+            if cv2.waitKey(1) == ord('q'):
+                break
+            frame_index += 1
+
+        # Release the video capture and writer objects
+        cap.release()
+        out.release()
+
+        print(input_file, " is completed~")
+
+
+def test_batch_processing_frames(input_dir):
+    input_dir_path = Path(input_dir)
+    files_pattern = input_dir_path.joinpath("*.png")
+    files = glob.glob(str(files_pattern))
+    sorted_files = sorted(files, key=os.path.getmtime)
+    every_frames = 10
+    for idx, file_name in enumerate(sorted_files):
+        if idx % every_frames == 0:
+            cv2image = cv2.imread(file_name)
+            cv2image = process_image_frame(cv2image, delta_angle=np.pi / 6, threshold=0.5, topk=4)
+            cv2.imwrite("test_poly.jpg", cv2image)
+            time.sleep(5)
 
 
 # ------------------------constans define------------------------------------
@@ -550,54 +652,34 @@ transform = v2.Compose([
     v2.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-test_file_name = "videos/frames/C35bd9041_0 (19)/C35bd9041_0 (19)_228.png"
-# test_file_name = "./images/5403.png"
-delta_angle = np.pi / 12
-my_video = "./videos/D35bd9041_1 (27).mp4"
+# input_video_dir = "./videos/20241002_1"
+# output_video_dir = "./videos/processed"
+# process_videos(input_video_dir, output_video_dir)
 
-cap = cv2.VideoCapture(my_video)
-
-# Check if the video opened successfully
-if not cap.isOpened():
-    print("Error opening video file")
-    exit()
-
-# Get video properties
-fps = cap.get(cv2.CAP_PROP_FPS)
-width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-# Define the codec and create VideoWriter object
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Use 'XVID' for .avi
-out = cv2.VideoWriter('./videos/D35bd9041_1 (27)_processed.mp4', fourcc, fps, (width, height))
-
-frame_index = 0
-# Read and write frames
-while cap.isOpened():
-    ret, frame = cap.read()
-
-    if not ret:
-        break
-    print(frame_index)
-    # Process the frame (optional)
-
-    frame = process_image_frame(frame)
-
-    # Write the frame to the output video
-    out.write(frame)
-
-    # Display the frame (optional)
-    # cv2.imshow('frame', frame)
-    if cv2.waitKey(1) == ord('q'):
-        break
-    frame_index += 1
-
-# Release the video capture and writer objects
-cap.release()
-out.release()
-cv2.destroyAllWindows()
-
+# test_file_name = "./videos/frames/C35bd9041_0 (19)/C35bd9041_0 (19)_660.png"
 # cv2image = cv2.imread(test_file_name)
-# cv2image = process_image_frame(cv2image)
+# results = get_results_from_cv2image(cv2image, detr_model, detr_processor, threshold=0.3)
+# print(len(results[0]["boxes"]))
+#
+# results = filter_detection_results(results)
+# print(len(results[0]["boxes"]))
+
+# boxes = results[0]["boxes"]
+# print(boxes)
+#
+# _, min_indices = torch.topk(boxes, k=3, dim=0, largest=False)
+# mins = min_indices[:, 0:2].flatten()
+# _, max_indices = torch.topk(boxes, k=3, dim=0, largest=True)
+# maxs = max_indices[:, 2:4].flatten()
+#
+# all = torch.cat((mins, maxs)).unique()
+# print(all)
+#
+# select_boxes = torch.index_select(boxes, 0, all)
+
+# print(select_boxes)
+# cv2image = process_image_frame(cv2image, delta_angle=np.pi / 10, threshold=0.4, topk=4)
 # cv2.imwrite("test_poly.jpg", cv2image)
 # plot_results(image, results, detr_model)
+
+test_batch_processing_frames("./videos/frames/D35bd9041_1 (40)")
