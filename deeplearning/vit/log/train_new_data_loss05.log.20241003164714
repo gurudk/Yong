@@ -28,3 +28,7 @@
 [27/1200] train loss: 0.4918 , val loss: 0.3018 , duration:39.41, lr:[1e-05]
 [28/1200] train loss: 0.4525 , val loss: 0.3288 , duration:39.42, lr:[1e-05]
 [29/1200] train loss: 0.4442 , val loss: 0.2924 , duration:39.65, lr:[1e-05]
+[30/1200] train loss: 0.4627 , val loss: 0.3319 , duration:39.67, lr:[1e-05]
+[31/1200] train loss: 0.4512 , val loss: 0.2864 , duration:39.86, lr:[1e-05]
+[32/1200] train loss: 0.4380 , val loss: 0.3327 , duration:39.76, lr:[1e-05]
+[33/1200] train loss: 0.4305 , val loss: 0.2853 , duration:39.48, lr:[1e-05]

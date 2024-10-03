@@ -537,13 +537,13 @@ def get_results_from_cv2image(cv2image, detr_model, detr_processor, threshold=0.
     return results
 
 
-def process_image_frame(cv2image, max_detection_player_num=20, delta_angle=np.pi / 8, threshold=0.7, topk=3):
+def process_image_frame(cv2image, max_detection_player_num=20, delta_angle=np.pi / 10, threshold=0.7, topk=3):
     color_coverted = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB)
     image = Image.fromarray(color_coverted)
     img_height, img_width, channel = cv2image.shape
 
     # ************************ must be modified just for test***************************
-    results = get_down_player_detection_results(image, detr_model, detr_processor, threshold=threshold, topk=topk)
+    results = get_detection_results(image, detr_model, detr_processor, threshold=threshold, topk=topk)
 
     player_idx = 0
     for result in results:
@@ -736,11 +736,11 @@ def test_batch_processing_frames(input_dir):
     files_pattern = input_dir_path.joinpath("*.png")
     files = glob.glob(str(files_pattern))
     sorted_files = sorted(files, key=os.path.getmtime)
-    every_frames = 10
+    every_frames = 15
     for idx, file_name in enumerate(sorted_files):
         if idx % every_frames == 0:
             cv2image = cv2.imread(file_name)
-            cv2image = process_image_frame(cv2image, delta_angle=np.pi / 6, threshold=0.3, topk=5)
+            cv2image = process_image_frame(cv2image, delta_angle=np.pi / 10, threshold=0.3, topk=3)
             cv2.imwrite("test_poly.jpg", cv2image)
             time.sleep(5)
 
