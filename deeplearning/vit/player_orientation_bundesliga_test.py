@@ -59,6 +59,70 @@ def get_detection_results(image, model, processor, threshold=0.5, topk=0):
     return results
 
 
+def get_left_player_detection_results(image, model, processor, threshold=0.5, topk=0):
+    inputs = processor(images=image, return_tensors="pt")
+    with torch.no_grad():
+        start_time = datetime.datetime.now().timestamp()
+        outputs = model(**inputs)
+        end_time = datetime.datetime.now().timestamp()
+        print("model execution time:", end_time - start_time)
+
+    results = processor.post_process_object_detection(outputs, target_sizes=torch.tensor([image.size[::-1]]),
+                                                      threshold=threshold)
+
+    if topk > 0:
+        results = filter_left_players_detection_results(results, topk)
+    return results
+
+
+def get_top_player_detection_results(image, model, processor, threshold=0.5, topk=0):
+    inputs = processor(images=image, return_tensors="pt")
+    with torch.no_grad():
+        start_time = datetime.datetime.now().timestamp()
+        outputs = model(**inputs)
+        end_time = datetime.datetime.now().timestamp()
+        print("model execution time:", end_time - start_time)
+
+    results = processor.post_process_object_detection(outputs, target_sizes=torch.tensor([image.size[::-1]]),
+                                                      threshold=threshold)
+
+    if topk > 0:
+        results = filter_top_players_detection_results(results, topk)
+    return results
+
+
+def get_right_player_detection_results(image, model, processor, threshold=0.5, topk=0):
+    inputs = processor(images=image, return_tensors="pt")
+    with torch.no_grad():
+        start_time = datetime.datetime.now().timestamp()
+        outputs = model(**inputs)
+        end_time = datetime.datetime.now().timestamp()
+        print("model execution time:", end_time - start_time)
+
+    results = processor.post_process_object_detection(outputs, target_sizes=torch.tensor([image.size[::-1]]),
+                                                      threshold=threshold)
+
+    if topk > 0:
+        results = filter_right_players_detection_results(results, topk)
+    return results
+
+
+def get_down_player_detection_results(image, model, processor, threshold=0.5, topk=0):
+    inputs = processor(images=image, return_tensors="pt")
+    with torch.no_grad():
+        start_time = datetime.datetime.now().timestamp()
+        outputs = model(**inputs)
+        end_time = datetime.datetime.now().timestamp()
+        print("model execution time:", end_time - start_time)
+
+    results = processor.post_process_object_detection(outputs, target_sizes=torch.tensor([image.size[::-1]]),
+                                                      threshold=threshold)
+
+    if topk > 0:
+        results = filter_down_players_detection_results(results, topk)
+    return results
+
+
 def plot_results(pil_img, results, model):
     plt.figure(figsize=(16, 10))
     plt.imshow(pil_img)
@@ -477,7 +541,9 @@ def process_image_frame(cv2image, max_detection_player_num=20, delta_angle=np.pi
     color_coverted = cv2.cvtColor(cv2image, cv2.COLOR_BGR2RGB)
     image = Image.fromarray(color_coverted)
     img_height, img_width, channel = cv2image.shape
-    results = get_detection_results(image, detr_model, detr_processor, threshold=threshold, topk=topk)
+
+    # ************************ must be modified just for test***************************
+    results = get_down_player_detection_results(image, detr_model, detr_processor, threshold=threshold, topk=topk)
 
     player_idx = 0
     for result in results:
@@ -516,6 +582,90 @@ def filter_detection_results(results, topk=3):
         _, max_indices = torch.topk(boxes, k=topk, dim=0, largest=True)
         maxs = max_indices[:, 2:4].flatten()
         selected_indices = torch.cat((mins, maxs)).unique()
+        filetered_scores = torch.index_select(result["scores"], 0, selected_indices)
+        filetered_labels = torch.index_select(result["labels"], 0, selected_indices)
+        filetered_boxes = torch.index_select(boxes, 0, selected_indices)
+
+        result["scores"] = filetered_scores
+        result["labels"] = filetered_labels
+        result["boxes"] = filetered_boxes
+        ret_results.append(result)
+
+    return ret_results
+
+
+def filter_left_players_detection_results(results, topk=5):
+    ret_results = []
+    for result in results:
+        # get the outermost players
+        boxes = result["boxes"]
+        _, min_indices = torch.topk(boxes, k=topk, dim=0, largest=False)
+        mins = min_indices[:, 0:1].flatten()
+
+        selected_indices = mins.unique()
+        filetered_scores = torch.index_select(result["scores"], 0, selected_indices)
+        filetered_labels = torch.index_select(result["labels"], 0, selected_indices)
+        filetered_boxes = torch.index_select(boxes, 0, selected_indices)
+
+        result["scores"] = filetered_scores
+        result["labels"] = filetered_labels
+        result["boxes"] = filetered_boxes
+        ret_results.append(result)
+
+    return ret_results
+
+
+def filter_top_players_detection_results(results, topk=5):
+    ret_results = []
+    for result in results:
+        # get the outermost players
+        boxes = result["boxes"]
+        _, min_indices = torch.topk(boxes, k=topk, dim=0, largest=False)
+        mins = min_indices[:, 1:2].flatten()
+
+        selected_indices = mins.unique()
+        filetered_scores = torch.index_select(result["scores"], 0, selected_indices)
+        filetered_labels = torch.index_select(result["labels"], 0, selected_indices)
+        filetered_boxes = torch.index_select(boxes, 0, selected_indices)
+
+        result["scores"] = filetered_scores
+        result["labels"] = filetered_labels
+        result["boxes"] = filetered_boxes
+        ret_results.append(result)
+
+    return ret_results
+
+
+def filter_right_players_detection_results(results, topk=5):
+    ret_results = []
+    for result in results:
+        # get the outermost players
+        boxes = result["boxes"]
+        _, max_indices = torch.topk(boxes, k=topk, dim=0, largest=True)
+        maxs = max_indices[:, 2:3].flatten()
+
+        selected_indices = maxs.unique()
+        filetered_scores = torch.index_select(result["scores"], 0, selected_indices)
+        filetered_labels = torch.index_select(result["labels"], 0, selected_indices)
+        filetered_boxes = torch.index_select(boxes, 0, selected_indices)
+
+        result["scores"] = filetered_scores
+        result["labels"] = filetered_labels
+        result["boxes"] = filetered_boxes
+        ret_results.append(result)
+
+    return ret_results
+
+
+def filter_down_players_detection_results(results, topk=5):
+    ret_results = []
+    for result in results:
+        # get the outermost players
+        boxes = result["boxes"]
+        _, max_indices = torch.topk(boxes, k=topk, dim=0, largest=True)
+        maxs = max_indices[:, 3:4].flatten()
+
+        selected_indices = maxs.unique()
         filetered_scores = torch.index_select(result["scores"], 0, selected_indices)
         filetered_labels = torch.index_select(result["labels"], 0, selected_indices)
         filetered_boxes = torch.index_select(boxes, 0, selected_indices)
@@ -590,7 +740,7 @@ def test_batch_processing_frames(input_dir):
     for idx, file_name in enumerate(sorted_files):
         if idx % every_frames == 0:
             cv2image = cv2.imread(file_name)
-            cv2image = process_image_frame(cv2image, delta_angle=np.pi / 6, threshold=0.5, topk=4)
+            cv2image = process_image_frame(cv2image, delta_angle=np.pi / 6, threshold=0.3, topk=5)
             cv2.imwrite("test_poly.jpg", cv2image)
             time.sleep(5)
 
@@ -606,7 +756,7 @@ TOTAL_EPOCHS = 2000
 BATCH_SIZE = 1
 AVG_BATCH_SIZE = 50
 full_dataset_file = "./player_annotation/clean_body_orientation_loss255555_mergeall_val_07.json.20240928093915"
-test_model_file = "./model/cleandata_loss15_16x16_160.torch"
+test_model_file = "model/loss05/new_data_loss05_with_val05_260.torch"
 LOG_FILE = "./log/train.log." + get_nowtime_str()
 player_body_orientation_data_explored_file = "./explored/loss2555555_val_data_explored_file_140pth_angle.txt." + get_nowtime_str()
 validation_rate = 0

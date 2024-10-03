@@ -2,10 +2,10 @@ import json
 import numpy as np
 import torch
 
-file = "./explored/loss25_data_explored_file_140pth_angle.txt.20240929153227"
-val_file = "./explored/loss2555555_val_data_explored_file_140pth_angle.txt.20240929155538"
+file = "./explored/new_explore_140th.txt.20241003090118"
+val_file = "./explored/new_data_loss05_valdata.txt.20241003123727"
 
-with open(file, 'r') as rf:
+with open(val_file, 'r') as rf:
     jd = json.loads(rf.read())
 
 print(len(jd))
