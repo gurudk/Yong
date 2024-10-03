@@ -291,7 +291,7 @@ class PlayerBodyOrientationViT(nn.Module):
 
 
 LR = 1e-5
-TOTAL_EPOCHS = 2000
+TOTAL_EPOCHS = 1200
 BATCH_SIZE = 64
 AVG_BATCH_SIZE = 50
 train_json_file = "./player_annotation/new_data_loss05_mergeall_07.json.20240928093915"
