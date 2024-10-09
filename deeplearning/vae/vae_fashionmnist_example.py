@@ -22,7 +22,7 @@ print("Project running on device: ", DEVICE)
 
 config = {
     "batch_size": 64,
-    "epochs": 100,
+    "epochs": 10,
     "lr": 1e-3,
     "hidden_dim": 2
 }
@@ -346,6 +346,8 @@ for i in range(config["epochs"]):
     valid_loss_hist.append(valid_loss)
     print(
         f"Epoch {i + 1}/{config['epochs']}: \t Train loss: {train_loss:.4f}\t Validation loss: {valid_loss:.4f}\tlr: {curr_lr:.4f}")
+
+torch.save(model, "vae_fashionmnit_1000.pth")
 
 
 def plot_hist():
