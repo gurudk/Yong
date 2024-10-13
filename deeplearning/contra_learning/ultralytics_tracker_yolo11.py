@@ -8,7 +8,7 @@ cv2.namedWindow('displaymywindows', cv2.WINDOW_NORMAL)
 model = YOLO("yolo11n.pt")
 
 # Open the video file
-video_path = "xueshi_new_193.mp4"
+video_path = "D35bd9041_1 (67).mp4"
 cap = cv2.VideoCapture(video_path)
 
 # Loop through the video frames
