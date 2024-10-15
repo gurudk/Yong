@@ -12,7 +12,9 @@ class Detection_Transformer:
         self.capture_index = capture_index
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print("Using Device:", self.device)
-        self.model = RTDETR("rtdetr-l.pt")
+        # self.model = RTDETR("rtdetr-l.pt")
+        # Load the YOLO11 model
+        self.model = YOLO("yolo11n.pt")
 
         # Create a dictionary mapping COCO class IDs to class names
         coco_class_ids = list(range(91))  # COCO has 91 classes
@@ -160,10 +162,14 @@ class Detection_Transformer:
                 # Break the loop if the video is finished
                 break
 
-            results = self.model.predict(frame)
-            frame = self.plot_bboxes(results, frame)
+            # results = self.model.track(frame)
+            # frame = self.plot_bboxes(results, frame)
+            results = self.model.track(frame, tracker='botsort_soccer.yaml', persist=True)
 
-            out.write(frame)
+            # Visualize the results on the frame
+            annotated_frame = results[0].plot()
+
+            out.write(annotated_frame)
             # cv2.imshow('RTDETR Detection', frame)
 
             if cv2.waitKey(5) & 0xFF == 27:
@@ -178,7 +184,7 @@ class Detection_Transformer:
 
 
 # Example usage:
-video_path = 'xueshi_new_211.mp4'
-output_filename = "xueshi_new_211_detect.mp4"
+video_path = '/home/wolf/datasets/xueshifootball/no_sound_clips/xueshi_new_213.mp4'
+output_filename = "xueshi_new_213_track.mp4"
 detector = Detection_Transformer(capture_index=0)
 detector(video_path, output_filename)

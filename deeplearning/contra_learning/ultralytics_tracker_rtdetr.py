@@ -19,7 +19,7 @@ while cap.isOpened():
 
     if success:
         # Run YOLO11 tracking on the frame, persisting tracks between frames
-        results = model.track(frame, persist=True)
+        results = model.track(frame, tracker='botsort_soccer.yaml', persist=True)
 
         # Visualize the results on the frame
         annotated_frame = results[0].plot()
