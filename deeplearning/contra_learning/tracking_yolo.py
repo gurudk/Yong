@@ -164,7 +164,7 @@ class Detection_Transformer:
 
             # results = self.model.track(frame)
             # frame = self.plot_bboxes(results, frame)
-            results = self.model.track(frame, tracker='botsort_soccer.yaml', persist=True)
+            results = self.model.track(frame, persist=True)
 
             # Visualize the results on the frame
             annotated_frame = results[0].plot()
@@ -184,7 +184,7 @@ class Detection_Transformer:
 
 
 # Example usage:
-video_path = '/home/wolf/datasets/xueshifootball/no_sound_clips/xueshi_new_213.mp4'
-output_filename = "xueshi_new_213_track.mp4"
+video_path = '/home/wolf/datasets/screenrecorder/SR583/SR583_0.mp4'
+output_filename = "/home/wolf/datasets/screenrecorder/SR583/SR583_0_track.mp4"
 detector = Detection_Transformer(capture_index=0)
 detector(video_path, output_filename)

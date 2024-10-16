@@ -3,6 +3,8 @@ import glob
 
 from pathlib import Path
 
+SECONDS_PER_VIDEO = 1500
+
 
 def split_videos(input_file, output_dir):
     gen_video_index = 0
@@ -46,7 +48,7 @@ def split_videos(input_file, output_dir):
             break
         frame_index += 1
 
-        if frame_index % 750 == 0:
+        if frame_index % SECONDS_PER_VIDEO == 0:
             out.release()
             print("Split video ", str(output_file), " generated")
 
@@ -59,7 +61,7 @@ def split_videos(input_file, output_dir):
     out.release()
 
 
-input_file_name = "/home/wolf/datasets/xueshifootball/xueshi_new.mp4"
-output_dir = "/home/wolf/datasets/xueshifootball/no_sound_clips/"
+input_file_name = "/home/wolf/datasets/screenrecorder/SR583.mp4"
+output_dir = "/home/wolf/datasets/screenrecorder/SR583/"
 
 split_videos(input_file_name, output_dir)

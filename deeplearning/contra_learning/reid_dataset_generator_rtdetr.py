@@ -8,10 +8,10 @@ from ultralytics.models import RTDETR
 # cv2.namedWindow('displaymywindows', cv2.WINDOW_NORMAL)
 
 # Load the YOLO11 model
-model = YOLO("yolo11n.pt")
-# model = RTDETR("rtdetr-l.pt")
+# model = YOLO("yolo11n.pt")
+model = RTDETR("rtdetr-l.pt")
 # Open the video file
-video_path = "/home/wolf/datasets/xueshifootball/no_sound_clips/xueshi_new_213.mp4"
+video_path = "/home/wolf/datasets/xueshifootball/no_sound_clips/xueshi_new_212.mp4"
 
 # video_path = "/home/wolf/datasets/DFL/train/D35bd9041_1/D35bd9041_1 (44).mp4"
 video_file_stem = Path(video_path).stem
@@ -19,6 +19,7 @@ reid_dataset_dir = "/home/wolf/datasets/reid/DFL/"
 reid_dataset_path = Path(reid_dataset_dir)
 track_frame_idx = 0
 delta = 0
+conf_threshold = 0.8
 
 cap = cv2.VideoCapture(video_path)
 
@@ -37,6 +38,8 @@ while cap.isOpened():
             confs = results[0].boxes.conf.cpu().tolist()
             annotated_frame = results[0].plot()
             for box, track_id, conf in zip(boxes, track_ids, confs):
+                if conf < conf_threshold:
+                    continue
                 x, y, w, h = box
                 x_left = int(x - w / 2 - delta)
                 y_top = int(y - h / 2 - delta)

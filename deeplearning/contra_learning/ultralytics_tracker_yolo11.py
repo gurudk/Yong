@@ -10,7 +10,7 @@ model = YOLO("yolo11n.pt")
 # Open the video file
 # video_path = "/home/wolf/datasets/xueshifootball/no_sound_clips/xueshi_new_212.mp4"
 
-video_path = "/home/wolf/datasets/DFL/train/D35bd9041_1/D35bd9041_1 (44).mp4"
+video_path = "/home/wolf/datasets/screenrecorder/SR583.mp4"
 cap = cv2.VideoCapture(video_path)
 
 # Loop through the video frames
@@ -20,7 +20,7 @@ while cap.isOpened():
 
     if success:
         # Run YOLO11 tracking on the frame, persisting tracks between frames
-        results = model(frame)
+        results = model.track(frame, tracker="botsort_soccer.yaml", persist=True)
 
         # Visualize the results on the frame
         annotated_frame = results[0].plot()
