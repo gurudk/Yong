@@ -36,8 +36,8 @@ def generate_frames(video_file_path, out_dir_path):
     cam.release()
 
 
-TEST_VIDEO_PATH = "/home/wolf/datasets/xueshifootball/no_sound_clips/xueshi_new_211.mp4"
-GEN_DIR = "./videos/frames"
+TEST_VIDEO_PATH = "/home/wolf/datasets/xueshifootball/no_sound_clips/xueshi_new_3.mp4"
+GEN_DIR = "/home/wolf/datasets/xueshifootball/frames/"
 
 # for root, dirs, files in os.walk(DFL_DIR):
 #     print(sorted(files))
