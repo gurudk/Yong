@@ -6,7 +6,7 @@ from pathlib import Path
 SECONDS_PER_VIDEO = 1500
 
 
-def split_videos(input_file, output_dir):
+def split_videos(input_file, output_dir, second_per_video=1500):
     gen_video_index = 0
     output_dir_path = Path(output_dir)
     output_dir_path.mkdir(parents=True, exist_ok=True)
@@ -61,7 +61,7 @@ def split_videos(input_file, output_dir):
     out.release()
 
 
-input_file_name = "/home/wolf/datasets/screenrecorder/SR583.mp4"
-output_dir = "/home/wolf/datasets/screenrecorder/SR583/"
+input_file_name = "/home/wolf/datasets/screenrecorder/SR42.mp4"
+output_dir = "/home/wolf/datasets/screenrecorder/SR42/"
 
 split_videos(input_file_name, output_dir)

@@ -11,7 +11,7 @@ from ultralytics.models import RTDETR
 model = YOLO("yolo11n.pt")
 # model = RTDETR("rtdetr-l.pt")
 # Open the video file
-video_path = "/home/wolf/datasets/screenrecorder/SR583/SR583_1.mp4"
+video_path = "/home/wolf/datasets/screenrecorder/SR42/SR42_1.mp4"
 
 # video_path = "/home/wolf/datasets/DFL/train/D35bd9041_1/D35bd9041_1 (44).mp4"
 video_file_stem = Path(video_path).stem
