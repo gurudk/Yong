@@ -5,7 +5,7 @@ from ultralytics.models import YOLO
 cv2.namedWindow('displaymywindows', cv2.WINDOW_NORMAL)
 
 # Load the YOLO11 model
-model = YOLO("yolo11n.pt")
+model = YOLO("ultralytics_models/yolo11n.pt")
 
 # Open the video file
 # video_path = "/home/wolf/datasets/xueshifootball/no_sound_clips/xueshi_new_212.mp4"

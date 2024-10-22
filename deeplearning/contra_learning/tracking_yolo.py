@@ -14,7 +14,7 @@ class Detection_Transformer:
         print("Using Device:", self.device)
         # self.model = RTDETR("rtdetr-l.pt")
         # Load the YOLO11 model
-        self.model = YOLO("yolo11n.pt")
+        self.model = YOLO("ultralytics_models/yolo11n.pt")
 
         # Create a dictionary mapping COCO class IDs to class names
         coco_class_ids = list(range(91))  # COCO has 91 classes

@@ -178,7 +178,7 @@ class Detection_Transformer:
 
 
 # Example usage:
-video_path = 'xueshi_new_211.mp4'
-output_filename = "xueshi_new_211_detect.mp4"
+video_path = 'test_videos/xueshi_new_211.mp4'
+output_filename = "test_videos/xueshi_new_211_detect.mp4"
 detector = Detection_Transformer(capture_index=0)
 detector(video_path, output_filename)

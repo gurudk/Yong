@@ -67,17 +67,12 @@ def split_videos(input_file, output_dir, second_per_video=1500):
     out.release()
 
 
-def batch_generator(model, video_path, out_dir):
-    # Open the video file
-    video_path = "/home/wolf/datasets/screenrecorder/SR42/SR42_1.mp4"
-
-    # video_path = "/home/wolf/datasets/DFL/train/D35bd9041_1/D35bd9041_1 (44).mp4"
+def batch_generator(model, video_path, out_dir, conf_threshold=0.6):
+    video_parent_dir_stem = video_path.split("/")[-2]
     video_file_stem = Path(video_path).stem
-    out_dir = "/home/wolf/datasets/reid/DFL/"
-    out_dataset_path = Path(out_dir)
+    out_dataset_path = Path(out_dir).joinpath(video_parent_dir_stem)
     track_frame_idx = 0
     delta = 0
-    conf_threshold = 0.6
 
     cap = cv2.VideoCapture(video_path)
 
@@ -88,7 +83,7 @@ def batch_generator(model, video_path, out_dir):
 
         if success:
             # Run YOLO11 tracking on the frame, persisting tracks between frames
-            results = model.track(frame, tracker='botsort_soccer.yaml', persist=True)
+            results = model.track(frame, tracker='./ultralytics_config/botsort_soccer.yaml', persist=True)
 
             if results[0].boxes.id is not None:
                 boxes = results[0].boxes.xywh.cpu()
@@ -133,15 +128,19 @@ def get_only_files_in_current(input_dir):
 
 
 # Load the YOLO11 model
-# model = YOLO("yolo11n.pt")
+model = YOLO("./ultralytics_models/yolo11n.pt")
 
-split_video_output_dir = "/home/wolf/datasets/screenrecorder/dest/"
-src_video_dir = "/home/wolf/datasets/screenrecorder/src/"
-track_player_images_out_dir = "/home/wolf/datasets/reid/DFL/dest"
+# split_video_output_dir = "/home/wolf/datasets/screenrecorder/dest/"
+# src_video_dir = "/home/wolf/datasets/screenrecorder/src/"
+# track_player_images_out_dir = "/home/wolf/datasets/reid/DFL/dest"
+#
+# print(get_only_files_in_current(src_video_dir))
+#
+# for video_path in get_only_files_in_current(src_video_dir):
+#     print("============================Begin generate:", video_path, "=====================================")
+#     split_videos(video_path, split_video_output_dir)
+#     print(video_path, " is generated===========================================")
 
-print(get_only_files_in_current(src_video_dir))
-
-for video_path in get_only_files_in_current(src_video_dir):
-    print("============================Begin generate:", video_path, "=====================================")
-    split_videos(video_path, split_video_output_dir)
-    print(video_path, " is generated===========================================")
+video_path = "/home/wolf/datasets/screenrecorder/dest/SR26/SR26_1.mp4"
+track_player_images_out_dir = "/home/wolf/datasets/reid/DFL/dest/"
+batch_generator(model, video_path, track_player_images_out_dir)

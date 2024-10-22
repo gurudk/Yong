@@ -8,7 +8,7 @@ from ultralytics.models import RTDETR
 # cv2.namedWindow('displaymywindows', cv2.WINDOW_NORMAL)
 
 # Load the YOLO11 model
-model = YOLO("yolo11n.pt")
+model = YOLO("ultralytics_models/yolo11n.pt")
 # model = RTDETR("rtdetr-l.pt")
 # Open the video file
 video_path = "/home/wolf/datasets/screenrecorder/SR42/SR42_1.mp4"
