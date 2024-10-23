@@ -196,8 +196,8 @@ player_dataset_dir0 = "/home/wolf/datasets/reid/dest/SR583/SR583_0_manual_clean/
 player_dataset_dir1 = "/home/wolf/datasets/reid/dest/SR583/SR583_1_manual_clean/"
 player_dataset_dir2 = "/home/wolf/datasets/reid/dest/SR583/SR42_0_manual_clean/"
 player_frame_span = 5
-max_sample_per_player = 64
-base_player_num = 255
+max_sample_per_player = 32
+base_player_num = 127
 
 data_item_idx = 0
 portion = (0.6, 0.2, 0.2)
@@ -319,15 +319,16 @@ final_dataset_dir = "/home/wolf/datasets/reid/dataset/test_final_dataset_64_256/
 for key in final_dataset.keys():
     temp_idx = 0
     print()
-    print(key, ":==========================================================")
+    print(key, ":==========================================================", len(final_dataset[key]))
     for pl in final_dataset[key]:
         print(pl.file_path)
         temp_idx += 1
         if temp_idx == 5:
             break
 
-    # if int(key) == 10:
-    #     break
+
+# if int(key) == 10:
+#     break
 
 
 def get_nowtime_str():
@@ -345,8 +346,7 @@ def dump_final_dataset_only_path(final_ds):
         new_dict[key] = file_list
     return new_dict
 
-
-final_dataset_json = json.dumps(dump_final_dataset_only_path(final_dataset))
-
-with open("/home/wolf/datasets/reid/dataset/final_dataset.json." + get_nowtime_str(), 'w') as wf:
-    wf.write(final_dataset_json)
+# final_dataset_json = json.dumps(dump_final_dataset_only_path(final_dataset))
+#
+# with open("/home/wolf/datasets/reid/dataset/final_dataset_32_127.json." + get_nowtime_str(), 'w') as wf:
+#     wf.write(final_dataset_json)
