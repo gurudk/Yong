@@ -2,6 +2,8 @@ import torchvision
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
 
 import os
+import re
+import glob
 import json
 import time
 import smtplib
@@ -50,18 +52,6 @@ class ContrastivePlayerDataset(Dataset):
         return len(self.player_json)
 
     def __getitem__(self, idx):
-        # if torch.is_tensor(idx):
-        #     idx = idx.tolist()
-        #
-        # img_name = self.player_detections_items[idx][0]
-        # image = Image.open(img_name)
-        # angle = self.player_detections_items[idx][1]
-        # gt_x = torch.cos(torch.tensor(angle))
-        # gt_y = torch.sin(torch.tensor(angle))
-        #
-        # truth_tensor = torch.tensor([gt_x, gt_y]).squeeze()
-        #
-
         pl_list = self.player_json[str(idx)]
         img = self.transform(Image.open(pl_list[0])).unsqueeze(dim=0)
 
@@ -223,7 +213,7 @@ class PlayerBodyOrientationViT(nn.Module):
         self.pool = pool
         self.to_latent = nn.Identity()
 
-        # self.mlp = MLP(dim, dim, out_dim, 3)
+        self.mlp = MLP(dim, dim, out_dim, 2)
 
     def forward(self, img):
         x = self.to_patch_embedding(img)
@@ -241,19 +231,32 @@ class PlayerBodyOrientationViT(nn.Module):
         x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
 
         x = self.to_latent(x)
-        return x
+        return self.mlp(x)
 
 
-# ================================ ViT DEFINE ===================================
+def get_latest_model_file(model_dir):
+    files = list(filter(os.path.isfile, glob.glob(model_dir + "*")))
+
+    if len(files) == 0:
+        return (None, 0)
+    else:
+        files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+        latest_file = files[0]
+        latest_epoch = int(re.split(r"[_\.]", latest_file)[-2])
+        return latest_file, latest_epoch
+
+
+# ================================ ViT DEFINE END===================================
 
 LR = 1e-5
-TOTAL_EPOCHS = 50
+TOTAL_EPOCHS = 500
 BATCH_SIZE = 1
 SUB_BATCH_SIZE = 16
 AVG_BATCH_SIZE = 50
-train_json_file = "/home/wolf/datasets/reid/dataset/final_dataset_32_127.json.20241023190821"
+train_json_file = "/home/wolf/datasets/reid/dataset/final_dataset_32_127.json.20241024100309"
 
-LOG_FILE = "./log/std_soccer_vit_cl_32_127_255.log." + get_nowtime_str()
+LOG_FILE = "./log/vit/std_soccer_vit_cl_32_127_255.log." + get_nowtime_str()
+SOFTMAX_LOG_FILE = "./log/vit/std_soccer_vit_cl_32_127_255_softmax.log." + get_nowtime_str()
 validation_rate = .1
 shuffle_dataset = True
 random_seed = 0
@@ -269,10 +272,11 @@ train_dataset = ContrastivePlayerDataset(train_json_file, transform)
 train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # --------------Load and set net and optimizer-------------------------------------
-device = torch.device('cuda') if torch.cuda.is_available() else torch.device(
+device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device(
     'cpu')  # Set device GPU or CPU where the training will take place
 
 # -------------------------Create model -------------------------------------------
+
 
 model = PlayerBodyOrientationViT(
     image_size=(48, 96),
@@ -286,6 +290,10 @@ model = PlayerBodyOrientationViT(
 )
 
 model = model.to(device)
+latest_model_file, latest_epoch = get_latest_model_file("./zoo/vit/")
+if latest_model_file:
+    model.load_state_dict(torch.load(latest_model_file))
+
 # -------------------------Create model -------------------------------------------
 
 optimizer = torch.optim.Adam(params=model.parameters(), lr=LR)  # Create adam optimizer
@@ -303,13 +311,17 @@ def loss_func(y_batch):
     return -torch.log(pair_loss / (pair_loss + p1_loss + p2_loss))
 
 
-def cross_loss_func(y_batch):
-    first_pair_loss_0 = cos(y_batch[0, :], y_batch[1, :])
+def cross_loss_func(y_batch, temperature=0.1):
+    first_pair_loss_0 = cos(y_batch[0, :], y_batch[1, :]) / temperature
     loss_list = first_pair_loss_0.unsqueeze(dim=0)
     for i in range(2, y_batch.shape[0]):
-        loss_list = torch.cat((loss_list, cos(y_batch[0, :], y_batch[i, :]).unsqueeze(dim=0)), dim=0)
-        loss_list = torch.cat((loss_list, cos(y_batch[1, :], y_batch[i, :]).unsqueeze(dim=0)), dim=0)
+        loss_list = torch.cat((loss_list, cos(y_batch[0, :], y_batch[i, :]).unsqueeze(dim=0) / temperature), dim=0)
 
+    for i in range(2, y_batch.shape[0]):
+        loss_list = torch.cat((loss_list, cos(y_batch[1, :], y_batch[i, :]).unsqueeze(dim=0) / temperature), dim=0)
+
+    with open(SOFTMAX_LOG_FILE, 'a') as softmax_log:
+        softmax_log.write(str(loss_list.detach().cpu().numpy()) + '\n')
     return criterion(loss_list.unsqueeze(dim=0), torch.tensor([0]).to(device))
 
 
@@ -317,7 +329,7 @@ def cross_loss_func(y_batch):
 
 sub_train_idx = 0
 notify_sub_batch_size = 5
-email_notify_sub_batch_size = 50
+email_notify_sub_batch_size = 500
 len_datasize = len(train_dataset)
 criterion = torch.nn.CrossEntropyLoss().to(device)
 
@@ -344,14 +356,8 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
 
         loss = cross_loss_func(y_batch)
 
-        # print(y_batch.shape)
-
         train_loss = loss.detach().cpu().item()
 
-        # train_loss += loss.detach().cpu().item() / len(train_dataset)
-        # train_theta_loss += train_th_loss.detach().cpu().item() / len(train_dataset)
-        # train_distance_loss += train_dis_loss.detach().cpu().item() / len(train_dataset)
-        #
         optimizer.zero_grad()
         loss.backward()
 
@@ -359,22 +365,24 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
 
         if sub_train_idx % notify_sub_batch_size == 0:
             duration = time.time() - start
-            summary = f"[{epoch}/{TOTAL_EPOCHS}][{sub_train_idx}/{len_datasize}] train loss: {train_loss:.4f} , duration:{duration:.2f}"
+            summary = f"[{latest_epoch}/{TOTAL_EPOCHS}][{sub_train_idx}/{len_datasize}] train loss: {train_loss:.4f} , duration:{duration:.2f}"
             with open(LOG_FILE, 'a') as log:
                 log.write(summary + '\n')
             print()
             print(summary)
-            if sub_train_idx % email_notify_sub_batch_size == 0:
-                nowtime = datetime.datetime.now()
-                try:
-                    send_mail("[" + nowtime.strftime("%Y%m%d") + "]-" + summary, 'ATT..............................')
-                except Exception:
-                    print("Sending email failed!")
-                    print(traceback.format_exc())
+            # if sub_train_idx % email_notify_sub_batch_size == 0:
+            #     nowtime = datetime.datetime.now()
+            #     try:
+            #         send_mail("[" + nowtime.strftime("%Y%m%d") + "]-" + summary, 'ATT..............................')
+            #     except Exception:
+            #         print("Sending email failed!")
+            #         print(traceback.format_exc())
 
             start = time.time()
+    sub_train_idx = 0
+    latest_epoch += 1
 
     print("Saving Model" + str(epoch) + ".torch")  # Save model weight
-    torch.save(model.state_dict(), "./zoo/std_soccer_vit_cl_32_128_253_" + str(epoch) + ".torch")
+    torch.save(model.state_dict(), "./zoo/vit/std_soccer_vit_cl_32_128_" + str(latest_epoch) + ".torch")
 
     # scheduler.step(val_loss)

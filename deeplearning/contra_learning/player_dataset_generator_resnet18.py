@@ -207,9 +207,9 @@ def count_player_samples(player_json):
 
 
 # =======================================================================
-player_dataset_dir0 = "/home/wolf/datasets/reid/dest/SR583/SR583_0_manual_clean/"
-player_dataset_dir1 = "/home/wolf/datasets/reid/dest/SR583/SR583_1_manual_clean/"
-player_dataset_dir2 = "/home/wolf/datasets/reid/dest/SR42/SR42_0_manual_clean/"
+player_dataset_dir0 = "/home/wolf/datasets/reid/dest/SR583/SR583_0_resnet/"
+player_dataset_dir1 = "/home/wolf/datasets/reid/dest/SR583/SR583_1_resnet/"
+player_dataset_dir2 = "/home/wolf/datasets/reid/dest/SR42/SR42_0_resnet/"
 player_frame_span = 5
 max_sample_per_player = 32
 base_player_num = 127
@@ -232,11 +232,11 @@ stat_players(sorted_json)
 print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 stat_players(sampled_json)
 
-# sample5_dump_out_dir = "/home/wolf/datasets/reid/dataset/test_gen_SR583_SR42_sampled5/"
-# merged_dump_out_dir = "/home/wolf/datasets/reid/dataset/test_gen_SR583_SR42_merged/"
-# dump_player_dataset(sampled_json, sample5_dump_out_dir)
-# dump_player_dataset(merge_ds, merged_dump_out_dir)
-# dump_player_dataset(sampled_json, "/home/wolf/datasets/reid/dataset/test_gen_SR583_SR42_sampled8")
+sample5_dump_out_dir = "/home/wolf/datasets/reid/dataset/resnet/SR583_resnet_sampled5/"
+merged_dump_out_dir = "/home/wolf/datasets/reid/dataset/resnet/SR583_resnet_merged/"
+dump_player_dataset(sampled_json, sample5_dump_out_dir)
+dump_player_dataset(merge_ds, merged_dump_out_dir)
+# dump_player_dataset(sampled_json, "/home/wolf/datasets/reid/dataset/resnet/test_gen_SR583_SR42_sampled8")
 
 print("Total  num:", count_player_samples(merge_ds))
 print("Sample  num:", count_player_samples(sampled_json))
@@ -327,13 +327,11 @@ for key in cutoff_ds.keys():
 
 print(len(final_dataset))
 
-final_dataset_dir = "/home/wolf/datasets/reid/dataset/test_final_dataset_64_256/"
-final_dataset_dir = "/home/wolf/datasets/reid/dataset/test_final_dataset_32_128/"
-
+final_dataset_dir = "/home/wolf/datasets/reid/dataset/resnet/resnet_final_dataset_32_128/"
 
 # dump_final_dataset(final_dataset, final_dataset_dir)
 
-# dump_final_dataset_with_key_prefix(final_dataset, final_dataset_dir, default_item_num=100)
+dump_final_dataset_with_key_prefix(final_dataset, final_dataset_dir, default_item_num=100)
 
 
 # for key in final_dataset.keys():
@@ -366,7 +364,8 @@ def dump_final_dataset_only_path(final_ds):
         new_dict[key] = file_list
     return new_dict
 
-# final_dataset_json = json.dumps(dump_final_dataset_only_path(final_dataset))
-#
-# with open("/home/wolf/datasets/reid/dataset/final_dataset_32_127.json." + get_nowtime_str(), 'w') as wf:
-#     wf.write(final_dataset_json)
+
+final_dataset_json = json.dumps(dump_final_dataset_only_path(final_dataset))
+
+with open("/home/wolf/datasets/reid/dataset/resnet/resnet18_final_dataset_32_127.json." + get_nowtime_str(), 'w') as wf:
+    wf.write(final_dataset_json)

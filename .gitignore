@@ -42,3 +42,5 @@
 /deeplearning/SAM/sam2/
 /deeplearning/contra_learning/test_videos/
 /deeplearning/contra_learning/ultralytics_models/
+/deeplearning/contra_learning/zoo/
+/deeplearning/contra_learning/log/

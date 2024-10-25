@@ -67,7 +67,7 @@ def split_videos(input_file, output_dir, second_per_video=1500):
     out.release()
 
 
-def batch_generator(model, video_path, out_dir, conf_threshold=0.6):
+def batch_generator(model, video_path, out_dir, conf_threshold=0.7):
     video_parent_dir_stem = video_path.split("/")[-2]
     video_file_stem = Path(video_path).stem
     out_dataset_path = Path(out_dir).joinpath(video_parent_dir_stem)

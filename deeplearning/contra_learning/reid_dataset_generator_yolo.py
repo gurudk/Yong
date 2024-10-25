@@ -19,7 +19,7 @@ reid_dataset_dir = "/home/wolf/datasets/reid/DFL/"
 reid_dataset_path = Path(reid_dataset_dir)
 track_frame_idx = 0
 delta = 0
-conf_threshold = 0.6
+conf_threshold = 0.7
 
 cap = cv2.VideoCapture(video_path)
 
