@@ -311,6 +311,19 @@ def loss_func(y_batch):
     return -torch.log(pair_loss / (pair_loss + p1_loss + p2_loss))
 
 
+def create_128x128_loss_mask():
+    r1 = torch.cat((torch.tensor([0]), torch.ones(127)), dim=0)
+    r2 = torch.cat((torch.tensor([0, 0]), torch.ones(126)), dim=0)
+    r3 = torch.zeros(128)
+    r3 = r3.repeat(126, 1)
+
+    m = torch.cat((r1.unsqueeze(dim=0), r2.unsqueeze(dim=0), r3), dim=0)
+
+    masked = m.bool()
+
+    return masked
+
+
 def cross_loss_func(y_batch, temperature=0.1):
     first_pair_loss_0 = cos(y_batch[0, :], y_batch[1, :]) / temperature
     loss_list = first_pair_loss_0.unsqueeze(dim=0)
@@ -325,6 +338,16 @@ def cross_loss_func(y_batch, temperature=0.1):
     return criterion(loss_list.unsqueeze(dim=0), torch.tensor([0]).to(device))
 
 
+def cross_loss_func_masked(features, masked, temperature=0.1):
+    features = F.normalize(features, dim=1)
+    similarity_matrix = torch.matmul(features, features.T)
+    logits = similarity_matrix[masked]
+    logits = logits / temperature
+    with open(SOFTMAX_LOG_FILE, 'a') as softmax_log:
+        softmax_log.write(str(logits.detach().cpu().numpy()) + '\n')
+    return criterion(logits.unsqueeze(dim=0), torch.tensor([0]).to(device))
+
+
 # ----------------Train--------------------------------------------------------------------------
 
 sub_train_idx = 0
@@ -332,6 +355,7 @@ notify_sub_batch_size = 5
 email_notify_sub_batch_size = 500
 len_datasize = len(train_dataset)
 criterion = torch.nn.CrossEntropyLoss().to(device)
+loss_masked = create_128x128_loss_mask().to(device)
 
 for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
     train_loss = 0.0
@@ -354,7 +378,8 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
             y_batch = torch.cat((y_batch, y_sub), dim=0)
             batch_idx += SUB_BATCH_SIZE
 
-        loss = cross_loss_func(y_batch)
+        # loss = cross_loss_func(y_batch)
+        loss = cross_loss_func_masked(y_batch, loss_masked)
 
         train_loss = loss.detach().cpu().item()
 
