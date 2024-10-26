@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/simclr" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/VIA2COCO" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/detr" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/translation/MeloTTS" vcs="Git" />
   </component>
