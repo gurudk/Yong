@@ -176,8 +176,11 @@ def cross_loss_func_masked(features, masked, temperature=0.1):
     features = F.normalize(features, dim=1)
     similarity_matrix = torch.matmul(features, features.T)
     logits = similarity_matrix[masked]
+    logits = logits / temperature
+
     with open(SOFTMAX_LOG_FILE, 'a') as softmax_log:
         softmax_log.write(str(logits.detach().cpu().numpy()) + '\n')
+
     return criterion(logits.unsqueeze(dim=0), torch.tensor([0]).to(device))
 
 
