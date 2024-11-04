@@ -3,6 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/SAM/sam2" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/RoPAR" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/SimCLR_Spijkervet" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/botsort" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/bytetrack" vcs="Git" />
