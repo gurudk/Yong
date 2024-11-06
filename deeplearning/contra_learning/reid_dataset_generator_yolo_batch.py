@@ -141,6 +141,13 @@ model = YOLO("./ultralytics_models/yolo11n.pt")
 #     split_videos(video_path, split_video_output_dir)
 #     print(video_path, " is generated===========================================")
 
-video_path = "/home/wolf/datasets/screenrecorder/dest/SR26/SR26_1.mp4"
-track_player_images_out_dir = "/home/wolf/datasets/reid/DFL/dest/"
-batch_generator(model, video_path, track_player_images_out_dir)
+video_base_path = "/home/wolf/datasets/screenrecorder/dest"
+# video_path = "/home/wolf/datasets/screenrecorder/dest/SR33/SR33_0.mp4"
+# track_player_images_out_dir = "/home/wolf/datasets/reid/DFL/dest/"
+autogen_images_out_dir = "/home/wolf/datasets/reid/DFL/dest_auto/"
+# batch_generator(model, video_path, track_player_images_out_dir)
+
+for subdir in os.listdir(video_base_path):
+    video_path = video_base_path + "/" + subdir + "/" + subdir + "_2.mp4"
+    batch_generator(model, video_path, autogen_images_out_dir)
+    print(video_path, "is completed~")
