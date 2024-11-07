@@ -329,9 +329,10 @@ print(len(final_dataset))
 
 final_dataset_dir = "/home/wolf/datasets/reid/dataset/resnet/resnet_final_dataset_32_128/"
 
+
 # dump_final_dataset(final_dataset, final_dataset_dir)
 
-dump_final_dataset_with_key_prefix(final_dataset, final_dataset_dir, default_item_num=100)
+# dump_final_dataset_with_key_prefix(final_dataset, final_dataset_dir, default_item_num=100)
 
 
 # for key in final_dataset.keys():
@@ -364,8 +365,7 @@ def dump_final_dataset_only_path(final_ds):
         new_dict[key] = file_list
     return new_dict
 
-
-final_dataset_json = json.dumps(dump_final_dataset_only_path(final_dataset))
-
-with open("/home/wolf/datasets/reid/dataset/resnet/resnet18_final_dataset_32_127.json." + get_nowtime_str(), 'w') as wf:
-    wf.write(final_dataset_json)
+# final_dataset_json = json.dumps(dump_final_dataset_only_path(final_dataset))
+#
+# with open("/home/wolf/datasets/reid/dataset/resnet/resnet18_final_dataset_32_127.json." + get_nowtime_str(), 'w') as wf:
+#     wf.write(final_dataset_json)
