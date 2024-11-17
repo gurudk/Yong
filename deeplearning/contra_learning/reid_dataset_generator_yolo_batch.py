@@ -8,7 +8,7 @@ from ultralytics.models import YOLO
 from ultralytics.models import RTDETR
 
 
-def split_videos(input_file, output_dir, second_per_video=1500):
+def split_videos(input_file, output_dir, frames_per_video=1500):
     gen_video_index = 0
     output_dir_path = Path(output_dir)
 
@@ -54,7 +54,7 @@ def split_videos(input_file, output_dir, second_per_video=1500):
             break
         frame_index += 1
 
-        if frame_index % second_per_video == 0:
+        if frame_index % frames_per_video == 0:
             out.release()
             print("Split video ", str(output_file), " generated")
 
@@ -147,9 +147,9 @@ video_base_path = "/home/wolf/datasets/screenrecorder/dest"
 autogen_images_out_dir = "/home/wolf/datasets/reid/DFL/dest_auto/"
 # batch_generator(model, video_path, track_player_images_out_dir)
 
-splits = (2, 13, 24)
+splits = range(1, 11, 1)
 for subdir in os.listdir(video_base_path):
-    if "SR11303" not in subdir:
+    if "SR200E" not in subdir:
         continue
     for s in splits:
         video_path = video_base_path + "/" + subdir + "/" + subdir + "_" + str(s) + ".mp4"
