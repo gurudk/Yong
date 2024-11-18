@@ -197,11 +197,12 @@ dump_json_file = "/home/wolf/datasets/reid/dataset/classify/player_classify_fina
 
 
 players_json = gen_player_dataset(base_dir)
-sample5_json = sample_players(sort_players(players_json), frame_span=5)
-
+sample5_json = sort_players(players_json)
+# sample5_json = sample_players(sample5_json, frame_span=5)
+#
 sample5_json = merge_match_players(sample5_json, match_dupliated_config_rule)
-
-sample5_json = filter_players_by_sample_num(sample5_json, min_num=20)
+#
+# sample5_json = filter_players_by_sample_num(sample5_json, min_num=20)
 player_sum = 0
 for key in sample5_json.keys():
     player_sum += len(sample5_json[key])
@@ -213,9 +214,11 @@ print()
 print()
 print("================================= gen dataset details =============================")
 player_dicts = {}
+player_indexes = {}
 sort_categories = sorted((sample5_json.keys()))
 for idx, player in enumerate(sort_categories):
     player_dicts[player] = idx
+    player_indexes[idx] = player
 print(player_dicts)
 
 player_final_json = {}
@@ -224,7 +227,7 @@ for key in sample5_json.keys():
         player_final_json[player.file_path] = player_dicts[key]
 
 print(len(player_final_json))
-player_dataset = {"player_dict": player_dicts, "player_list": player_final_json}
+player_dataset = {"player_dict": player_dicts, "player_indexes": player_indexes, "player_list": player_final_json}
 
 with open(dump_json_file, 'w') as wf:
     wf.write(json.dumps(player_dataset))
