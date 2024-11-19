@@ -147,9 +147,9 @@ video_base_path = "/home/wolf/datasets/screenrecorder/dest"
 autogen_images_out_dir = "/home/wolf/datasets/reid/DFL/dest_auto/"
 # batch_generator(model, video_path, track_player_images_out_dir)
 
-splits = range(1, 11, 1)
+splits = (4,)
 for subdir in os.listdir(video_base_path):
-    if "SR200E" not in subdir:
+    if "SR694" not in subdir:
         continue
     for s in splits:
         video_path = video_base_path + "/" + subdir + "/" + subdir + "_" + str(s) + ".mp4"

@@ -161,8 +161,10 @@ def merge_match_players(player_json, config):
 match_dupliated_config_rule = {"SR583_team_b": "SR475_team_b",  ## fb
                                "SR26_team_r": "SR543_team_h",  ## sjxx
                                "SR26_team_b": "SR246_team_b",  ## gajh
-                               "SR33_team_g": "SR858_team_g",  ## ddsh
-                               "SR105_team_r": "SR758_team_h"  # jzhyd#
+                               "SR33_team_g": "SR758_team_g",  ## ddsh
+                               "SR105_team_r": "SR758_team_h",  # jzhyd#
+                               "SR200A_team_w": "SR200B_team_w",  # SR200A and SR200B
+                               "SR200A_team_r": "SR200B_team_r"  # SR200A and SR200B
                                }
 
 # test_sr_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR26/SR26_1_manual_ready"
