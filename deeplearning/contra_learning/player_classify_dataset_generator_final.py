@@ -164,7 +164,9 @@ match_dupliated_config_rule = {"SR583_team_b": "SR475_team_b",  ## fb
                                "SR33_team_g": "SR758_team_g",  ## ddsh
                                "SR105_team_r": "SR758_team_h",  # jzhyd#
                                "SR200A_team_w": "SR200B_team_w",  # SR200A and SR200B
-                               "SR200A_team_r": "SR200B_team_r"  # SR200A and SR200B
+                               "SR200A_team_r": "SR200B_team_r",  # SR200A and SR200B
+                               "SR200C_team_r": "SR200D_team_r",  ## SR200C and SR200D
+                               "SR200C_team_y": "SR200D_team_y",  ## SR200C and SR200D
                                }
 
 # test_sr_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR26/SR26_1_manual_ready"
