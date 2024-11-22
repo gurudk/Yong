@@ -239,7 +239,7 @@ class PlayerClassifyViT(nn.Module):
         x = x.mean(dim=1) if self.pool == 'mean' else x[:, 0]
 
         x = self.to_latent(x)
-        return self.mlp(x)
+        return self.mlp(x), x
 
 
 def get_latest_model_file(model_dir):
@@ -351,7 +351,7 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
         x_batch = x_batch.to(device)
         x_truth = x_truth.to(device)
 
-        y_pre = model(x_batch)
+        y_pre, y_features = model(x_batch)
 
         loss = criterion(y_pre, x_truth)
 
