@@ -373,7 +373,7 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
             x_batch = x_batch.to(device)
             x_truth = x_truth.to(device)
 
-            y_pre = model(x_batch)
+            y_pre, _ = model(x_batch)
 
             loss = criterion(y_pre, x_truth)
 
