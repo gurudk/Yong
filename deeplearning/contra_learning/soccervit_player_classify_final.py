@@ -47,7 +47,7 @@ class PlayerClassifyDataset(Dataset):
         with open(player_json_file, 'r') as rf:
             self.player_dataset = json.loads(rf.read())
             self.player_json = self.player_dataset["player_list"]
-            self.player_dict = self.player_dataset["player_dicts"]
+            self.player_dict = self.player_dataset["player_dict"]
             self.player_items = list(self.player_json.items())
         self.transform = transform
 
@@ -261,8 +261,8 @@ TOTAL_EPOCHS = 500
 BATCH_SIZE = 128
 full_dataset_file = "/home/wolf/datasets/reid/dataset/classify/train_classify_minnum20_span3.json.20241122105138"
 
-LOG_FILE = "./log/classify_vit/vit_classify_26_583.log." + get_nowtime_str()
-SOFTMAX_LOG_FILE = "./log/classify_vit/vit_classify_26_583_softmax.log." + get_nowtime_str()
+LOG_FILE = "./log/vit_player_classify/vit_classify_final.log." + get_nowtime_str()
+SOFTMAX_LOG_FILE = "./log/vit_player_classify/vit_classify_final_softmax.log." + get_nowtime_str()
 validation_rate = .1
 shuffle_dataset = True
 random_seed = 0
@@ -314,7 +314,7 @@ model = PlayerClassifyViT(
 model = model.to(device)
 
 # read the resume weights
-latest_model_file, latest_epoch = get_latest_model_file("./zoo/classify_vit/")
+latest_model_file, latest_epoch = get_latest_model_file("./zoo/vit_player_classify/")
 if latest_model_file:
     model.load_state_dict(torch.load(latest_model_file))
 
@@ -395,4 +395,5 @@ for epoch in trange(TOTAL_EPOCHS + 1, desc="Training.."):  # Training loop
 
     if epoch % 10 == 0 and epoch != 0:
         print("Saving Model" + str(epoch) + ".torch")  # Save model weight
-        torch.save(model.state_dict(), "./zoo/classify_vit/vit_classify_final_1122_" + str(latest_epoch) + ".torch")
+        torch.save(model.state_dict(),
+                   "./zoo/vit_player_classify/vit_classify_final_1122_" + str(latest_epoch) + ".torch")
