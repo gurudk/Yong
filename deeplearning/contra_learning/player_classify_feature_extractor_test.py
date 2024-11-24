@@ -307,7 +307,7 @@ def get_shuffle_images_by_num(input_dir, file_num=30):
     return file_list[:file_num]
 
 
-torch_file = "./zoo/vit_player_classify/vit_classify_final_1122_201.torch"
+torch_file = "./zoo/vit_player_classify/vit_classify_final_1122_301.torch"
 full_dataset_file = "/home/wolf/datasets/reid/dataset/classify/train_classify_minnum20_span3.json.20241122105138"
 
 transform = v2.Compose([
@@ -396,24 +396,25 @@ test_base_dir2 = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_2/"
 #     print(item)
 
 test_player_w36_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/w36/"
-test_player_g11_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_78_g11_player"
+test_player_w77_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/w77/"
+test_player_g11_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/g11/"
 test_player_g8_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_82_g8_player"
 test_player_g6_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_2_g6_player"
-test_player_g37_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_53_g37_player"
+test_player_g37_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/g37"
 src_g6_files = get_shuffle_images_by_num(test_player_g6_dir, file_num=15)
 
 src_g37_files = get_shuffle_images_by_num(test_player_g37_dir, file_num=30)
 src_g8_files = get_shuffle_images_by_num(test_player_g8_dir, file_num=15)
 src_g11_files = get_shuffle_images_by_num(test_player_g11_dir, file_num=30)
 src_w36_files = get_shuffle_images_by_num(test_player_w36_dir, file_num=30)
-
+src_w77_files = get_shuffle_images_by_num(test_player_w77_dir, file_num=30)
 res_dict = {}
-for p in Path(test_base_dir1).iterdir():
+for p in Path(test_base_dir2).iterdir():
     if p.is_dir():
         target_list = get_shuffle_images_by_num(str(p), file_num=30)
         sub_simi_list = list()
         sub_dir = str(p).split("/")[-1]
-        for src_file in src_w36_files:
+        for src_file in src_g37_files:
             sub_simi_list.append(get_sim_by_target_list(src_file, target_list, model, device))
         res_dict[sub_dir] = np.array(sub_simi_list).mean()
         print(sub_dir, " calculate completed~")
