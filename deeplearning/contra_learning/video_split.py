@@ -61,7 +61,7 @@ def split_videos(input_file, output_dir, second_per_video=1500):
     out.release()
 
 
-input_file_name = "/home/wolf/datasets/screenrecorder/src/SR11303.mp4"
-output_dir = "/home/wolf/datasets/screenrecorder/dest/SR11303/"
+input_file_name = "/home/wolf/datasets/screenrecorder/src/SR21119.mp4"
+output_dir = "/home/wolf/datasets/screenrecorder/dest/SR21119/"
 
 split_videos(input_file_name, output_dir)

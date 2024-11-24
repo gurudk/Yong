@@ -28,7 +28,8 @@ def dump_json_dataset_to_disk(classify_json_file, dump_dir):
                 print(idx, "players is dumped~")
 
 
-classify_json_file = "/home/wolf/datasets/reid/dataset/classify/player_classify_final_span5.json.20241122104131"
+classify_json_file = "/home/wolf/datasets/reid/dataset/classify/train_classify_minnum20_span3.json.20241122105138"
+
 dump_out_dir = "/home/wolf/datasets/reid/dataset/classsify_dump_dir_" + get_nowtime_str()
 
 dump_json_dataset_to_disk(classify_json_file, dump_out_dir)
