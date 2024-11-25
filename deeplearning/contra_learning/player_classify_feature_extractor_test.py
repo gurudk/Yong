@@ -275,6 +275,12 @@ def get_features(img_name, model, device):
     return y_features
 
 
+def get_simi_by_pair(src_image, dest_image, model, device, simi_func):
+    f_src = get_features(src_image, model, device)
+    f_dest = get_features(dest_image, model, device)
+    return simi_func(f_src, f_dest).detach().cpu().item()
+
+
 def get_sim_by_category(src_image_name, dest_category_dir, model, device):
     f_src = get_features(src_image_name, model, device)
     sim_list = list()
@@ -365,10 +371,10 @@ for pr in cat1_dir_pairs[:100]:
 np_cat1_res_list = np.array(cat1_res_list)
 print(np_cat1_res_list.mean())
 
-zz_res_mean = get_sim_by_category(cat1_dir1_sample1, cat1_dir, model, device)
-print("sample1 with dir simi mean:", zz_res_mean)
-print("sample1 with dir2 simi mean:", get_sim_by_category(cat1_dir1_sample1, cat1_dir2, model, device))
-print("sample1 with dir1 simi mean:", get_sim_by_category(cat1_dir1_sample1, cat1_dir1, model, device))
+# zz_res_mean = get_sim_by_category(cat1_dir1_sample1, cat1_dir, model, device)
+# print("sample1 with dir simi mean:", zz_res_mean)
+# print("sample1 with dir2 simi mean:", get_sim_by_category(cat1_dir1_sample1, cat1_dir2, model, device))
+# print("sample1 with dir1 simi mean:", get_sim_by_category(cat1_dir1_sample1, cat1_dir1, model, device))
 
 # base_dir = "/home/wolf/datasets/reid/dataset/classsify_dump_dir_20241124165612/"
 # for p in Path(base_dir).iterdir():
@@ -395,26 +401,31 @@ test_base_dir2 = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_2/"
 # for item in res_items:
 #     print(item)
 
+test_player_g33_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/g33/"
 test_player_w36_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/w36/"
 test_player_w77_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/w77/"
 test_player_g11_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/g11/"
 test_player_g8_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_82_g8_player"
 test_player_g6_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_2_g6_player"
 test_player_g37_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/g37"
-src_g6_files = get_shuffle_images_by_num(test_player_g6_dir, file_num=15)
 
+test_1_g33_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_1/SR21119_1_144"
+
+src_g6_files = get_shuffle_images_by_num(test_player_g6_dir, file_num=15)
 src_g37_files = get_shuffle_images_by_num(test_player_g37_dir, file_num=30)
 src_g8_files = get_shuffle_images_by_num(test_player_g8_dir, file_num=15)
 src_g11_files = get_shuffle_images_by_num(test_player_g11_dir, file_num=30)
 src_w36_files = get_shuffle_images_by_num(test_player_w36_dir, file_num=30)
 src_w77_files = get_shuffle_images_by_num(test_player_w77_dir, file_num=30)
+src_g33_files = get_shuffle_images_by_num(test_player_g33_dir, file_num=30)
+
 res_dict = {}
-for p in Path(test_base_dir2).iterdir():
+for p in Path(test_base_dir1).iterdir():
     if p.is_dir():
         target_list = get_shuffle_images_by_num(str(p), file_num=30)
         sub_simi_list = list()
         sub_dir = str(p).split("/")[-1]
-        for src_file in src_g37_files:
+        for src_file in src_w36_files:
             sub_simi_list.append(get_sim_by_target_list(src_file, target_list, model, device))
         res_dict[sub_dir] = np.array(sub_simi_list).mean()
         print(sub_dir, " calculate completed~")
@@ -424,3 +435,19 @@ res_items = list(res_dict.items())
 res_items.sort(key=lambda itm: itm[1])
 for item in res_items:
     print(item)
+
+g37_file = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_53_g37_player/SR21119_0_53_frame_525_736.png"
+g33_file = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_57_g33_player/SR21119_0_57_frame_455_779.png"
+g33_1_file = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_1/SR21119_1_144/SR21119_1_144_frame_227_725.png"
+w36_file = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/merge/w36/SR21119_0_12_frame_48_719.png"
+w19_file = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_1/SR21119_1_146/SR21119_1_146_frame_212_730.png"
+w19_dir = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_1/SR21119_1_146/"
+
+pair_simi = get_simi_by_pair(g37_file, g33_file, model, device, cosi)
+# print("g37 and g33 simi:", pair_simi)
+# print("g33 vs g37 category:", get_sim_by_category(g33_file, test_player_g37_dir, model, device))
+# print("g37 vs g33 category:", get_sim_by_category(g37_file, test_player_g33_dir, model, device))
+# print("g37 vs _2_g33 category:", get_sim_by_category(g37_file, test_1_g33_dir, model, device))
+# print("g37 with new 1 g33 file", get_simi_by_pair(g37_file, g33_1_file, model, device, cosi))
+print("w36 and w19:", get_simi_by_pair(w36_file, w19_file, model, device, cosi))
+print("w36 and w19 dir:", get_sim_by_category(w36_file, w19_dir, model, device))
