@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Images</title>
+    <style>
+        .item1 { grid-area: header;font-size: 40px; }
+        .item2 { grid-area: menu; z-index:9999}
+        .item3 { grid-area: main; }
+        .item4 { grid-area: right; }
+        .item5 { grid-area: footer; }
+
+        .grid-container {
+          display: grid;
+          grid-template-areas:
+            'header header header header header header header header'
+            'menu main main main main main right right'
+            'menu footer footer footer footer footer footer footer';
+          gap: 1px;
+          background-color: #2196F3;
+          padding: 1px;
+        }
+
+        .grid-container > div {
+          background-color: rgba(255, 255, 255, 0.8);
+          text-align: center;
+          padding: 20px 0;
+        }
+        .grid-container-content {
+          display: grid;
+          grid-template-columns: auto auto auto auto auto auto auto auto;
+          background-color: #2196F3;
+        }
+        .grid-item {
+          background-color: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(0, 0, 0, 0.8);
+          padding: 15px;
+          text-align: center;
+        }
+
+        .grid-item.selected {
+          background-color: lightblue;
+        }
+
+        .ghost-select{
+          display:none;
+          z-index:9000;
+          position:absolute !important;
+          cursor:default !important;
+        }
+
+        .ghost-select>div{
+          position:absolute;
+          left:0px !important;
+          top:2px !important;
+
+        }
+
+        .ghost-active{
+          display:block !important;
+        }
+
+        .ghost-select>span{
+          background-color:rgba(239,28,190,0.6);
+          border:1px solid #b20e8c;
+          width:100%;
+          height:100%;
+          float:left;
+
+        }
+
+        #grid-select{
+          width:100%;
+          height:100%;
+          position:absolute;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+<body>
+
+<div id="grid-select">
+  <div class="ghost-select"><span></span></div>
+</div>
+
+<div class="grid-container">
+  <div class="item1">Player Annotation </div>
+  <div class="item2">Player Categories:
+    <div>
+
+            {% for dir in dirs %}
+            <a href="/toc/{{dir}}">{{dir}}</a><br>
+            {% endfor %}
+
+    </div>
+  </div>
+  <div class="item3">
+      <div id = "imagegrid" class="grid-container-content">
+    {% for item in images %}
+    <div id="{{item}}" annotated="true" class="grid-item" handmaded dealed><img src="/images/{{currdir}}/{{item}}" width="48", height="96"></div>
+    {% endfor %}
+      </div>
+  </div>
+  <div class="item4">Annotation Json<br>
+  <h2 id="score">Items selected: <span>0</span> </h2>
+  </div>
+  <div class="item5">Footer</div>
+</div>
+
+
+<script>
+const gridContainer = document.querySelector('.grid-container-content');
+const gridItems = gridContainer.querySelectorAll('.grid-item');
+
+let selectedItems = [];
+
+gridContainer.addEventListener('click', (event) => {
+  const clickedItem = event.target;
+
+  if (clickedItem.classList.contains('grid-item')) {
+    // Check if Ctrl key is pressed for multiple selections
+    if (event.ctrlKey) {
+      if (selectedItems.includes(clickedItem)) {
+        // Deselect item
+        selectedItems = selectedItems.filter((item) => item !== clickedItem);
+        clickedItem.classList.remove('selected');
+      } else {
+        // Select item
+        selectedItems.push(clickedItem);
+        clickedItem.classList.add('selected');
+      }
+    } else {
+      // Single selection
+      selectedItems.forEach((item) => item.classList.remove('selected'));
+      selectedItems = [clickedItem];
+      clickedItem.classList.add('selected');
+    }
+
+    console.log('Selected items:', selectedItems);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("Dom is ready");
+  for (var i=0;i<gridItems.length;i++){
+    var item = gridItems[i].getBoundingClientRect();
+    console.log(item.left, ",", item.top, ",", item.width, ",", item.height)
+  }
+
+
+
+});
+
+  $(document).ready(function(){
+
+  var offset = $(".item3").offset()
+  $("#grid-select").css({top:offset.top, left:offset.left});
+  $("#grid-select").height($(".item3").height());
+  $("#grid-select").width($(".item3").width());
+
+  $("#grid-select").mousedown(function (e) {
+
+        $(".ghost-select").addClass("ghost-active");
+        $(".ghost-select").css({
+            'left': e.pageX - offset.left,
+            'top': e.pageY - offset.top
+        });
+
+        initialW = e.pageX - offset.left;
+        initialH = e.pageY - offset.top;
+
+        console.log("attach handler");
+        console.log("mousedown:",e.pageX,",",e.pageY)
+        console.log("mousedown:"," initialW:",initialW,",initialH:",initialH)
+
+
+        $(document).bind("mouseup", selectElements);
+        $(document).bind("mousemove", openSelector);
+
+    });
+
+
+});
+
+function selectElements(e) {
+    $("#score>span").text('0');
+    $(document).unbind("mousemove", openSelector);
+    $(document).unbind("mouseup", selectElements);
+    var maxX = 0;
+    var minX = 5000;
+    var maxY = 0;
+    var minY = 5000;
+    var totalElements = 0;
+    var elementArr = new Array();
+    $(".grid-item").each(function () {
+        var aElem = $(".ghost-select");
+        var bElem = $(this);
+        var result = doObjectsCollide(aElem, bElem);
+
+        console.log(result);
+        if (result == true) {
+          $("#score>span").text( Number($("#score>span").text())+1 );
+        }
+    });
+
+    console.log("mouseup:",e.pageX,",",e.pageY)
+    console.log("mouseup:"," initialW:",initialW,",initialH:",initialH)
+
+    $(".ghost-select").removeClass("ghost-active");
+    $(".ghost-select").width(0).height(0);
+
+    ////////////////////////////////////////////////
+
+}
+
+function openSelector(e) {
+    var offset = $(".item3").offset()
+    new_x = e.pageX - offset.left
+    new_y = e.pageY - offset.top
+
+    var w = Math.abs(initialW - new_x);
+    var h = Math.abs(initialH - new_y);
+
+
+    $(".ghost-select").css({
+        'width': w,
+        'height': h
+    });
+    if (new_x <= initialW) {
+        $(".ghost-select").css({
+            'left': new_x
+        });
+    }
+    if (new_y <= initialH) {
+        $(".ghost-select").css({
+            'top': new_y
+        });
+    }
+
+    console.log(new_x,new_y)
+
+}
+
+
+function doObjectsCollide(a, b) { // a and b are your objects
+    //console.log(a.offset().top,a.position().top, b.position().top, a.width(),a.height(), b.width(),b.height());
+    var aTop = a.offset().top;
+    var aLeft = a.offset().left;
+    var bTop = b.offset().top;
+    var bLeft = b.offset().left;
+
+    return !(
+        ((aTop + a.height()) < (bTop)) ||
+        (aTop > (bTop + b.height())) ||
+        ((aLeft + a.width()) < bLeft) ||
+        (aLeft > (bLeft + b.width()))
+    );
+}
+</script>
+</body>
+</html>
+</html>

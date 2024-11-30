@@ -54,6 +54,7 @@ class PlayerClassifyDataset(Dataset):
             self.player_dataset = json.loads(rf.read())
             self.player_json = self.player_dataset["player_list"]
             self.player_dict = self.player_dataset["player_dict"]
+            self.player_indexes = self.player_dataset["player_indexes"]
             self.player_items = list(self.player_json.items())
         self.transform = transform
 
@@ -62,6 +63,9 @@ class PlayerClassifyDataset(Dataset):
 
     def get_class_num(self):
         return len(self.player_dict)
+
+    def get_player_indexs_dict(self):
+        return self.player_indexes
 
     def __getitem__(self, idx):
         image_name = self.player_items[idx][0]
@@ -275,6 +279,15 @@ def get_features(img_name, model, device):
     return y_features
 
 
+def get_predicted_class(img_name, model, device):
+    img = Image.open(img_name)
+    img_tensor = transform(img).unsqueeze(dim=0)
+    img_tensor = img_tensor.to(device)
+
+    y_class, _ = model(img_tensor)
+    return y_class
+
+
 def get_simi_by_pair(src_image, dest_image, model, device, simi_func):
     f_src = get_features(src_image, model, device)
     f_dest = get_features(dest_image, model, device)
@@ -311,6 +324,19 @@ def get_shuffle_images_by_num(input_dir, file_num=30):
             file_list.append(str(p))
     shuffle(file_list)
     return file_list[:file_num]
+
+
+def get_topk_simi_predict_category(input_file, index_class_dicts, k=5):
+    clz = get_predicted_class(input_file, model, device)
+    clz_prob = F.softmax(clz, dim=1)
+
+    topk_res = torch.topk(clz_prob, k=5)
+
+    res_list = list()
+    for idx in topk_res[1].squeeze().tolist():
+        res_list.append(index_class_dicts[str(idx)])
+
+    return res_list, topk_res[0].squeeze().tolist()
 
 
 torch_file = "./zoo/vit_player_classify/vit_classify_final_1122_301.torch"
@@ -420,21 +446,21 @@ src_w77_files = get_shuffle_images_by_num(test_player_w77_dir, file_num=30)
 src_g33_files = get_shuffle_images_by_num(test_player_g33_dir, file_num=30)
 
 res_dict = {}
-for p in Path(test_base_dir1).iterdir():
-    if p.is_dir():
-        target_list = get_shuffle_images_by_num(str(p), file_num=30)
-        sub_simi_list = list()
-        sub_dir = str(p).split("/")[-1]
-        for src_file in src_w36_files:
-            sub_simi_list.append(get_sim_by_target_list(src_file, target_list, model, device))
-        res_dict[sub_dir] = np.array(sub_simi_list).mean()
-        print(sub_dir, " calculate completed~")
-
-print("=======================================summary==============================")
-res_items = list(res_dict.items())
-res_items.sort(key=lambda itm: itm[1])
-for item in res_items:
-    print(item)
+# for p in Path(test_base_dir1).iterdir():
+#     if p.is_dir():
+#         target_list = get_shuffle_images_by_num(str(p), file_num=30)
+#         sub_simi_list = list()
+#         sub_dir = str(p).split("/")[-1]
+#         for src_file in src_w36_files:
+#             sub_simi_list.append(get_sim_by_target_list(src_file, target_list, model, device))
+#         res_dict[sub_dir] = np.array(sub_simi_list).mean()
+#         print(sub_dir, " calculate completed~")
+#
+# print("=======================================summary==============================")
+# res_items = list(res_dict.items())
+# res_items.sort(key=lambda itm: itm[1])
+# for item in res_items:
+#     print(item)
 
 g37_file = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_53_g37_player/SR21119_0_53_frame_525_736.png"
 g33_file = "/home/wolf/datasets/reid/DFL/dest_manual/SR21119/SR21119_0/SR21119_0_57_g33_player/SR21119_0_57_frame_455_779.png"
@@ -451,3 +477,11 @@ pair_simi = get_simi_by_pair(g37_file, g33_file, model, device, cosi)
 # print("g37 with new 1 g33 file", get_simi_by_pair(g37_file, g33_1_file, model, device, cosi))
 print("w36 and w19:", get_simi_by_pair(w36_file, w19_file, model, device, cosi))
 print("w36 and w19 dir:", get_sim_by_category(w36_file, w19_dir, model, device))
+
+class_19 = get_predicted_class(w19_file, model, device)
+class_36 = get_predicted_class(w36_file, model, device)
+
+print(get_topk_simi_predict_category(w36_file, full_dataset.get_player_indexs_dict()))
+print(get_topk_simi_predict_category(w19_file, full_dataset.get_player_indexs_dict()))
+print(get_topk_simi_predict_category(g33_file, full_dataset.get_player_indexs_dict()))
+print(get_topk_simi_predict_category(g37_file, full_dataset.get_player_indexs_dict()))
