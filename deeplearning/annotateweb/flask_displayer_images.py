@@ -1,5 +1,6 @@
-from flask import Flask, send_from_directory, render_template
+from flask import Flask, send_from_directory, render_template, request, flash, url_for
 import os
+import json
 from pathlib import Path
 
 app = Flask(__name__)
@@ -43,6 +44,27 @@ def toc(dir):
         dirs.append(sub_dir)
 
     return render_template('images_layout.html', images=images, dirs=dirs, currdir=dir)
+
+
+@app.route('/annotatedjson', methods=['POST'])
+def commit_json():
+    if request.method == 'POST':
+        data = request.form
+        print("posted data:", data)
+        currdir = data["currdir"]
+        json_str = data['json_area']
+        obj = json.loads(json_str)
+        print(obj)
+        images = []
+        for filename in os.listdir(IMAGE_DIR + currdir):
+            if filename.endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                images.append(filename)
+
+        dirs = []
+        for sub_dir in os.listdir(IMAGE_DIR):
+            dirs.append(sub_dir)
+
+        return render_template('images_layout.html', images=images, dirs=dirs, currdir=currdir)
 
 
 if __name__ == '__main__':

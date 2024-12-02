@@ -74,6 +74,12 @@
           height:100%;
           position:absolute;
         }
+
+        .json_area{
+        width:95%;
+        margin:10px;
+        }
+
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
@@ -101,10 +107,24 @@
     {% endfor %}
       </div>
   </div>
-  <div class="item4">Annotation Json<br>
-  <h2 id="score">Items selected: <span>0</span> </h2>
+    <div class="item4"><h3>Annotation Json</h3><br>
+
+      <div class="annotation-form">
+            <form action="/annotatedjson" method="post">
+                <div class="submit_button">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+
+                 <input type="hidden" id="currdir" name="currdir" value="{{currdir}}">
+
+                <div class="annotation-text">
+                  <textarea id="json_area" class="json_area" name="json_area" rows="100" cols="30"></textarea>
+                </div>
+            </form>
+        </div>
   </div>
-  <div class="item5">Footer</div>
+  <div class="item5">Footer<br>
+    <h2 id="score">Items selected: <span>0</span> </h2></div>
 </div>
 
 
