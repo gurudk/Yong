@@ -2,21 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/SAM/sam2" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/RoPAR" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/SimCLR_Spijkervet" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/botsort" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/bytetrack" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/deepsort" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/fastreid" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/simclr" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/trackinglab" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/contra_learning/ultralytics" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/VIA2COCO" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/object_detection/detr" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/deeplearning/translation/MeloTTS" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/PaddleSpeech" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/opencv" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/deeplearning/videoedit/vosk-api" vcs="Git" />
   </component>
 </project>
