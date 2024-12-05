@@ -42,6 +42,10 @@
           background-color: lightblue;
         }
 
+        .grid-item.annotated {
+          background-color: green;
+        }
+
         .ghost-select{
           display:none;
           z-index:9000;
@@ -103,7 +107,7 @@
   <div class="item3">
       <div id = "imagegrid" class="grid-container-content">
     {% for item in images %}
-    <div id="{{item}}" annotated="true" class="grid-item" handmaded dealed><img src="/images/{{currdir}}/{{item}}" width="48", height="96"></div>
+    <div id="{{item}}" class="grid-item" ><img src="/images/{{currdir}}/{{item}}" width="48", height="96"></div>
     {% endfor %}
       </div>
   </div>
@@ -111,14 +115,19 @@
 
       <div class="annotation-form">
             <form action="/annotatedjson" method="post">
+                <div class="selected-items">
+                    <label id="selected-items-label"></label>
+                </div>
                 <div class="submit_button">
                     <button type="submit" class="btn btn-primary">Save</button>
                 </div>
 
                  <input type="hidden" id="currdir" name="currdir" value="{{currdir}}">
+                 <input type="hidden" id="selected_list" name="selected_list" value="">
+                 <input type="hidden" id="annotated_list" name="annotated_list" value="{{annotated_list}}">
 
                 <div class="annotation-text">
-                  <textarea id="json_area" class="json_area" name="json_area" rows="100" cols="30"></textarea>
+                  <textarea id="json_area" class="json_area" name="json_area" rows="100" cols="30" >{{jsonstr}}</textarea>
                 </div>
             </form>
         </div>
@@ -132,7 +141,21 @@
 const gridContainer = document.querySelector('.grid-container-content');
 const gridItems = gridContainer.querySelectorAll('.grid-item');
 
+function filter_annotated(){
+    var annotated_list = $('#annotated_list').val().split(",");
+    $(".grid-item").each(function () {
+        let annotated = annotated_list.includes(this.id)
+
+        if (annotated == true) {
+          this.classList.add('annotated');
+        }
+    });
+
+}
+
+
 let selectedItems = [];
+let selectedList = new Array();
 
 gridContainer.addEventListener('click', (event) => {
   const clickedItem = event.target;
@@ -178,6 +201,8 @@ document.addEventListener("DOMContentLoaded", () => {
   $("#grid-select").height($(".item3").height());
   $("#grid-select").width($(".item3").width());
 
+  filter_annotated()
+
   $("#grid-select").mousedown(function (e) {
 
         $(".ghost-select").addClass("ghost-active");
@@ -211,7 +236,7 @@ function selectElements(e) {
     var maxY = 0;
     var minY = 5000;
     var totalElements = 0;
-    var elementArr = new Array();
+
     $(".grid-item").each(function () {
         var aElem = $(".ghost-select");
         var bElem = $(this);
@@ -220,11 +245,16 @@ function selectElements(e) {
         console.log(result);
         if (result == true) {
           $("#score>span").text( Number($("#score>span").text())+1 );
+          this.classList.add('selected');
+          selectedList.push(this.id)
+
         }
     });
 
+    $('input[id="selected_list"]').val(selectedList.toString());
     console.log("mouseup:",e.pageX,",",e.pageY)
     console.log("mouseup:"," initialW:",initialW,",initialH:",initialH)
+    console.log("selectedList:",selectedList)
 
     $(".ghost-select").removeClass("ghost-active");
     $(".ghost-select").width(0).height(0);
