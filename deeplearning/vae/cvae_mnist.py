@@ -97,4 +97,5 @@ vae = VariationalAutoencoder(latent_dims, device).to(device)  # GPU
 vae = train_vae(vae, data)
 
 plot_latent(vae, data)
-plt.show()
+
+# plt.show()
