@@ -11,5 +11,6 @@ for f in work_path.rglob("*.pdf"):
     if ":" in str(f):
         new_name = file_name.replace(":", "_")
         print(new_name)
-        print(f)
-        f.rename(new_name)
+        new_path = f.parent.joinpath(new_name)
+        print(new_path)
+        f.rename(new_path)
